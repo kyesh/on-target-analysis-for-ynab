@@ -134,6 +134,49 @@ This application integrates with the YNAB API v1:
 - Personal Access Token from YNAB
 - Modern web browser for testing
 
+## 🚀 Quick Start
+
+### 1. Clone and Install
+```bash
+git clone <repository-url>
+cd YNAB_Off_Target_Assignment
+npm install
+```
+
+### 2. Configure YNAB API Access
+1. **Get your YNAB Personal Access Token:**
+   - Visit [YNAB Developer Settings](https://app.ynab.com/settings/developer)
+   - Click "New Token" and follow the instructions
+   - Copy the generated token (format: `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`)
+
+2. **Update Environment Variables:**
+   - Open the `.env.local` file in the project root
+   - Replace `your-ynab-personal-access-token-here` with your actual token:
+   ```
+   YNAB_ACCESS_TOKEN=your-actual-token-here
+   ```
+
+### 3. Start Development Server
+```bash
+npm run dev
+```
+
+### 4. Open Application
+- Navigate to [http://localhost:3000](http://localhost:3000)
+- Verify the connection status shows "Connected to YNAB API"
+
+## 🔧 Troubleshooting
+
+### Configuration Issues
+- **"Missing required environment variables"**: Ensure `.env.local` exists and contains `YNAB_ACCESS_TOKEN`
+- **"Invalid YNAB access token format"**: Token should be in format `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`
+- **"Unable to connect to YNAB API"**: Verify your token is valid and has not expired
+
+### Common Solutions
+1. **Restart the development server** after changing environment variables
+2. **Check token validity** by visiting YNAB Developer Settings
+3. **Verify internet connection** for API access
+
 ## 📖 Documentation Structure
 
 ```

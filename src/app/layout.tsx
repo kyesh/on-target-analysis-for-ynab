@@ -9,8 +9,12 @@ export const metadata: Metadata = {
   description: 'Analyze your YNAB budget target alignment and identify over-target spending patterns',
   keywords: ['YNAB', 'budget', 'target', 'analysis', 'financial', 'planning'],
   authors: [{ name: 'Ken Yesh', email: 'ken.yesh@apella.io' }],
-  viewport: 'width=device-width, initial-scale=1',
   robots: 'noindex, nofollow', // Local app, no indexing needed
+};
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
 };
 
 export default function RootLayout({

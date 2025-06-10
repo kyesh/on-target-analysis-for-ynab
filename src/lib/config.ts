@@ -82,24 +82,42 @@ export function validateEnvironment(): ValidationResult {
 }
 
 /**
- * Get validated configuration
+ * Get validated configuration (safe version that doesn't throw)
  */
-export function getConfig(): SecurityConfig {
-  const validation = validateEnvironment();
-  
-  if (!validation.valid) {
+export function getConfig(): SecurityConfig | null {
+  try {
+    const validation = validateEnvironment();
+
+    if (!validation.valid) {
+      console.warn(`Configuration validation failed: ${validation.error}`);
+      return null;
+    }
+
+    return {
+      YNAB_ACCESS_TOKEN: process.env.YNAB_ACCESS_TOKEN!,
+      NODE_ENV: process.env.NODE_ENV as 'development' | 'production' | 'test',
+      API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.ynab.com/v1',
+      RATE_LIMIT_REQUESTS_PER_HOUR: parseInt(process.env.RATE_LIMIT_REQUESTS_PER_HOUR || '200', 10),
+      CACHE_TTL_SECONDS: parseInt(process.env.CACHE_TTL_SECONDS || '300', 10),
+      ENABLE_SECURITY_HEADERS: process.env.ENABLE_SECURITY_HEADERS !== 'false',
+      LOG_LEVEL: (process.env.LOG_LEVEL as 'debug' | 'info' | 'warn' | 'error') || 'info'
+    };
+  } catch (error) {
+    console.warn('Configuration error:', error);
+    return null;
+  }
+}
+
+/**
+ * Get configuration with error throwing (for server-side use)
+ */
+export function getConfigOrThrow(): SecurityConfig {
+  const config = getConfig();
+  if (!config) {
+    const validation = validateEnvironment();
     throw new Error(`Configuration validation failed: ${validation.error}`);
   }
-  
-  return {
-    YNAB_ACCESS_TOKEN: process.env.YNAB_ACCESS_TOKEN!,
-    NODE_ENV: process.env.NODE_ENV as 'development' | 'production' | 'test',
-    API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.ynab.com/v1',
-    RATE_LIMIT_REQUESTS_PER_HOUR: parseInt(process.env.RATE_LIMIT_REQUESTS_PER_HOUR || '200', 10),
-    CACHE_TTL_SECONDS: parseInt(process.env.CACHE_TTL_SECONDS || '300', 10),
-    ENABLE_SECURITY_HEADERS: process.env.ENABLE_SECURITY_HEADERS !== 'false',
-    LOG_LEVEL: (process.env.LOG_LEVEL as 'debug' | 'info' | 'warn' | 'error') || 'info'
-  };
+  return config;
 }
 
 /**
@@ -128,5 +146,33 @@ export function getClientConfig() {
   };
 }
 
-// Export configuration for use throughout the application
+// Export configuration for use throughout the application (safe version)
+// Note: This may be null if configuration is invalid
 export const config = getConfig();
+
+/**
+ * Check if configuration is valid
+ */
+export function isConfigurationValid(): boolean {
+  return config !== null;
+}
+
+/**
+ * Get configuration validation details
+ */
+export function getConfigurationStatus(): { valid: boolean; error?: string; missingVars?: string[] } {
+  const validation = validateEnvironment();
+
+  if (!validation.valid) {
+    const requiredVars = ['YNAB_ACCESS_TOKEN', 'NODE_ENV'];
+    const missing = requiredVars.filter(varName => !process.env[varName]);
+
+    return {
+      valid: false,
+      error: validation.error,
+      missingVars: missing
+    };
+  }
+
+  return { valid: true };
+}

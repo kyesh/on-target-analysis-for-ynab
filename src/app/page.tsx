@@ -2,21 +2,30 @@
 
 import { useEffect, useState } from 'react';
 import { ynabClient } from '@/lib/ynab-client';
-import { validateEnvironment } from '@/lib/config';
+import { getConfigurationStatus, isConfigurationValid } from '@/lib/config';
 import { SecureErrorHandler } from '@/lib/errors';
 
 export default function HomePage() {
   const [isConfigValid, setIsConfigValid] = useState<boolean | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<'checking' | 'connected' | 'error'>('checking');
   const [error, setError] = useState<string | null>(null);
+  const [missingVars, setMissingVars] = useState<string[]>([]);
 
   useEffect(() => {
     // Validate configuration on mount
-    const configValidation = validateEnvironment();
-    setIsConfigValid(configValidation.valid);
-    
-    if (!configValidation.valid) {
-      setError(configValidation.error || 'Configuration validation failed');
+    const configStatus = getConfigurationStatus();
+    setIsConfigValid(configStatus.valid);
+
+    if (!configStatus.valid) {
+      setError(configStatus.error || 'Configuration validation failed');
+      setMissingVars(configStatus.missingVars || []);
+      setConnectionStatus('error');
+      return;
+    }
+
+    // Check if client is configured
+    if (!ynabClient.isClientConfigured()) {
+      setError('YNAB API client is not properly configured');
       setConnectionStatus('error');
       return;
     }
@@ -26,7 +35,7 @@ export default function HomePage() {
       try {
         const isConnected = await ynabClient.validateConnection();
         setConnectionStatus(isConnected ? 'connected' : 'error');
-        
+
         if (!isConnected) {
           setError('Unable to connect to YNAB API. Please check your access token.');
         }
@@ -167,12 +176,41 @@ export default function HomePage() {
                 <h2 className="text-lg font-semibold text-gray-900">Setup Instructions</h2>
               </div>
               <div className="card-body">
-                <ol className="list-decimal list-inside space-y-2 text-sm text-gray-700">
-                  <li>Get your YNAB Personal Access Token from <a href="https://app.ynab.com/settings/developer" target="_blank" rel="noopener noreferrer" className="text-primary-600 hover:text-primary-700 underline">YNAB Developer Settings</a></li>
-                  <li>Create a <code className="bg-gray-100 px-1 py-0.5 rounded text-xs">.env.local</code> file in the project root</li>
-                  <li>Add your token: <code className="bg-gray-100 px-1 py-0.5 rounded text-xs">YNAB_ACCESS_TOKEN=your-token-here</code></li>
-                  <li>Restart the development server</li>
+                <div className="mb-4">
+                  <h3 className="text-sm font-medium text-gray-900 mb-2">Missing Configuration:</h3>
+                  {missingVars.length > 0 && (
+                    <ul className="list-disc list-inside text-sm text-danger-700 mb-4">
+                      {missingVars.map(varName => (
+                        <li key={varName}>{varName}</li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+
+                <h3 className="text-sm font-medium text-gray-900 mb-2">Setup Steps:</h3>
+                <ol className="list-decimal list-inside space-y-3 text-sm text-gray-700">
+                  <li>
+                    <strong>Get your YNAB Personal Access Token:</strong>
+                    <br />
+                    Visit <a href="https://app.ynab.com/settings/developer" target="_blank" rel="noopener noreferrer" className="text-primary-600 hover:text-primary-700 underline">YNAB Developer Settings</a> and generate a new Personal Access Token
+                  </li>
+                  <li>
+                    <strong>Update the .env.local file:</strong>
+                    <br />
+                    The file already exists in your project root. Replace <code className="bg-gray-100 px-1 py-0.5 rounded text-xs">your-ynab-personal-access-token-here</code> with your actual token
+                  </li>
+                  <li>
+                    <strong>Restart the development server:</strong>
+                    <br />
+                    Stop the current server (Ctrl+C) and run <code className="bg-gray-100 px-1 py-0.5 rounded text-xs">npm run dev</code> again
+                  </li>
                 </ol>
+
+                <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                  <p className="text-sm text-blue-800">
+                    <strong>Note:</strong> Your YNAB token should look like: <code className="bg-blue-100 px-1 py-0.5 rounded text-xs">12345678-1234-1234-1234-123456789abc</code>
+                  </p>
+                </div>
               </div>
             </div>
           </div>

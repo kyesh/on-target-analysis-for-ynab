@@ -4,9 +4,9 @@
  */
 
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
-import { config } from './config';
+import { config, getConfigOrThrow, isConfigurationValid } from './config';
 import { globalRateLimiter } from './rate-limiter';
-import { SecureErrorHandler, ErrorType, AppError } from './errors';
+import { SecureErrorHandler, ErrorType, AppError, createConfigurationError } from './errors';
 import {
   YNABBudgetsResponse,
   YNABCategoriesResponse,
@@ -20,8 +20,24 @@ export class YNABClient {
   private client: AxiosInstance;
   private readonly baseURL: string;
   private readonly accessToken: string;
+  private readonly isConfigured: boolean;
 
   constructor() {
+    // Check if configuration is valid
+    if (!isConfigurationValid() || !config) {
+      this.isConfigured = false;
+      this.baseURL = 'https://api.ynab.com/v1';
+      this.accessToken = '';
+
+      // Create a dummy client that will always throw configuration errors
+      this.client = axios.create({
+        baseURL: this.baseURL,
+        timeout: 30000,
+      });
+      return;
+    }
+
+    this.isConfigured = true;
     this.baseURL = config.API_BASE_URL;
     this.accessToken = config.YNAB_ACCESS_TOKEN;
 
@@ -72,9 +88,20 @@ export class YNABClient {
   }
 
   /**
+   * Check if client is properly configured
+   */
+  isClientConfigured(): boolean {
+    return this.isConfigured;
+  }
+
+  /**
    * Validate API connection and token
    */
   async validateConnection(): Promise<boolean> {
+    if (!this.isConfigured) {
+      return false;
+    }
+
     try {
       await this.getUser();
       return true;
@@ -85,9 +112,20 @@ export class YNABClient {
   }
 
   /**
+   * Ensure client is configured before making requests
+   */
+  private ensureConfigured(): void {
+    if (!this.isConfigured) {
+      throw createConfigurationError('YNAB API client is not properly configured. Please check your environment variables.');
+    }
+  }
+
+  /**
    * Get user information (for token validation)
    */
   async getUser(): Promise<YNABUserResponse> {
+    this.ensureConfigured();
+
     try {
       const response: AxiosResponse<YNABUserResponse> = await this.client.get('/user');
       return response.data;
@@ -100,6 +138,8 @@ export class YNABClient {
    * Get all budgets
    */
   async getBudgets(): Promise<YNABBudgetsResponse> {
+    this.ensureConfigured();
+
     try {
       const response: AxiosResponse<YNABBudgetsResponse> = await this.client.get('/budgets');
       return response.data;
