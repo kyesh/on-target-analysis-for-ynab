@@ -34,7 +34,7 @@ YNAB_ACCESS_TOKEN=your-actual-token-here
 
 **Example:**
 ```env
-YNAB_ACCESS_TOKEN=12345678-1234-1234-1234-123456789abc
+YNAB_ACCESS_TOKEN=EXAMPLE-TOKEN-DO-NOT-USE-REAL-TOKEN-HERE
 ```
 
 ### 3. Start the Application
@@ -67,7 +67,7 @@ npm run dev
 **Problem:** The token format is incorrect.
 
 **Solution:**
-1. Verify your token follows the format: `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`
+1. Verify your token is a 43-character alphanumeric string (like: `EXAMPLE-TOKEN-DO-NOT-USE-REAL-TOKEN-HERE`)
 2. Ensure there are no extra spaces or characters
 3. Generate a new token if needed
 
@@ -133,7 +133,7 @@ npm run dev
 
 | Variable | Description | Example |
 |----------|-------------|---------|
-| `YNAB_ACCESS_TOKEN` | Your YNAB Personal Access Token | `12345678-1234-1234-1234-123456789abc` |
+| `YNAB_ACCESS_TOKEN` | Your YNAB Personal Access Token | `EXAMPLE-TOKEN-DO-NOT-USE-REAL-TOKEN-HERE` |
 
 ### Optional Variables
 

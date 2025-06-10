@@ -20,8 +20,9 @@ interface SecurityConfig {
   LOG_LEVEL: 'debug' | 'info' | 'warn' | 'error';
 }
 
-// YNAB token validation pattern
-const YNAB_TOKEN_PATTERN = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/;
+// YNAB token validation pattern - Real YNAB tokens are base64-like strings
+// Format: 43 characters, alphanumeric + hyphens and underscores, ending with specific characters
+const YNAB_TOKEN_PATTERN = /^[A-Za-z0-9_-]{43}$/;
 
 /**
  * Validate YNAB access token format
@@ -32,9 +33,9 @@ export function validateYNABToken(token: string): ValidationResult {
   }
   
   if (!YNAB_TOKEN_PATTERN.test(token)) {
-    return { 
-      valid: false, 
-      error: 'Invalid YNAB access token format. Expected format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx' 
+    return {
+      valid: false,
+      error: 'Invalid YNAB access token format. Expected 43-character alphanumeric string (e.g., EXAMPLE-TOKEN-DO-NOT-USE-REAL-TOKEN-HERE)'
     };
   }
   

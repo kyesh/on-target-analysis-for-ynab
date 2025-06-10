@@ -208,7 +208,7 @@ export default function HomePage() {
 
                 <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
                   <p className="text-sm text-blue-800">
-                    <strong>Note:</strong> Your YNAB token should look like: <code className="bg-blue-100 px-1 py-0.5 rounded text-xs">12345678-1234-1234-1234-123456789abc</code>
+                    <strong>Note:</strong> Your YNAB token should be a 43-character string like: <code className="bg-blue-100 px-1 py-0.5 rounded text-xs">EXAMPLE-TOKEN-DO-NOT-USE-REAL-TOKEN-HERE</code>
                   </p>
                 </div>
               </div>
