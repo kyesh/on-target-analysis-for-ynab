@@ -1,8 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { ynabClient } from '@/lib/ynab-client';
-import { getConfigurationStatus, isConfigurationValid } from '@/lib/config';
 import { SecureErrorHandler } from '@/lib/errors';
 
 export default function HomePage() {
@@ -10,42 +8,53 @@ export default function HomePage() {
   const [connectionStatus, setConnectionStatus] = useState<'checking' | 'connected' | 'error'>('checking');
   const [error, setError] = useState<string | null>(null);
   const [missingVars, setMissingVars] = useState<string[]>([]);
+  const [rateLimitStatus, setRateLimitStatus] = useState<any>(null);
 
   useEffect(() => {
-    // Validate configuration on mount
-    const configStatus = getConfigurationStatus();
-    setIsConfigValid(configStatus.valid);
-
-    if (!configStatus.valid) {
-      setError(configStatus.error || 'Configuration validation failed');
-      setMissingVars(configStatus.missingVars || []);
-      setConnectionStatus('error');
-      return;
-    }
-
-    // Check if client is configured
-    if (!ynabClient.isClientConfigured()) {
-      setError('YNAB API client is not properly configured');
-      setConnectionStatus('error');
-      return;
-    }
-
-    // Test YNAB API connection
-    const testConnection = async () => {
+    // Check configuration via API route (server-side)
+    const checkConfiguration = async () => {
       try {
-        const isConnected = await ynabClient.validateConnection();
-        setConnectionStatus(isConnected ? 'connected' : 'error');
+        const response = await fetch('/api/config');
+        const configStatus = await response.json();
 
-        if (!isConnected) {
-          setError('Unable to connect to YNAB API. Please check your access token.');
+        setIsConfigValid(configStatus.valid);
+
+        if (!configStatus.valid) {
+          setError(configStatus.error || 'Configuration validation failed');
+          setMissingVars(configStatus.missingVars || []);
+          setConnectionStatus('error');
+          return;
         }
+
+        // If configuration is valid, test YNAB API connection
+        const testConnection = async () => {
+          try {
+            // Test connection via API route to avoid client-side token exposure
+            const connectionResponse = await fetch('/api/ynab/test-connection');
+            const connectionResult = await connectionResponse.json();
+
+            setConnectionStatus(connectionResult.connected ? 'connected' : 'error');
+
+            if (connectionResult.connected) {
+              setRateLimitStatus(connectionResult.rateLimit);
+            } else {
+              setError(connectionResult.error || 'Unable to connect to YNAB API. Please check your access token.');
+            }
+          } catch (err) {
+            setConnectionStatus('error');
+            setError('Failed to test YNAB API connection');
+          }
+        };
+
+        await testConnection();
       } catch (err) {
         setConnectionStatus('error');
-        setError(SecureErrorHandler.getUserFriendlyMessage(err as Error));
+        setError('Failed to check configuration');
+        setIsConfigValid(false);
       }
     };
 
-    testConnection();
+    checkConfiguration();
   }, []);
 
   const getStatusColor = () => {
@@ -117,11 +126,11 @@ export default function HomePage() {
                 </div>
 
                 {/* Rate Limit Status */}
-                {connectionStatus === 'connected' && (
+                {connectionStatus === 'connected' && rateLimitStatus && (
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-gray-700">API Rate Limit</span>
                     <span className="text-sm text-gray-600">
-                      {ynabClient.getRateLimitStatus().remaining} / {ynabClient.getRateLimitStatus().limit} remaining
+                      {rateLimitStatus.remaining} / {rateLimitStatus.limit} remaining
                     </span>
                   </div>
                 )}

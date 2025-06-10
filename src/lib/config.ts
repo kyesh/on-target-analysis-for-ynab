@@ -59,7 +59,7 @@ export function validateEnvironment(): ValidationResult {
     'YNAB_ACCESS_TOKEN',
     'NODE_ENV'
   ];
-  
+
   // Check for missing required variables
   const missing = requiredVars.filter(varName => !process.env[varName]);
   
