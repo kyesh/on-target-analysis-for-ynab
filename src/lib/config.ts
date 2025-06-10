@@ -31,14 +31,23 @@ export function validateYNABToken(token: string): ValidationResult {
   if (!token || typeof token !== 'string') {
     return { valid: false, error: 'YNAB access token is required' };
   }
-  
+
+  // Check for placeholder token
+  if (token === 'EXAMPLE-TOKEN-DO-NOT-USE-REAL-TOKEN-HERE' ||
+      token === 'your-ynab-personal-access-token-here') {
+    return {
+      valid: false,
+      error: 'Please replace the placeholder token with your actual YNAB Personal Access Token'
+    };
+  }
+
   if (!YNAB_TOKEN_PATTERN.test(token)) {
     return {
       valid: false,
       error: 'Invalid YNAB access token format. Expected 43-character alphanumeric string (e.g., EXAMPLE-TOKEN-DO-NOT-USE-REAL-TOKEN-HERE)'
     };
   }
-  
+
   return { valid: true };
 }
 
