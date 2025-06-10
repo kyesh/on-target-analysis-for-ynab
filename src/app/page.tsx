@@ -1,7 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { SecureErrorHandler } from '@/lib/errors';
+import BudgetSelector from '@/components/BudgetSelector';
+import MonthSelector from '@/components/MonthSelector';
+import AnalysisDashboard from '@/components/AnalysisDashboard';
+import ExportButton from '@/components/ExportButton';
+import { MonthlyAnalysisResponse } from '@/types/analysis';
+import { YNABBudget } from '@/types/ynab';
 
 export default function HomePage() {
   const [isConfigValid, setIsConfigValid] = useState<boolean | null>(null);
@@ -9,6 +14,10 @@ export default function HomePage() {
   const [error, setError] = useState<string | null>(null);
   const [missingVars, setMissingVars] = useState<string[]>([]);
   const [rateLimitStatus, setRateLimitStatus] = useState<any>(null);
+  const [selectedBudgetId, setSelectedBudgetId] = useState<string>('');
+  const [selectedMonth, setSelectedMonth] = useState<string>('');
+  const [selectedBudget, setSelectedBudget] = useState<YNABBudget | null>(null);
+  const [analysis, setAnalysis] = useState<MonthlyAnalysisResponse | null>(null);
 
   useEffect(() => {
     // Check configuration via API route (server-side)
@@ -56,6 +65,26 @@ export default function HomePage() {
 
     checkConfiguration();
   }, []);
+
+  useEffect(() => {
+    if (selectedBudgetId) {
+      fetchBudgetDetails();
+    }
+  }, [selectedBudgetId]);
+
+  const fetchBudgetDetails = async () => {
+    try {
+      const response = await fetch('/api/budgets');
+      const data = await response.json();
+
+      if (data.success) {
+        const budget = data.data.budgets.find((b: YNABBudget) => b.id === selectedBudgetId);
+        setSelectedBudget(budget || null);
+      }
+    } catch (error) {
+      console.error('Failed to fetch budget details:', error);
+    }
+  };
 
   const getStatusColor = () => {
     switch (connectionStatus) {
@@ -166,7 +195,7 @@ export default function HomePage() {
                       <div className="ml-3">
                         <h3 className="text-sm font-medium text-success-800">Ready to Analyze</h3>
                         <div className="mt-2 text-sm text-success-700">
-                          <p>Your YNAB connection is working. The dashboard will be available soon!</p>
+                          <p>Your YNAB connection is working. Select a budget below to start analyzing!</p>
                         </div>
                       </div>
                     </div>
@@ -176,6 +205,48 @@ export default function HomePage() {
             </div>
           </div>
         </div>
+
+        {/* Analysis Dashboard */}
+        {connectionStatus === 'connected' && (
+          <div className="max-w-7xl mx-auto mt-8 space-y-6">
+            {/* Controls */}
+            <div className="card">
+              <div className="card-header">
+                <h2 className="text-lg font-semibold text-gray-900">Budget Analysis</h2>
+              </div>
+              <div className="card-body">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <BudgetSelector
+                    onBudgetSelect={setSelectedBudgetId}
+                    selectedBudgetId={selectedBudgetId}
+                  />
+                  <MonthSelector
+                    onMonthSelect={setSelectedMonth}
+                    selectedMonth={selectedMonth}
+                    budgetFirstMonth={selectedBudget?.firstMonth}
+                    budgetLastMonth={selectedBudget?.lastMonth}
+                  />
+                </div>
+
+                {analysis && (
+                  <div className="mt-4 pt-4 border-t border-gray-200 flex justify-end">
+                    <ExportButton
+                      analysis={analysis}
+                      budgetName={selectedBudget?.name}
+                      month={selectedMonth}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Analysis Results */}
+            <AnalysisDashboard
+              budgetId={selectedBudgetId}
+              month={selectedMonth}
+            />
+          </div>
+        )}
 
         {/* Setup Instructions */}
         {!isConfigValid && (
