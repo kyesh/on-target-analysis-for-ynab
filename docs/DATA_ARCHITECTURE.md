@@ -8,7 +8,7 @@ This document defines the data models, structures, and flow for the YNAB Off-Tar
 
 ### Core YNAB Data Structures
 
-Based on YNAB API v1 documentation, the following are the key data structures we'll work with:
+**✅ CONFIRMED:** Based on thorough research of the official YNAB API v1 documentation, OpenAPI specification, and TypeScript SDK, the following data structures are accurate and complete. **All target/goal data IS available through the API.**
 
 #### Budget Object
 ```typescript
@@ -34,7 +34,7 @@ interface YNABBudget {
 }
 ```
 
-#### Category Object
+#### Category Object (CONFIRMED - Based on Official YNAB API v1)
 ```typescript
 interface YNABCategory {
   id: string;
@@ -42,24 +42,27 @@ interface YNABCategory {
   category_group_name?: string;
   name: string;
   hidden: boolean;
-  original_category_group_id?: string;
-  note?: string;
+  original_category_group_id?: string | null; // DEPRECATED: Always null
+  note?: string | null;
   budgeted: number; // milliunits - amount assigned in current month
   activity: number; // milliunits - amount spent in current month
   balance: number; // milliunits - current balance
+
+  // TARGET/GOAL FIELDS - ALL CONFIRMED AVAILABLE
   goal_type?: 'TB' | 'TBD' | 'MF' | 'NEED' | 'DEBT' | null;
-  goal_day?: number;
-  goal_cadence?: number;
-  goal_cadence_frequency?: number;
-  goal_creation_month?: string;
-  goal_target?: number; // milliunits - target amount
-  goal_target_month?: string;
-  goal_percentage_complete?: number;
-  goal_months_to_budget?: number;
-  goal_under_funded?: number;
-  goal_overall_funded?: number;
-  goal_overall_left?: number;
-  goal_needs_whole_amount?: boolean;
+  goal_target?: number | null; // milliunits - target amount
+  goal_target_month?: string | null; // YYYY-MM-DD format
+  goal_creation_month?: string | null; // YYYY-MM-DD format
+  goal_percentage_complete?: number | null; // 0-100 percentage
+  goal_months_to_budget?: number | null; // months left in goal period
+  goal_under_funded?: number | null; // milliunits - amount needed this month
+  goal_overall_funded?: number | null; // milliunits - total funded toward goal
+  goal_overall_left?: number | null; // milliunits - amount still needed
+  goal_needs_whole_amount?: boolean | null; // rollover behavior for NEED goals
+  goal_day?: number | null; // day offset for goal due date
+  goal_cadence?: number | null; // goal cadence (0-14)
+  goal_cadence_frequency?: number | null; // cadence frequency
+
   deleted: boolean;
 }
 ```
@@ -166,7 +169,7 @@ interface DashboardSummary {
 
 ## Data Processing Logic
 
-### Target Alignment Calculation
+### Target Alignment Calculation (CONFIRMED FEASIBLE)
 
 ```typescript
 enum AlignmentStatus {
@@ -177,16 +180,19 @@ enum AlignmentStatus {
 }
 
 function calculateAlignmentStatus(
-  assigned: number, 
-  target: number | null,
+  category: YNABCategory,
   tolerance: number = 0 // milliunits tolerance for "on-target"
 ): AlignmentStatus {
+  const assigned = category.budgeted; // milliunits assigned this month
+  const target = category.goal_target; // milliunits target (null if no goal)
+
+  // No target set
   if (target === null || target === 0) {
     return assigned > 0 ? AlignmentStatus.NO_TARGET : AlignmentStatus.ON_TARGET;
   }
-  
+
   const variance = assigned - target;
-  
+
   if (Math.abs(variance) <= tolerance) {
     return AlignmentStatus.ON_TARGET;
   } else if (variance > 0) {
@@ -195,6 +201,15 @@ function calculateAlignmentStatus(
     return AlignmentStatus.UNDER_TARGET;
   }
 }
+
+// Goal type descriptions for UI display
+const GOAL_TYPE_DESCRIPTIONS: Record<string, string> = {
+  'TB': 'Target Category Balance',
+  'TBD': 'Target Category Balance by Date',
+  'MF': 'Monthly Funding',
+  'NEED': 'Plan Your Spending',
+  'DEBT': 'Debt Payoff Goal'
+};
 ```
 
 ### Currency Conversion
@@ -218,6 +233,55 @@ function formatCurrency(milliunits: number, currencyFormat: YNABCurrencyFormat):
     minimumFractionDigits: currencyFormat.decimal_digits,
     maximumFractionDigits: currencyFormat.decimal_digits,
   }).format(amount);
+}
+```
+
+## YNAB API Endpoints (CONFIRMED)
+
+### Target Data Endpoints
+
+**✅ CONFIRMED:** All target/goal data is available through these official YNAB API v1 endpoints:
+
+#### Primary Endpoints for Target Analysis
+
+1. **`GET /budgets/{budget_id}/categories`**
+   - **Purpose**: Get all categories with current month data
+   - **Target Data**: All goal fields included in response
+   - **Use Case**: Initial dashboard load, current month analysis
+   - **Rate Limit**: Counts as 1 request
+
+2. **`GET /budgets/{budget_id}/months/{month}`**
+   - **Purpose**: Get all categories for specific month
+   - **Target Data**: All goal fields for specified month
+   - **Use Case**: Historical analysis, month selection
+   - **Rate Limit**: Counts as 1 request
+   - **Format**: month parameter as YYYY-MM-DD (e.g., "2024-01-01")
+
+3. **`GET /budgets/{budget_id}/months/{month}/categories/{category_id}`**
+   - **Purpose**: Get single category for specific month
+   - **Target Data**: Complete goal information for category
+   - **Use Case**: Category drill-down, detailed analysis
+   - **Rate Limit**: Counts as 1 request
+
+#### Response Structure Confirmation
+
+All endpoints return categories with this confirmed structure:
+```json
+{
+  "data": {
+    "categories": [
+      {
+        "id": "category-uuid",
+        "name": "Groceries",
+        "budgeted": 50000,  // $50.00 assigned this month
+        "goal_type": "MF",  // Monthly Funding goal
+        "goal_target": 45000,  // $45.00 target
+        "goal_percentage_complete": 100,
+        "goal_under_funded": 0,
+        // ... all other goal fields available
+      }
+    ]
+  }
 }
 ```
 
