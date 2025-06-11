@@ -205,8 +205,9 @@ export function validateMonthFormat(month: string): boolean {
  * Get first day of month in YNAB format (YYYY-MM-DD)
  */
 export function getFirstDayOfMonth(date: Date = new Date()): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
+  // Use UTC methods to avoid timezone issues
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
   return `${year}-${month}-01`;
 }
 
@@ -214,8 +215,9 @@ export function getFirstDayOfMonth(date: Date = new Date()): string {
  * Get previous month in YNAB format
  */
 export function getPreviousMonth(month: string): string {
-  const date = new Date(month);
-  date.setMonth(date.getMonth() - 1);
+  // Parse as UTC to avoid timezone issues
+  const date = new Date(month + 'T00:00:00.000Z');
+  date.setUTCMonth(date.getUTCMonth() - 1);
   return getFirstDayOfMonth(date);
 }
 
@@ -223,7 +225,8 @@ export function getPreviousMonth(month: string): string {
  * Get next month in YNAB format
  */
 export function getNextMonth(month: string): string {
-  const date = new Date(month);
-  date.setMonth(date.getMonth() + 1);
+  // Parse as UTC to avoid timezone issues
+  const date = new Date(month + 'T00:00:00.000Z');
+  date.setUTCMonth(date.getUTCMonth() + 1);
   return getFirstDayOfMonth(date);
 }

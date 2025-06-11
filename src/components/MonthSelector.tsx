@@ -18,17 +18,46 @@ export default function MonthSelector({
 }: MonthSelectorProps) {
   const [currentMonth, setCurrentMonth] = useState<string>('');
 
+  // Initialize current month when budget data changes
   useEffect(() => {
-    const today = getFirstDayOfMonth();
-    const defaultMonth = budgetLastMonth && new Date(today) > new Date(budgetLastMonth) 
-      ? budgetLastMonth 
-      : today;
-    
-    setCurrentMonth(defaultMonth);
-    if (!selectedMonth) {
-      onMonthSelect(defaultMonth);
+    if (!budgetFirstMonth || !budgetLastMonth) {
+      setCurrentMonth('');
+      return;
     }
-  }, [budgetLastMonth, selectedMonth, onMonthSelect]);
+
+    try {
+      const today = getFirstDayOfMonth();
+      const todayDate = new Date(today);
+      const budgetFirstDate = new Date(budgetFirstMonth);
+      const budgetLastDate = new Date(budgetLastMonth);
+
+      // Choose a safe default month within budget range
+      let defaultMonth: string;
+      if (todayDate >= budgetFirstDate && todayDate <= budgetLastDate) {
+        defaultMonth = today;
+      } else if (todayDate > budgetLastDate) {
+        defaultMonth = budgetLastMonth;
+      } else {
+        defaultMonth = budgetFirstMonth;
+      }
+
+      setCurrentMonth(defaultMonth);
+    } catch (error) {
+      console.error('Error setting default month:', error);
+      setCurrentMonth('');
+    }
+  }, [budgetFirstMonth, budgetLastMonth]);
+
+  // Handle initial month selection separately to avoid setState during render
+  useEffect(() => {
+    if (!selectedMonth && currentMonth && budgetFirstMonth && budgetLastMonth) {
+      // Use setTimeout to avoid setState during render
+      const timer = setTimeout(() => {
+        onMonthSelect(currentMonth);
+      }, 0);
+      return () => clearTimeout(timer);
+    }
+  }, [currentMonth, selectedMonth, budgetFirstMonth, budgetLastMonth, onMonthSelect]);
 
   const formatMonthDisplay = (monthStr: string): string => {
     const date = new Date(monthStr);
@@ -40,12 +69,22 @@ export default function MonthSelector({
 
   const canGoPrevious = (): boolean => {
     if (!selectedMonth || !budgetFirstMonth) return false;
-    return new Date(selectedMonth) > new Date(budgetFirstMonth);
+    try {
+      return new Date(selectedMonth) > new Date(budgetFirstMonth);
+    } catch (error) {
+      console.error('Error checking previous month availability:', error);
+      return false;
+    }
   };
 
   const canGoNext = (): boolean => {
     if (!selectedMonth || !budgetLastMonth) return false;
-    return new Date(selectedMonth) < new Date(budgetLastMonth);
+    try {
+      return new Date(selectedMonth) < new Date(budgetLastMonth);
+    } catch (error) {
+      console.error('Error checking next month availability:', error);
+      return false;
+    }
   };
 
   const handlePrevious = () => {
@@ -67,15 +106,35 @@ export default function MonthSelector({
       return [];
     }
 
-    const months: string[] = [];
-    let current = budgetFirstMonth;
+    try {
+      const months: string[] = [];
+      const monthsSet = new Set<string>(); // Prevent duplicates
+      let current = budgetFirstMonth;
+      const maxIterations = 120; // Safety limit: 10 years max
+      let iterations = 0;
 
-    while (new Date(current) <= new Date(budgetLastMonth)) {
-      months.push(current);
-      current = getNextMonth(current);
+      const budgetLastDate = new Date(budgetLastMonth + 'T00:00:00.000Z');
+
+      while (new Date(current + 'T00:00:00.000Z') <= budgetLastDate && iterations < maxIterations) {
+        if (!monthsSet.has(current)) {
+          months.push(current);
+          monthsSet.add(current);
+        }
+
+        const nextMonth = getNextMonth(current);
+        if (nextMonth === current) {
+          // Prevent infinite loop if getNextMonth returns the same month
+          console.error('getNextMonth returned the same month, breaking loop');
+          break;
+        }
+        current = nextMonth;
+        iterations++;
+      }
+      return months.reverse(); // Most recent first
+    } catch (error) {
+      console.error('Error generating month options:', error);
+      return [];
     }
-
-    return months.reverse(); // Most recent first
   };
 
   return (
@@ -101,8 +160,8 @@ export default function MonthSelector({
           className="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
         >
           <option value="">Select month...</option>
-          {generateMonthOptions().map((month) => (
-            <option key={month} value={month}>
+          {generateMonthOptions().map((month, index) => (
+            <option key={`month-${month}-${index}`} value={month}>
               {formatMonthDisplay(month)}
             </option>
           ))}
