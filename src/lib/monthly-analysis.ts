@@ -38,7 +38,7 @@ export function analyzeMonth(
   
   monthData.categories.forEach(category => {
     if (shouldIncludeCategory(category, config)) {
-      const processed = processCategory(category, '', config);
+      const processed = processCategory(category, '', config, monthData.month);
       processedCategories.push(processed);
     }
   });
@@ -110,7 +110,7 @@ export function analyzeCategoryGroups(
   config: AnalysisConfig = DEFAULT_ANALYSIS_CONFIG
 ): MonthlyAnalysis {
   // Flatten all categories from all groups
-  const allCategories = categoryGroups.flatMap(group => 
+  const allCategories = categoryGroups.flatMap(group =>
     group.categories.map(category => ({
       ...category,
       category_group_name: group.name
@@ -143,7 +143,7 @@ export function getTopVarianceCategories(
 ): { overTarget: CategoryVariance[]; underTarget: CategoryVariance[] } {
   const processedCategories = monthData.categories
     .filter(category => shouldIncludeCategory(category, config))
-    .map(category => processCategory(category, '', config))
+    .map(category => processCategory(category, '', config, month))
     .filter(category => category.hasTarget);
 
   const variances = processedCategories
@@ -223,7 +223,7 @@ export function generateDashboardSummary(
   // Get categories without targets that have assignments
   const categoriesWithoutTargets = monthData.categories
     .filter(category => shouldIncludeCategory(category, config))
-    .map(category => processCategory(category, '', config))
+    .map(category => processCategory(category, '', config, monthData.month))
     .filter(category => !category.hasTarget && category.assigned !== 0);
 
   // Calculate key metrics

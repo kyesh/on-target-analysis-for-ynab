@@ -198,9 +198,14 @@ describe('Data Processing Utilities', () => {
       expect(extractTargetAmount(category)).toBe(30000);
     });
 
-    test('NEED goals use goal_target (spending target)', () => {
+    test('NEED goals prioritize goal_under_funded when available', () => {
       const category = createEnhancedMockCategory('NEED', 60000, 10000);
-      expect(extractTargetAmount(category)).toBe(60000);
+      expect(extractTargetAmount(category)).toBe(10000); // Uses goal_under_funded when available
+    });
+
+    test('NEED goals fallback to goal_target when goal_under_funded is null', () => {
+      const category = createEnhancedMockCategory('NEED', 60000, null);
+      expect(extractTargetAmount(category)).toBe(60000); // Falls back to goal_target
     });
 
     test('DEBT goals prioritize goal_under_funded for monthly payment', () => {
@@ -211,6 +216,93 @@ describe('Data Processing Utilities', () => {
     test('handles goal_under_funded of 0 correctly', () => {
       const category = createEnhancedMockCategory('TB', 100000, 0);
       expect(extractTargetAmount(category)).toBe(0);
+    });
+  });
+
+  describe('Future-Dated Goals Enhancement', () => {
+    const createFutureDatedCategory = (
+      goalType: string,
+      goalTarget: number,
+      goalTargetMonth: string,
+      goalOverallFunded: number = 0
+    ): YNABCategory => ({
+      id: 'test-id',
+      category_group_id: 'group-id',
+      name: 'Future Goal Category',
+      hidden: false,
+      note: null,
+      budgeted: 0,
+      activity: 0,
+      balance: 0,
+      goal_type: goalType as any,
+      goal_target: goalTarget,
+      goal_under_funded: null, // Future goals have null goal_under_funded
+      goal_target_month: goalTargetMonth,
+      goal_overall_funded: goalOverallFunded,
+      goal_creation_month: null,
+      goal_percentage_complete: null,
+      goal_months_to_budget: null,
+      goal_overall_left: null,
+      goal_needs_whole_amount: null,
+      goal_day: null,
+      goal_cadence: null,
+      goal_cadence_frequency: null,
+      deleted: false,
+    });
+
+    test('calculates monthly amount for future-dated NEED goals', () => {
+      const category = createFutureDatedCategory('NEED', 600000, '2024-06-01'); // $600 goal for June
+      const currentMonth = '2024-03-01'; // March (3 months before)
+
+      const result = extractTargetAmount(category, currentMonth);
+      expect(result).toBe(200000); // $600 / 3 months = $200/month
+    });
+
+    test('handles already funded future goals', () => {
+      const category = createFutureDatedCategory('NEED', 600000, '2024-06-01', 300000); // $300 already funded
+      const currentMonth = '2024-03-01'; // March (3 months before)
+
+      const result = extractTargetAmount(category, currentMonth);
+      expect(result).toBe(100000); // ($600 - $300) / 3 months = $100/month
+    });
+
+    test('returns 0 for over-funded future goals', () => {
+      const category = createFutureDatedCategory('NEED', 600000, '2024-06-01', 700000); // Over-funded
+      const currentMonth = '2024-03-01';
+
+      const result = extractTargetAmount(category, currentMonth);
+      expect(result).toBe(0);
+    });
+
+    test('handles single month remaining', () => {
+      const category = createFutureDatedCategory('NEED', 600000, '2024-04-01');
+      const currentMonth = '2024-04-01'; // Same month as target
+
+      const result = extractTargetAmount(category, currentMonth);
+      expect(result).toBe(600000); // Full amount in single month
+    });
+
+    test('does not calculate for past dates', () => {
+      const category = createFutureDatedCategory('NEED', 600000, '2024-01-01');
+      const currentMonth = '2024-03-01'; // After target date
+
+      const result = extractTargetAmount(category, currentMonth);
+      expect(result).toBe(600000); // Falls back to goal_target
+    });
+
+    test('does not affect non-NEED goal types', () => {
+      const category = createFutureDatedCategory('MF', 600000, '2024-06-01');
+      const currentMonth = '2024-03-01';
+
+      const result = extractTargetAmount(category, currentMonth);
+      expect(result).toBe(600000); // MF goals use goal_target regardless
+    });
+
+    test('handles missing currentMonth parameter', () => {
+      const category = createFutureDatedCategory('NEED', 600000, '2024-06-01');
+
+      const result = extractTargetAmount(category); // No currentMonth provided
+      expect(result).toBe(600000); // Falls back to goal_target
     });
   });
 

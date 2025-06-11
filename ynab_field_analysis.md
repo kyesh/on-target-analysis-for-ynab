@@ -102,6 +102,46 @@ goal_under_funded = max(0, goal_target - goal_overall_funded)
 4. **Null Values**: Appear for inactive/future goals or goals not applicable to current month
 5. **Zero Values**: Indicate goal is fully funded for current month/period
 
-### VERIFICATION: Our Implementation is CORRECT
+### VERIFICATION: Our Implementation is MOSTLY CORRECT with Edge Case Identified
 
 Our enhanced target extraction logic using `goal_under_funded` for TB/TBD/DEBT goals is accurately implementing the "Needed This Month" concept as defined by YNAB's official API documentation.
+
+**HOWEVER**: We identified a critical edge case where our implementation differs from YNAB UI behavior.
+
+## EDGE CASE DISCOVERED: Future-Dated NEED Goals
+
+### The Problem
+
+**Future-dated NEED goals return `goal_under_funded = null`** until the target month is reached, but YNAB's UI still displays a "Needed This Month" value.
+
+### Examples from Real Data
+
+**Summer Camp (Target: 2025-06-01)**:
+- December 2024: `goal_under_funded = null` (6 months before target)
+- June 2025: `goal_under_funded = 687930` (in target month)
+
+**Camp Michigania (Target: 2025-04-15)**:
+- December 2024: `goal_under_funded = null` (4 months before target)
+- April 2025: `goal_under_funded = 580000` (in target month)
+
+### Manual Calculation Formula
+
+For future-dated goals where `goal_under_funded = null`, YNAB UI likely calculates:
+
+```
+Monthly Needed = (goal_target - goal_overall_funded) / months_remaining
+```
+
+**Example Calculations**:
+- Summer Camp: (800,000 - 0) / 6 months = 133,333 milliunits/month ($133.33)
+- Camp Michigania: (5,240,000 - 0) / 4 months = 1,310,000 milliunits/month ($1,310.00)
+
+### Impact on Our Implementation
+
+**Current Behavior**: Future-dated NEED goals with `goal_under_funded = null` fall back to `goal_target`, which represents the TOTAL goal amount, not the monthly amount needed.
+
+**Correct Behavior**: Should calculate monthly amount using the formula above when `goal_under_funded = null` and `goal_target_month` is in the future.
+
+### Recommendation
+
+Enhance our target extraction logic to handle this edge case by implementing the manual calculation for future-dated goals.

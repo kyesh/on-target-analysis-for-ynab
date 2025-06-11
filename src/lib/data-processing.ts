@@ -80,10 +80,58 @@ export function calculateTargetPercentage(assigned: number, target: number | nul
 }
 
 /**
+ * Calculate months between two date strings (YYYY-MM-DD format)
+ * Returns the number of months from start to end date
+ */
+function calculateMonthsBetween(startDate: string, endDate: string): number {
+  const start = new Date(startDate + 'T00:00:00.000Z');
+  const end = new Date(endDate + 'T00:00:00.000Z');
+
+  const yearDiff = end.getUTCFullYear() - start.getUTCFullYear();
+  const monthDiff = end.getUTCMonth() - start.getUTCMonth();
+
+  return Math.max(1, yearDiff * 12 + monthDiff);
+}
+
+/**
+ * Calculate monthly needed amount for future-dated goals
+ * Used when goal_under_funded is null but goal has a future target date
+ */
+function calculateMonthlyNeededForFutureGoal(
+  category: YNABCategory,
+  currentMonth: string
+): number | null {
+  if (!category.goal_target_month || !category.goal_target) {
+    return null;
+  }
+
+  // Only calculate for future dates
+  if (category.goal_target_month <= currentMonth) {
+    return null;
+  }
+
+  const monthsRemaining = calculateMonthsBetween(currentMonth, category.goal_target_month);
+  if (monthsRemaining <= 0) {
+    return null;
+  }
+
+  const alreadyFunded = category.goal_overall_funded || 0;
+  const remainingNeeded = category.goal_target - alreadyFunded;
+
+  // If already fully funded or over-funded, no monthly amount needed
+  if (remainingNeeded <= 0) {
+    return 0;
+  }
+
+  return Math.round(remainingNeeded / monthsRemaining);
+}
+
+/**
  * Extract target amount from YNAB category goal fields for monthly analysis
  * Uses goal_under_funded when available for more accurate monthly calculations
+ * Enhanced to handle future-dated goals with manual calculation
  */
-export function extractTargetAmount(category: YNABCategory): number | null {
+export function extractTargetAmount(category: YNABCategory, currentMonth?: string): number | null {
   // If no goal type is set, return null
   if (!category.goal_type) {
     return null;
@@ -118,8 +166,21 @@ export function extractTargetAmount(category: YNABCategory): number | null {
       return overallTarget || null;
 
     case 'NEED': // Plan Your Spending
-      // For spending goals, use goal_target as it represents the monthly spending target
-      // goal_under_funded might be misleading for spending categories
+      // Enhanced handling for future-dated NEED goals
+      if (monthlyNeeded !== null && monthlyNeeded !== undefined) {
+        return monthlyNeeded;
+      }
+
+      // For future-dated NEED goals where goal_under_funded is null,
+      // calculate monthly amount needed to reach target by target date
+      if (currentMonth && category.goal_target_month && category.goal_target_month > currentMonth) {
+        const calculatedMonthly = calculateMonthlyNeededForFutureGoal(category, currentMonth);
+        if (calculatedMonthly !== null) {
+          return calculatedMonthly;
+        }
+      }
+
+      // Fall back to goal_target for non-dated or current month goals
       return overallTarget || null;
 
     case 'DEBT': // Debt Payoff Goal
@@ -197,9 +258,10 @@ export function shouldIncludeCategory(
 export function processCategory(
   category: YNABCategory,
   categoryGroupName: string = '',
-  config: AnalysisConfig = DEFAULT_ANALYSIS_CONFIG
+  config: AnalysisConfig = DEFAULT_ANALYSIS_CONFIG,
+  currentMonth?: string
 ): ProcessedCategory {
-  const target = extractTargetAmount(category);
+  const target = extractTargetAmount(category, currentMonth);
   const assigned = category.budgeted;
   const variance = target !== null ? assigned - target : 0;
   const alignmentStatus = determineAlignmentStatus(assigned, target, config.toleranceMilliunits);
