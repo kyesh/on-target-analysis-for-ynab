@@ -292,11 +292,16 @@ export function calculateCategoryVariance(
   category: ProcessedCategory,
   month: string
 ): CategoryVariance | null {
-  if (!category.hasTarget || category.target === null) {
+  if (!category.hasTarget || category.target === null || category.target === 0) {
     return null;
   }
-  
+
   const variancePercentage = (category.variance / category.target) * 100;
+
+  // Handle edge cases where percentage calculation results in invalid numbers
+  const safeVariancePercentage = (!isNaN(variancePercentage) && isFinite(variancePercentage))
+    ? variancePercentage
+    : null;
   
   return {
     categoryId: category.id,
@@ -305,7 +310,7 @@ export function calculateCategoryVariance(
     assigned: category.assigned,
     target: category.target,
     variance: category.variance,
-    variancePercentage,
+    variancePercentage: safeVariancePercentage,
     targetType: category.targetType,
     month,
   };

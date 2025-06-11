@@ -197,7 +197,10 @@ export default function AnalysisDashboard({ budgetId, month }: AnalysisDashboard
                         +{formatCurrency(category.variance)}
                       </p>
                       <p className="text-xs text-gray-500">
-                        {category.variancePercentage.toFixed(1)}% over
+                        {category.variancePercentage !== null && !isNaN(category.variancePercentage) && isFinite(category.variancePercentage)
+                          ? `${category.variancePercentage.toFixed(1)}% over`
+                          : 'Over target'
+                        }
                       </p>
                     </div>
                   </div>
@@ -228,7 +231,10 @@ export default function AnalysisDashboard({ budgetId, month }: AnalysisDashboard
                         {formatCurrency(category.variance)}
                       </p>
                       <p className="text-xs text-gray-500">
-                        {Math.abs(category.variancePercentage).toFixed(1)}% under
+                        {category.variancePercentage !== null && !isNaN(category.variancePercentage) && isFinite(category.variancePercentage)
+                          ? `${Math.abs(category.variancePercentage).toFixed(1)}% under`
+                          : 'Under target'
+                        }
                       </p>
                     </div>
                   </div>
