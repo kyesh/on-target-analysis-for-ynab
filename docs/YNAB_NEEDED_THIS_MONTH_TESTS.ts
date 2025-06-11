@@ -1,14 +1,14 @@
 /**
- * Comprehensive Test Suite for YNAB "Needed This Month" Calculations
- * 
- * This test suite validates all goal types, cadences, and edge cases
- * documented in the Developer Guide.
- * 
- * @version 2.0
+ * Simplified Test Suite for YNAB "Needed This Month" Calculations
+ *
+ * This test suite validates the four simplified rules for calculating
+ * "Needed This Month" values with clear, focused test cases.
+ *
+ * @version 3.0
  * @date December 2024
  */
 
-import { extractNeededThisMonth, calculateSafeVariancePercentage } from './YNAB_NEEDED_THIS_MONTH_IMPLEMENTATION';
+import { calculateNeededThisMonth, calculateSafeVariancePercentage } from './YNAB_NEEDED_THIS_MONTH_IMPLEMENTATION';
 
 // Mock category factory for testing
 function createMockCategory(overrides: Partial<YNABCategory> = {}): YNABCategory {
@@ -29,309 +29,182 @@ function createMockCategory(overrides: Partial<YNABCategory> = {}): YNABCategory
   };
 }
 
-describe('YNAB Needed This Month Calculations', () => {
-  
-  describe('No Goal Type', () => {
+describe('Simplified YNAB Needed This Month Calculations', () => {
+
+  describe('Rule 1: Monthly NEED Goals', () => {
+    test('should use goal_target for monthly NEED goals', () => {
+      const category = createMockCategory({
+        goal_type: 'NEED',
+        goal_target: 60000, // $60/month
+        goal_cadence: 1,
+        goal_cadence_frequency: 1,
+      });
+      expect(calculateNeededThisMonth(category)).toBe(60000);
+    });
+
     test('should return null for categories without goal_type', () => {
       const category = createMockCategory();
-      expect(extractNeededThisMonth(category)).toBeNull();
-    });
-  });
-
-  describe('Monthly Funding (MF) Goals', () => {
-    test('should use goal_target for monthly funding amount', () => {
-      const category = createMockCategory({
-        goal_type: 'MF',
-        goal_target: 150000, // $150
-      });
-      expect(extractNeededThisMonth(category)).toBe(150000);
+      expect(calculateNeededThisMonth(category)).toBeNull();
     });
 
-    test('should return null for MF goals without goal_target', () => {
+    test('should return null for categories without goal_target', () => {
       const category = createMockCategory({
-        goal_type: 'MF',
+        goal_type: 'NEED',
         goal_target: null,
       });
-      expect(extractNeededThisMonth(category)).toBeNull();
+      expect(calculateNeededThisMonth(category)).toBeNull();
+    });
+  });
+
+  describe('Rule 2: Weekly NEED Goals', () => {
+    test('should calculate goal_target × day occurrences for weekly goals', () => {
+      const category = createMockCategory({
+        goal_type: 'NEED',
+        goal_target: 100000, // $100 per occurrence
+        goal_cadence: 2, // Weekly
+        goal_cadence_frequency: 1,
+        goal_day: 1, // Monday
+      });
+
+      // December 2024 has 5 Mondays (2, 9, 16, 23, 30)
+      expect(calculateNeededThisMonth(category, '2024-12-01')).toBe(500000); // $100 × 5 = $500
     });
 
-    test('should ignore goal_under_funded for MF goals', () => {
+    test('should fallback to goal_target when no current month provided', () => {
+      const category = createMockCategory({
+        goal_type: 'NEED',
+        goal_target: 100000,
+        goal_cadence: 2,
+        goal_cadence_frequency: 1,
+        goal_day: 1,
+      });
+
+      expect(calculateNeededThisMonth(category)).toBe(100000); // Fallback
+    });
+
+    test('should handle missing goal_day gracefully', () => {
+      const category = createMockCategory({
+        goal_type: 'NEED',
+        goal_target: 100000,
+        goal_cadence: 2,
+        goal_cadence_frequency: 1,
+        goal_day: null,
+      });
+
+      expect(calculateNeededThisMonth(category, '2024-12-01')).toBe(100000); // Fallback
+    });
+  });
+
+  describe('Rule 3: Goals with Months to Budget (Priority Rule)', () => {
+    test('should use months to budget calculation when available', () => {
+      const category = createMockCategory({
+        goal_type: 'TBD',
+        goal_target: 120000,
+        goal_months_to_budget: 4,
+        goal_overall_left: 80000,
+        budgeted: 20000,
+      });
+
+      // (80000 + 20000) / 4 = 25000
+      expect(calculateNeededThisMonth(category)).toBe(25000);
+    });
+
+    test('should take precedence over cadence calculations', () => {
+      const category = createMockCategory({
+        goal_type: 'NEED',
+        goal_target: 100000,
+        goal_cadence: 2, // Weekly
+        goal_cadence_frequency: 1,
+        goal_day: 1,
+        goal_months_to_budget: 3, // Should take precedence
+        goal_overall_left: 60000,
+        budgeted: 30000,
+      });
+
+      // (60000 + 30000) / 3 = 30000 (not weekly calculation)
+      expect(calculateNeededThisMonth(category, '2024-12-01')).toBe(30000);
+    });
+  });
+
+  describe('Rule 4: All Other Cases (Fallback)', () => {
+    test('should use goal_target for MF goals', () => {
       const category = createMockCategory({
         goal_type: 'MF',
-        goal_target: 150000,
-        goal_under_funded: 75000, // Should be ignored
+        goal_target: 150000, // $150/month
       });
-      expect(extractNeededThisMonth(category)).toBe(150000);
+      expect(calculateNeededThisMonth(category)).toBe(150000);
     });
-  });
 
-  describe('Target Category Balance (TB) Goals', () => {
-    test('should prioritize goal_under_funded when available', () => {
+    test('should use goal_target for TB goals', () => {
       const category = createMockCategory({
         goal_type: 'TB',
-        goal_target: 100000,
-        goal_under_funded: 25000,
+        goal_target: 100000, // $100 target
       });
-      expect(extractNeededThisMonth(category)).toBe(25000);
+      expect(calculateNeededThisMonth(category)).toBe(100000);
     });
 
-    test('should fallback to goal_target when goal_under_funded is null', () => {
-      const category = createMockCategory({
-        goal_type: 'TB',
-        goal_target: 100000,
-        goal_under_funded: null,
-      });
-      expect(extractNeededThisMonth(category)).toBe(100000);
-    });
-
-    test('should handle goal_under_funded of 0 (fully funded)', () => {
-      const category = createMockCategory({
-        goal_type: 'TB',
-        goal_target: 100000,
-        goal_under_funded: 0,
-      });
-      expect(extractNeededThisMonth(category)).toBe(0);
-    });
-  });
-
-  describe('Target Category Balance by Date (TBD) Goals', () => {
-    test('should prioritize goal_under_funded for monthly progress', () => {
+    test('should use goal_target for TBD goals', () => {
       const category = createMockCategory({
         goal_type: 'TBD',
-        goal_target: 120000,
-        goal_under_funded: 20000,
-        goal_target_month: '2025-06-01',
+        goal_target: 120000, // $120 target
       });
-      expect(extractNeededThisMonth(category)).toBe(20000);
+      expect(calculateNeededThisMonth(category)).toBe(120000);
     });
 
-    test('should fallback to goal_target when goal_under_funded is null', () => {
-      const category = createMockCategory({
-        goal_type: 'TBD',
-        goal_target: 120000,
-        goal_under_funded: null,
-        goal_target_month: '2025-06-01',
-      });
-      expect(extractNeededThisMonth(category)).toBe(120000);
-    });
-  });
-
-  describe('Debt Payoff (DEBT) Goals', () => {
-    test('should prioritize goal_under_funded for monthly payment', () => {
+    test('should use goal_target for DEBT goals', () => {
       const category = createMockCategory({
         goal_type: 'DEBT',
-        goal_target: 500000,
-        goal_under_funded: 50000,
+        goal_target: 500000, // $500 target
       });
-      expect(extractNeededThisMonth(category)).toBe(50000);
+      expect(calculateNeededThisMonth(category)).toBe(500000);
     });
 
-    test('should fallback to goal_target when goal_under_funded is null', () => {
-      const category = createMockCategory({
-        goal_type: 'DEBT',
-        goal_target: 500000,
-        goal_under_funded: null,
-      });
-      expect(extractNeededThisMonth(category)).toBe(500000);
-    });
-  });
-
-  describe('Plan Your Spending (NEED) Goals', () => {
-    test('should prioritize goal_under_funded when available', () => {
+    test('should use goal_target for other NEED goal variations', () => {
       const category = createMockCategory({
         goal_type: 'NEED',
-        goal_target: 80000,
-        goal_under_funded: 20000,
+        goal_target: 80000, // $80 target
+        goal_cadence: 0, // One-time
       });
-      expect(extractNeededThisMonth(category)).toBe(20000);
+      expect(calculateNeededThisMonth(category)).toBe(80000);
     });
 
-    test('should fallback to goal_target when goal_under_funded is null', () => {
-      const category = createMockCategory({
-        goal_type: 'NEED',
-        goal_target: 80000,
-        goal_under_funded: null,
-      });
-      expect(extractNeededThisMonth(category)).toBe(80000);
-    });
-
-    describe('Future-Dated NEED Goals', () => {
-      test('should calculate monthly amount for future-dated goals', () => {
-        const category = createMockCategory({
-          goal_type: 'NEED',
-          goal_target: 600000, // $600
-          goal_target_month: '2024-06-01',
-          goal_under_funded: null,
-          goal_overall_funded: 0,
-        });
-        const currentMonth = '2024-03-01'; // 3 months before target
-        
-        const result = extractNeededThisMonth(category, currentMonth);
-        expect(result).toBe(200000); // $600 / 3 months = $200/month
-      });
-
-      test('should handle already funded future goals', () => {
-        const category = createMockCategory({
-          goal_type: 'NEED',
-          goal_target: 600000, // $600
-          goal_target_month: '2024-06-01',
-          goal_under_funded: null,
-          goal_overall_funded: 300000, // $300 already funded
-        });
-        const currentMonth = '2024-03-01'; // 3 months before target
-        
-        const result = extractNeededThisMonth(category, currentMonth);
-        expect(result).toBe(100000); // ($600 - $300) / 3 months = $100/month
-      });
-
-      test('should return 0 for over-funded future goals', () => {
-        const category = createMockCategory({
-          goal_type: 'NEED',
-          goal_target: 600000, // $600
-          goal_target_month: '2024-06-01',
-          goal_under_funded: null,
-          goal_overall_funded: 700000, // $700 over-funded
-        });
-        const currentMonth = '2024-03-01';
-        
-        const result = extractNeededThisMonth(category, currentMonth);
-        expect(result).toBe(0);
-      });
-
-      test('should handle single month remaining', () => {
-        const category = createMockCategory({
-          goal_type: 'NEED',
-          goal_target: 600000,
-          goal_target_month: '2024-04-01',
-          goal_under_funded: null,
-          goal_overall_funded: 0,
-        });
-        const currentMonth = '2024-04-01'; // Same month as target
-        
-        const result = extractNeededThisMonth(category, currentMonth);
-        expect(result).toBe(600000); // Full amount in single month
-      });
-
-      test('should not calculate for past dates', () => {
-        const category = createMockCategory({
-          goal_type: 'NEED',
-          goal_target: 600000,
-          goal_target_month: '2024-01-01',
-          goal_under_funded: null,
-        });
-        const currentMonth = '2024-03-01'; // After target date
-        
-        const result = extractNeededThisMonth(category, currentMonth);
-        expect(result).toBe(600000); // Falls back to goal_target
-      });
-
-      test('should handle missing currentMonth parameter', () => {
-        const category = createMockCategory({
-          goal_type: 'NEED',
-          goal_target: 600000,
-          goal_target_month: '2024-06-01',
-          goal_under_funded: null,
-        });
-        
-        const result = extractNeededThisMonth(category); // No currentMonth
-        expect(result).toBe(600000); // Falls back to goal_target
-      });
-    });
-
-    describe('Cadence-Based NEED Goals', () => {
-      test('should handle weekly goals (cadence = 2)', () => {
-        const category = createMockCategory({
-          goal_type: 'NEED',
-          goal_target: 100000, // $100/week
-          goal_cadence: 2, // Weekly
-          goal_cadence_frequency: 1,
-          goal_under_funded: null,
-        });
-        
-        const result = extractNeededThisMonth(category);
-        // ($100 × 52 weeks) / 12 months = $433.33/month
-        expect(result).toBe(433333);
-      });
-
-      test('should handle yearly goals (cadence = 13)', () => {
-        const category = createMockCategory({
-          goal_type: 'NEED',
-          goal_target: 1200000, // $1,200/year
-          goal_cadence: 13, // Yearly
-          goal_cadence_frequency: 1,
-          goal_under_funded: null,
-        });
-        
-        const result = extractNeededThisMonth(category);
-        // $1,200 / 12 months = $100/month
-        expect(result).toBe(100000);
-      });
-
-      test('should handle monthly goals with frequency > 1', () => {
-        const category = createMockCategory({
-          goal_type: 'NEED',
-          goal_target: 300000, // $300 every 3 months
-          goal_cadence: 1, // Monthly
-          goal_cadence_frequency: 3,
-          goal_under_funded: null,
-        });
-        
-        const result = extractNeededThisMonth(category);
-        // $300 / 3 months = $100/month
-        expect(result).toBe(100000);
-      });
-
-      test('should handle one-time goals (cadence = 0)', () => {
-        const category = createMockCategory({
-          goal_type: 'NEED',
-          goal_target: 500000, // $500 one-time
-          goal_cadence: 0, // One-time
-          goal_under_funded: null,
-        });
-        
-        const result = extractNeededThisMonth(category);
-        expect(result).toBe(500000); // Use target as-is
-      });
-    });
   });
 
   describe('Edge Cases and Error Handling', () => {
-    test('should handle unknown goal types', () => {
-      const category = createMockCategory({
-        goal_type: 'UNKNOWN' as any,
-        goal_target: 100000,
-      });
-      
-      // Should log warning and return null
-      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
-      const result = extractNeededThisMonth(category);
-      
-      expect(result).toBeNull();
-      expect(consoleSpy).toHaveBeenCalledWith('Unknown goal type: UNKNOWN');
-      consoleSpy.mockRestore();
-    });
-
-    test('should handle invalid date formats', () => {
+    test('should handle invalid date formats for weekly goals', () => {
       const category = createMockCategory({
         goal_type: 'NEED',
-        goal_target: 600000,
-        goal_target_month: 'invalid-date',
-        goal_under_funded: null,
+        goal_target: 100000,
+        goal_cadence: 2,
+        goal_cadence_frequency: 1,
+        goal_day: 1,
       });
-      
-      const result = extractNeededThisMonth(category, '2024-03-01');
-      expect(result).toBe(600000); // Falls back to goal_target
+
+      const result = calculateNeededThisMonth(category, 'invalid-date');
+      expect(result).toBe(100000); // Falls back to goal_target
     });
 
     test('should handle NaN and Infinity values', () => {
       const category = createMockCategory({
-        goal_type: 'TB',
-        goal_target: 100000,
-        goal_under_funded: NaN,
+        goal_type: 'MF',
+        goal_target: NaN,
       });
-      
-      const result = extractNeededThisMonth(category);
-      expect(result).toBe(100000); // Falls back to goal_target
+
+      const result = calculateNeededThisMonth(category);
+      expect(result).toBeNull(); // Returns null for invalid goal_target
+    });
+
+    test('should handle zero goal_months_to_budget', () => {
+      const category = createMockCategory({
+        goal_type: 'TBD',
+        goal_target: 120000,
+        goal_months_to_budget: 0, // Should not trigger Rule 3
+        goal_overall_left: 80000,
+        budgeted: 20000,
+      });
+
+      const result = calculateNeededThisMonth(category);
+      expect(result).toBe(120000); // Falls back to goal_target
     });
   });
 
@@ -358,65 +231,54 @@ describe('YNAB Needed This Month Calculations', () => {
   });
 });
 
-// Integration tests with real-world scenarios
-describe('Real-World Integration Tests', () => {
-  test('Summer Camp Goal - Future Dated NEED', () => {
-    const summerCamp = createMockCategory({
+// Simplified real-world integration tests
+describe('Simplified Real-World Examples', () => {
+  test('Monthly Subscription - Rule 1', () => {
+    const subscription = createMockCategory({
       goal_type: 'NEED',
-      goal_target: 800000, // $800
-      goal_target_month: '2025-06-01',
-      goal_under_funded: null,
-      goal_overall_funded: 0,
+      goal_target: 60000, // $60/month
+      goal_cadence: 1,
+      goal_cadence_frequency: 1,
     });
-    
-    const result = extractNeededThisMonth(summerCamp, '2024-12-01');
-    expect(result).toBe(133333); // $800 / 6 months = $133.33/month
+
+    const result = calculateNeededThisMonth(subscription);
+    expect(result).toBe(60000); // $60/month
   });
 
-  test('Camp Michigania Goal - Future Dated NEED', () => {
-    const campMichigania = createMockCategory({
+  test('Weekly Groceries - Rule 2', () => {
+    const groceries = createMockCategory({
       goal_type: 'NEED',
-      goal_target: 5240000, // $5,240
-      goal_target_month: '2025-04-15',
-      goal_under_funded: null,
-      goal_overall_funded: 0,
+      goal_target: 100000, // $100 per Monday
+      goal_cadence: 2,
+      goal_cadence_frequency: 1,
+      goal_day: 1, // Monday
     });
-    
-    const result = extractNeededThisMonth(campMichigania, '2024-12-01');
-    expect(result).toBe(1310000); // $5,240 / 4 months = $1,310/month
+
+    // December 2024 has 5 Mondays
+    const result = calculateNeededThisMonth(groceries, '2024-12-01');
+    expect(result).toBe(500000); // $100 × 5 = $500/month
   });
 
-  test('Monthly Bills - MF Goal', () => {
-    const monthlyBills = createMockCategory({
+  test('Vacation Fund - Rule 3', () => {
+    const vacation = createMockCategory({
+      goal_type: 'TBD',
+      goal_target: 120000,
+      goal_months_to_budget: 6,
+      goal_overall_left: 100000,
+      budgeted: 20000,
+    });
+
+    const result = calculateNeededThisMonth(vacation);
+    expect(result).toBe(20000); // (100000 + 20000) / 6 = $20/month
+  });
+
+  test('Monthly Bills - Rule 4', () => {
+    const bills = createMockCategory({
       goal_type: 'MF',
       goal_target: 250000, // $250/month
     });
-    
-    const result = extractNeededThisMonth(monthlyBills);
+
+    const result = calculateNeededThisMonth(bills);
     expect(result).toBe(250000); // $250/month
-  });
-
-  test('Emergency Fund - TB Goal', () => {
-    const emergencyFund = createMockCategory({
-      goal_type: 'TB',
-      goal_target: 1000000, // $1,000 target
-      goal_under_funded: 100000, // $100 needed this month
-    });
-    
-    const result = extractNeededThisMonth(emergencyFund);
-    expect(result).toBe(100000); // $100 needed this month
-  });
-
-  test('Grocery Budget - Weekly NEED Goal', () => {
-    const groceries = createMockCategory({
-      goal_type: 'NEED',
-      goal_target: 75000, // $75/week
-      goal_cadence: 2, // Weekly
-      goal_cadence_frequency: 1,
-      goal_under_funded: null,
-    });
-    
-    const result = extractNeededThisMonth(groceries);
-    expect(result).toBe(325000); // ($75 × 52) / 12 = $325/month
   });
 });
