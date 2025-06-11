@@ -79,225 +79,98 @@ export function calculateTargetPercentage(assigned: number, target: number | nul
   return (assigned / target) * 100;
 }
 
+
+
+
+
 /**
- * Calculate months between two date strings (YYYY-MM-DD format)
- * Returns the number of months from start to end date
+ * Count occurrences of a specific day of the week in a given month
+ * @param year - Year (e.g., 2024)
+ * @param month - Month (1-12)
+ * @param dayOfWeek - Day of week (0=Sunday, 1=Monday, ..., 6=Saturday)
+ * @returns Number of occurrences of that day in the month
  */
-function calculateMonthsBetween(startDate: string, endDate: string): number {
-  const start = new Date(startDate + 'T00:00:00.000Z');
-  const end = new Date(endDate + 'T00:00:00.000Z');
+function countDayOccurrencesInMonth(year: number, month: number, dayOfWeek: number): number {
+  const daysInMonth = new Date(year, month, 0).getDate();
+  let count = 0;
 
-  const yearDiff = end.getUTCFullYear() - start.getUTCFullYear();
-  const monthDiff = end.getUTCMonth() - start.getUTCMonth();
+  for (let day = 1; day <= daysInMonth; day++) {
+    const date = new Date(year, month - 1, day);
+    if (date.getDay() === dayOfWeek) {
+      count++;
+    }
+  }
 
-  return Math.max(1, yearDiff * 12 + monthDiff);
+  return count;
 }
 
 /**
- * Calculate monthly needed amount for future-dated goals
- * Used when goal_under_funded is null but goal has a future target date
+ * Calculate "Needed This Month" amount based on simplified YNAB rules
+ * This replaces all previous complex calculation logic with definitive rules
  */
-function calculateMonthlyNeededForFutureGoal(
-  category: YNABCategory,
-  currentMonth: string
-): number | null {
-  if (!category.goal_target_month || !category.goal_target) {
+export function calculateNeededThisMonth(category: YNABCategory, currentMonth?: string): number | null {
+  // Return null if no goal type is set
+  if (!category.goal_type || !category.goal_target) {
     return null;
   }
 
-  // Only calculate for future dates
-  if (category.goal_target_month <= currentMonth) {
-    return null;
+  // Rule 3: Goals with months to budget take precedence
+  if (category.goal_months_to_budget && category.goal_months_to_budget > 0) {
+    const overallLeft = category.goal_overall_left || 0;
+    const budgeted = category.budgeted || 0;
+    return Math.round((overallLeft + budgeted) / category.goal_months_to_budget);
   }
 
-  const monthsRemaining = calculateMonthsBetween(currentMonth, category.goal_target_month);
-  if (monthsRemaining <= 0) {
-    return null;
+  // Rule 1: Monthly NEED Goals (cadence = 1, frequency = 1)
+  if (category.goal_cadence === 1 && category.goal_cadence_frequency === 1) {
+    return category.goal_target;
   }
 
-  const alreadyFunded = category.goal_overall_funded || 0;
-  const remainingNeeded = category.goal_target - alreadyFunded;
+  // Rule 2: Weekly NEED Goals (cadence = 2, frequency = 1)
+  if (category.goal_cadence === 2 && category.goal_cadence_frequency === 1 &&
+      typeof category.goal_day === 'number') {
+    if (!currentMonth) {
+      // Fallback to goal_target if no current month provided
+      return category.goal_target;
+    }
 
-  // If already fully funded or over-funded, no monthly amount needed
-  if (remainingNeeded <= 0) {
-    return 0;
+    try {
+      // Parse month (YYYY-MM-DD format)
+      const [year, month] = currentMonth.split('-').map(Number);
+      const dayCount = countDayOccurrencesInMonth(year, month, category.goal_day);
+      return Math.round(category.goal_target * dayCount);
+    } catch (error) {
+      console.warn('Error calculating weekly goal for month:', currentMonth, error);
+      return category.goal_target;
+    }
   }
 
-  return Math.round(remainingNeeded / monthsRemaining);
-}
-
-/**
- * Calculate monthly amount based on goal cadence and frequency
- * Converts weekly, yearly, and custom interval goals to monthly amounts
- */
-function calculateCadenceBasedMonthlyAmount(category: YNABCategory): number | null {
-  const target = category.goal_target;
-  const cadence = category.goal_cadence;
-  const frequency = category.goal_cadence_frequency || 1;
-
-  if (!target || !cadence) return null;
-
-  switch (cadence) {
-    case 1: // Monthly
-      return Math.round(target / frequency);
-
-    case 2: // Weekly
-      // Convert weekly to monthly: (weekly amount × 52 weeks) ÷ 12 months
-      return Math.round((target * 52) / 12 / frequency);
-
-    case 13: // Yearly
-      // Convert yearly to monthly: yearly amount ÷ 12 months
-      return Math.round(target / 12 / frequency);
-
-    case 0: // One-time/No cadence
-      // For one-time goals, use the target as-is (may need manual calculation for future dates)
-      return target;
-
-    default:
-      // For other cadences (3-12, 14+), treat as monthly
-      console.warn(`Unhandled cadence: ${cadence}, treating as monthly`);
-      return target;
-  }
-}
-
-/**
- * Extract the original monthly target amount for variance calculations
- * This represents the user's original monthly commitment, properly converted from cadence
- */
-export function extractOriginalMonthlyTarget(category: YNABCategory, currentMonth?: string): number | null {
-  if (!category.goal_type) {
-    return null;
-  }
-
-  const overallTarget = category.goal_target;
-
-  switch (category.goal_type) {
-    case 'MF': // Monthly Funding
-      // For MF goals, goal_target IS the monthly amount
-      return overallTarget || null;
-
-    case 'TB': // Target Category Balance
-    case 'TBD': // Target Category Balance by Date
-    case 'DEBT': // Debt Payoff Goal
-      // For these goals, goal_target is usually the total target
-      // Use goal_under_funded when available as it represents monthly progress needed
-      // But for variance calculations, we need the consistent monthly target
-      if (category.goal_under_funded !== null && category.goal_under_funded !== undefined) {
-        return category.goal_under_funded;
-      }
-      return overallTarget || null;
-
-    case 'NEED': // Plan Your Spending
-      // NEED goals are complex - handle cadence, future dating, etc.
-
-      // For future-dated NEED goals, calculate monthly amount
-      if (currentMonth && category.goal_target_month && category.goal_target_month > currentMonth) {
-        const calculatedMonthly = calculateMonthlyNeededForFutureGoal(category, currentMonth);
-        if (calculatedMonthly !== null) {
-          return calculatedMonthly;
-        }
-      }
-
-      // Handle cadence-based calculations
-      if (category.goal_cadence && category.goal_cadence !== 1) {
-        const cadenceBased = calculateCadenceBasedMonthlyAmount(category);
-        if (cadenceBased !== null) {
-          return cadenceBased;
-        }
-      }
-
-      // For monthly NEED goals, use goal_target
-      return overallTarget || null;
-
-    default:
-      return null;
-  }
-}
-
-/**
- * Extract current "needed this month" amount for funding guidance
- * This represents what YNAB shows as currently needed, using goal_under_funded when available
- */
-export function extractCurrentNeededAmount(category: YNABCategory, currentMonth?: string): number | null {
-  if (!category.goal_type) {
-    return null;
-  }
-
-  // For monthly analysis, prioritize goal_under_funded when available
-  // This represents what YNAB calculates as needed THIS MONTH to stay on track
-  const monthlyNeeded = category.goal_under_funded;
-  const overallTarget = category.goal_target;
-
-  // Handle different goal types with monthly-specific logic
-  switch (category.goal_type) {
-    case 'MF': // Monthly Funding
-      // For monthly funding goals, use the overall target as it represents the monthly amount
-      // goal_under_funded might be 0 if already funded, but we want the monthly target
-      return overallTarget || null;
-
-    case 'TB': // Target Category Balance
-      // For target balance goals, use goal_under_funded if available (amount needed this month)
-      // Fall back to goal_target for total target amount
-      if (monthlyNeeded !== null && monthlyNeeded !== undefined) {
-        return monthlyNeeded;
-      }
-      return overallTarget || null;
-
-    case 'TBD': // Target Category Balance by Date
-      // For date-based targets, use goal_under_funded (monthly progress needed)
-      // This gives us what's needed THIS MONTH to stay on track for the target date
-      if (monthlyNeeded !== null && monthlyNeeded !== undefined) {
-        return monthlyNeeded;
-      }
-      return overallTarget || null;
-
-    case 'NEED': // Plan Your Spending
-      // Enhanced handling for future-dated NEED goals
-      if (monthlyNeeded !== null && monthlyNeeded !== undefined) {
-        return monthlyNeeded;
-      }
-
-      // For future-dated NEED goals where goal_under_funded is null,
-      // calculate monthly amount needed to reach target by target date
-      if (currentMonth && category.goal_target_month && category.goal_target_month > currentMonth) {
-        const calculatedMonthly = calculateMonthlyNeededForFutureGoal(category, currentMonth);
-        if (calculatedMonthly !== null) {
-          return calculatedMonthly;
-        }
-      }
-
-      // Handle cadence-based calculations for current month
-      if (category.goal_cadence && category.goal_cadence !== 1) {
-        const cadenceBased = calculateCadenceBasedMonthlyAmount(category);
-        if (cadenceBased !== null) {
-          return cadenceBased;
-        }
-      }
-
-      // Fall back to goal_target for non-dated or current month goals
-      return overallTarget || null;
-
-    case 'DEBT': // Debt Payoff Goal
-      // For debt goals, use goal_under_funded if available (monthly payment needed)
-      // Fall back to goal_target
-      if (monthlyNeeded !== null && monthlyNeeded !== undefined) {
-        return monthlyNeeded;
-      }
-      return overallTarget || null;
-
-    default:
-      return null;
-  }
+  // Rule 4: All other cases - fallback to goal_target
+  return category.goal_target;
 }
 
 /**
  * Extract target amount from YNAB category goal fields for monthly analysis
- * DEPRECATED: Use extractOriginalMonthlyTarget for variance calculations
- * or extractCurrentNeededAmount for funding guidance
+ * Uses the simplified calculateNeededThisMonth logic
  */
 export function extractTargetAmount(category: YNABCategory, currentMonth?: string): number | null {
-  // For backward compatibility, use the original monthly target for variance calculations
-  return extractOriginalMonthlyTarget(category, currentMonth);
+  return calculateNeededThisMonth(category, currentMonth);
+}
+
+/**
+ * Extract the original monthly target amount for variance calculations
+ * @deprecated Use calculateNeededThisMonth instead
+ */
+export function extractOriginalMonthlyTarget(category: YNABCategory, currentMonth?: string): number | null {
+  return calculateNeededThisMonth(category, currentMonth);
+}
+
+/**
+ * Extract current "needed this month" amount for funding guidance
+ * @deprecated Use calculateNeededThisMonth instead
+ */
+export function extractCurrentNeededAmount(category: YNABCategory, currentMonth?: string): number | null {
+  return calculateNeededThisMonth(category, currentMonth);
 }
 
 /**
@@ -365,29 +238,26 @@ export function processCategory(
   config: AnalysisConfig = DEFAULT_ANALYSIS_CONFIG,
   currentMonth?: string
 ): ProcessedCategory {
-  // Use original monthly target for accurate variance calculations
-  const target = extractOriginalMonthlyTarget(category, currentMonth);
-
-  // Also extract current needed amount for display/guidance purposes
-  const currentNeeded = extractCurrentNeededAmount(category, currentMonth);
+  // Use simplified calculation for needed this month
+  const neededThisMonth = calculateNeededThisMonth(category, currentMonth);
   const assigned = category.budgeted;
-  const variance = target !== null ? assigned - target : 0;
-  const alignmentStatus = determineAlignmentStatus(assigned, target, config.toleranceMilliunits);
-  const percentageOfTarget = calculateTargetPercentage(assigned, target);
-  
+  const variance = neededThisMonth !== null ? assigned - neededThisMonth : 0;
+  const alignmentStatus = determineAlignmentStatus(assigned, neededThisMonth, config.toleranceMilliunits);
+  const percentageOfTarget = calculateTargetPercentage(assigned, neededThisMonth);
+
   return {
     id: category.id,
     name: category.name,
     categoryGroupName: categoryGroupName || category.category_group_name || 'Unknown',
     assigned,
-    target,
-    currentNeeded,
-    targetType: category.goal_type,
+    neededThisMonth,
+    target: neededThisMonth, // Alias for backward compatibility
+    targetType: category.goal_type || null,
     variance,
     alignmentStatus,
     percentageOfTarget,
     isHidden: category.hidden,
-    hasTarget: target !== null,
+    hasTarget: neededThisMonth !== null,
     goalPercentageComplete: category.goal_percentage_complete,
     goalUnderFunded: category.goal_under_funded,
     goalOverallLeft: category.goal_overall_left,
@@ -401,23 +271,23 @@ export function calculateCategoryVariance(
   category: ProcessedCategory,
   month: string
 ): CategoryVariance | null {
-  if (!category.hasTarget || category.target === null || category.target === 0) {
+  if (!category.hasTarget || category.neededThisMonth === null || category.neededThisMonth === 0) {
     return null;
   }
 
-  const variancePercentage = (category.variance / category.target) * 100;
+  const variancePercentage = (category.variance / category.neededThisMonth) * 100;
 
   // Handle edge cases where percentage calculation results in invalid numbers
   const safeVariancePercentage = (!isNaN(variancePercentage) && isFinite(variancePercentage))
     ? variancePercentage
     : null;
-  
+
   return {
     categoryId: category.id,
     categoryName: category.name,
     categoryGroupName: category.categoryGroupName,
     assigned: category.assigned,
-    target: category.target,
+    target: category.neededThisMonth,
     variance: category.variance,
     variancePercentage: safeVariancePercentage,
     targetType: category.targetType,
