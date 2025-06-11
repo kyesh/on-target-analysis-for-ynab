@@ -137,7 +137,7 @@ export function calculateNeededThisMonth(category: YNABCategory, currentMonth?: 
     try {
       // Parse month (YYYY-MM-DD format)
       const [year, month] = currentMonth.split('-').map(Number);
-      const dayCount = countDayOccurrencesInMonth(year, month, category.goal_day);
+      const dayCount = countDayOccurrencesInMonth(year, month, category.goal_day as number);
       return Math.round(category.goal_target * dayCount);
     } catch (error) {
       console.warn('Error calculating weekly goal for month:', currentMonth, error);
@@ -147,6 +147,120 @@ export function calculateNeededThisMonth(category: YNABCategory, currentMonth?: 
 
   // Rule 4: All other cases - fallback to goal_target
   return category.goal_target;
+}
+
+/**
+ * Calculate "Needed This Month" amount with debug information
+ * Returns both the calculated amount and which rule was applied
+ */
+export function calculateNeededThisMonthWithRule(
+  category: YNABCategory,
+  currentMonth?: string
+): { amount: number | null; rule: string; debugInfo?: any } {
+  // Return null if no goal type is set
+  if (!category.goal_type || !category.goal_target) {
+    return {
+      amount: null,
+      rule: "No Goal",
+      debugInfo: {
+        reason: "Missing goal_type or goal_target",
+        goal_type: category.goal_type,
+        goal_target: category.goal_target
+      }
+    };
+  }
+
+  // Rule 3: Goals with months to budget take precedence
+  if (category.goal_months_to_budget && category.goal_months_to_budget > 0) {
+    const overallLeft = category.goal_overall_left || 0;
+    const budgeted = category.budgeted || 0;
+    const amount = Math.round((overallLeft + budgeted) / category.goal_months_to_budget);
+    return {
+      amount,
+      rule: "Rule 3: Months to Budget",
+      debugInfo: {
+        calculation: `(${overallLeft} + ${budgeted}) ÷ ${category.goal_months_to_budget} = ${amount}`,
+        goal_overall_left: overallLeft,
+        budgeted: budgeted,
+        goal_months_to_budget: category.goal_months_to_budget
+      }
+    };
+  }
+
+  // Rule 1: Monthly NEED Goals (cadence = 1, frequency = 1)
+  if (category.goal_cadence === 1 && category.goal_cadence_frequency === 1) {
+    return {
+      amount: category.goal_target,
+      rule: "Rule 1: Monthly NEED",
+      debugInfo: {
+        calculation: `goal_target = ${category.goal_target}`,
+        goal_cadence: category.goal_cadence,
+        goal_cadence_frequency: category.goal_cadence_frequency
+      }
+    };
+  }
+
+  // Rule 2: Weekly NEED Goals (cadence = 2, frequency = 1)
+  if (category.goal_cadence === 2 && category.goal_cadence_frequency === 1 &&
+      typeof category.goal_day === 'number') {
+    if (!currentMonth) {
+      return {
+        amount: category.goal_target,
+        rule: "Rule 2: Weekly NEED (fallback)",
+        debugInfo: {
+          calculation: `goal_target = ${category.goal_target} (no currentMonth provided)`,
+          goal_cadence: category.goal_cadence,
+          goal_cadence_frequency: category.goal_cadence_frequency,
+          goal_day: category.goal_day
+        }
+      };
+    }
+
+    try {
+      const [year, month] = currentMonth.split('-').map(Number);
+      const dayCount = countDayOccurrencesInMonth(year, month, category.goal_day as number);
+      const amount = Math.round(category.goal_target * dayCount);
+      return {
+        amount,
+        rule: `Rule 2: Weekly NEED (${dayCount} occurrences)`,
+        debugInfo: {
+          calculation: `${category.goal_target} × ${dayCount} = ${amount}`,
+          goal_cadence: category.goal_cadence,
+          goal_cadence_frequency: category.goal_cadence_frequency,
+          goal_day: category.goal_day,
+          currentMonth: currentMonth,
+          dayCount: dayCount
+        }
+      };
+    } catch (error) {
+      console.warn('Error calculating weekly goal for month:', currentMonth, error);
+      return {
+        amount: category.goal_target,
+        rule: "Rule 2: Weekly NEED (error fallback)",
+        debugInfo: {
+          calculation: `goal_target = ${category.goal_target} (error in calculation)`,
+          error: error instanceof Error ? error.message : 'Unknown error',
+          goal_cadence: category.goal_cadence,
+          goal_cadence_frequency: category.goal_cadence_frequency,
+          goal_day: category.goal_day,
+          currentMonth: currentMonth
+        }
+      };
+    }
+  }
+
+  // Rule 4: All other cases - fallback to goal_target
+  return {
+    amount: category.goal_target,
+    rule: "Rule 4: Fallback",
+    debugInfo: {
+      calculation: `goal_target = ${category.goal_target}`,
+      goal_type: category.goal_type,
+      goal_cadence: category.goal_cadence,
+      goal_cadence_frequency: category.goal_cadence_frequency,
+      reason: "No specific rule matched"
+    }
+  };
 }
 
 /**
@@ -238,12 +352,30 @@ export function processCategory(
   config: AnalysisConfig = DEFAULT_ANALYSIS_CONFIG,
   currentMonth?: string
 ): ProcessedCategory {
-  // Use simplified calculation for needed this month
-  const neededThisMonth = calculateNeededThisMonth(category, currentMonth);
+  // Use simplified calculation with debug information
+  const calculationResult = calculateNeededThisMonthWithRule(category, currentMonth);
+  const neededThisMonth = calculationResult.amount;
   const assigned = category.budgeted;
   const variance = neededThisMonth !== null ? assigned - neededThisMonth : 0;
   const alignmentStatus = determineAlignmentStatus(assigned, neededThisMonth, config.toleranceMilliunits);
   const percentageOfTarget = calculateTargetPercentage(assigned, neededThisMonth);
+
+  // Create debug information for categories with goals
+  const debugInfo = category.goal_type ? {
+    rawFields: {
+      goal_type: category.goal_type,
+      goal_target: category.goal_target ?? null,
+      goal_cadence: category.goal_cadence ?? null,
+      goal_cadence_frequency: category.goal_cadence_frequency ?? null,
+      goal_day: category.goal_day ?? null,
+      goal_months_to_budget: category.goal_months_to_budget ?? null,
+      goal_overall_left: category.goal_overall_left ?? null,
+      budgeted: category.budgeted,
+      balance: category.balance,
+    },
+    calculationRule: calculationResult.rule,
+    calculationDetails: calculationResult.debugInfo,
+  } : undefined;
 
   return {
     id: category.id,
@@ -261,6 +393,7 @@ export function processCategory(
     goalPercentageComplete: category.goal_percentage_complete,
     goalUnderFunded: category.goal_under_funded,
     goalOverallLeft: category.goal_overall_left,
+    debugInfo,
   };
 }
 

@@ -29,6 +29,25 @@ export interface ProcessedCategory {
   goalPercentageComplete?: number | null;
   goalUnderFunded?: number | null;
   goalOverallLeft?: number | null;
+
+  // Debug information for calculation validation
+  debugInfo?: {
+    // Raw YNAB API fields
+    rawFields: {
+      goal_type: string | null;
+      goal_target: number | null;
+      goal_cadence: number | null;
+      goal_cadence_frequency: number | null;
+      goal_day: number | null;
+      goal_months_to_budget: number | null;
+      goal_overall_left: number | null;
+      budgeted: number;
+      balance: number;
+    };
+    // Calculation details
+    calculationRule: string;
+    calculationDetails?: any;
+  };
 }
 
 // Monthly Analysis Summary
@@ -74,6 +93,7 @@ export interface DashboardSummary {
   topOverTargetCategories: CategoryVariance[]; // Top 10 over-target
   topUnderTargetCategories: CategoryVariance[]; // Top 10 under-target
   categoriesWithoutTargets: ProcessedCategory[]; // Categories with assignments but no targets
+  categories: ProcessedCategory[]; // All categories with debug information
   keyMetrics: {
     targetAlignmentScore: number; // 0-100 score based on alignment
     budgetDisciplineRating: BudgetDisciplineRating;

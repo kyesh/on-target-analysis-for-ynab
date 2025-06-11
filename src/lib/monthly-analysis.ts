@@ -220,19 +220,22 @@ export function generateDashboardSummary(
   const monthlyAnalysis = analyzeMonth(monthData, budgetId, budgetName, config);
   const { overTarget, underTarget } = getTopVarianceCategories(monthData, monthData.month, 10, config);
   
-  // Get categories without targets that have assignments
-  const categoriesWithoutTargets = monthData.categories
+  // Process all categories with debug information
+  const allCategories = monthData.categories
     .filter(category => shouldIncludeCategory(category, config))
-    .map(category => processCategory(category, '', config, monthData.month))
+    .map(category => processCategory(category, '', config, monthData.month));
+
+  // Get categories without targets that have assignments
+  const categoriesWithoutTargets = allCategories
     .filter(category => !category.hasTarget && category.assigned !== 0);
 
   // Calculate key metrics
   const targetAlignmentScore = calculateTargetAlignmentScore(monthlyAnalysis);
   const budgetDisciplineRating = calculateBudgetDisciplineRating(monthlyAnalysis);
-  
+
   const totalVariance = [...overTarget, ...underTarget]
     .reduce((sum, variance) => sum + Math.abs(variance.variance), 0);
-  
+
   const averageTargetAchievement = monthlyAnalysis.categoriesWithTargets > 0
     ? (monthlyAnalysis.onTargetAmount + monthlyAnalysis.overTargetAmount) / monthlyAnalysis.totalTargeted * 100
     : 0;
@@ -243,6 +246,7 @@ export function generateDashboardSummary(
     topOverTargetCategories: overTarget,
     topUnderTargetCategories: underTarget,
     categoriesWithoutTargets,
+    categories: allCategories, // Include all categories with debug information
     keyMetrics: {
       targetAlignmentScore,
       budgetDisciplineRating,

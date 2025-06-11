@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { MonthlyAnalysisResponse } from '@/types/analysis';
 import { formatCurrency } from '@/lib/data-processing';
+import { CategoryDebugPanel, DebugToggle } from './CategoryDebugPanel';
 
 interface AnalysisDashboardProps {
   budgetId?: string;
@@ -13,6 +14,18 @@ export default function AnalysisDashboard({ budgetId, month }: AnalysisDashboard
   const [analysis, setAnalysis] = useState<MonthlyAnalysisResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [debugMode, setDebugMode] = useState(false);
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+
+  const toggleCategoryDebug = (categoryId: string) => {
+    const newExpanded = new Set(expandedCategories);
+    if (newExpanded.has(categoryId)) {
+      newExpanded.delete(categoryId);
+    } else {
+      newExpanded.add(categoryId);
+    }
+    setExpandedCategories(newExpanded);
+  };
 
   useEffect(() => {
     if (budgetId && month) {
@@ -244,6 +257,88 @@ export default function AnalysisDashboard({ budgetId, month }: AnalysisDashboard
               <p className="text-sm text-gray-500">All categories with targets are properly funded.</p>
             )}
           </div>
+        </div>
+      </div>
+
+      {/* Detailed Category List with Debug Information */}
+      <div className="bg-white shadow rounded-lg">
+        <div className="px-4 py-5 sm:p-6">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg leading-6 font-medium text-gray-900">
+              All Categories ({analysis.categories.length})
+            </h3>
+            <DebugToggle isEnabled={debugMode} onToggle={setDebugMode} />
+          </div>
+
+          {/* Category List */}
+          <div className="space-y-4">
+            {analysis.categories
+              .filter(category => category.hasTarget || category.assigned > 0)
+              .map((category) => (
+                <div key={category.id} className="border border-gray-200 rounded-lg p-4">
+                  {/* Category Header */}
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2">
+                        <h4 className="text-sm font-medium text-gray-900">{category.name}</h4>
+                        {category.hasTarget && (
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                            category.alignmentStatus === 'on-target' ? 'bg-green-100 text-green-800' :
+                            category.alignmentStatus === 'over-target' ? 'bg-red-100 text-red-800' :
+                            category.alignmentStatus === 'under-target' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}>
+                            {category.alignmentStatus}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">{category.categoryGroupName}</p>
+                    </div>
+
+                    <div className="text-right">
+                      <div className="text-sm font-medium text-gray-900">
+                        Assigned: {formatCurrency(category.assigned)}
+                      </div>
+                      {category.hasTarget && (
+                        <>
+                          <div className="text-sm text-gray-600">
+                            Target: {formatCurrency(category.neededThisMonth)}
+                          </div>
+                          <div className={`text-sm font-medium ${
+                            category.variance > 0 ? 'text-red-600' :
+                            category.variance < 0 ? 'text-yellow-600' :
+                            'text-green-600'
+                          }`}>
+                            Variance: {formatCurrency(category.variance)}
+                          </div>
+                          {category.percentageOfTarget !== null && (
+                            <div className="text-xs text-gray-500">
+                              {category.percentageOfTarget.toFixed(1)}% of target
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Debug Panel */}
+                  {debugMode && category.debugInfo && (
+                    <CategoryDebugPanel
+                      category={category}
+                      isOpen={expandedCategories.has(category.id)}
+                      onToggle={() => toggleCategoryDebug(category.id)}
+                    />
+                  )}
+                </div>
+              ))}
+          </div>
+
+          {/* No Categories Message */}
+          {analysis.categories.filter(category => category.hasTarget || category.assigned > 0).length === 0 && (
+            <p className="text-sm text-gray-500 text-center py-8">
+              No categories with targets or assignments found for this month.
+            </p>
+          )}
         </div>
       </div>
     </div>
