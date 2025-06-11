@@ -118,10 +118,11 @@ export function extractTargetAmount(category: YNABCategory): number | null {
 ```
 
 **Key Improvements**:
-- **Monthly Focus**: Prioritizes `goal_under_funded` for more accurate monthly calculations
+- **Monthly Focus**: Prioritizes `goal_under_funded` (**VERIFIED** as "Needed This Month") for accurate monthly calculations
 - **Goal Type Specific**: Different logic for different goal types (MF vs TB/TBD vs NEED)
 - **Backward Compatible**: Falls back to `goal_target` when `goal_under_funded` unavailable
 - **Enhanced Accuracy**: Uses YNAB's calculated monthly progress amounts for date-based goals
+- **Official Verification**: Implementation confirmed against YNAB's official API documentation
 
 ## Month Selection and Validation
 

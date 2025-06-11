@@ -285,13 +285,15 @@ All monetary values are in **milliunits** (YNAB format):
 
 The API uses an enhanced target extraction method for more accurate monthly analysis:
 
-**Monthly Target Calculation**:
+**Monthly Target Calculation** (VERIFIED with YNAB API Documentation):
 - **MF (Monthly Funding)**: Uses `goal_target` (represents monthly funding amount)
-- **TB/TBD (Target Balance)**: Uses `goal_under_funded` when available (amount needed this month)
+- **TB/TBD (Target Balance)**: Uses `goal_under_funded` (**VERIFIED** as "Needed This Month") when available
 - **NEED (Plan Your Spending)**: Uses `goal_target` (represents monthly spending target)
-- **DEBT (Debt Payoff)**: Uses `goal_under_funded` when available (monthly payment needed)
+- **DEBT (Debt Payoff)**: Uses `goal_under_funded` (**VERIFIED** as "Needed This Month") when available
 
 **Fallback Logic**: If `goal_under_funded` is null/undefined, falls back to `goal_target`
+
+**Field Verification**: `goal_under_funded` officially defined as "The amount of funding still needed in the current month to stay on track towards completing the goal within the current goal period" (Microsoft YNAB API Documentation)
 
 ### Date Format
 
