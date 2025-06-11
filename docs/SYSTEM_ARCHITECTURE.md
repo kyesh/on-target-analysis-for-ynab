@@ -1,5 +1,9 @@
 # YNAB Off-Target Assignment Analysis - System Architecture
 
+**Version:** 1.0
+**Last Updated:** June 2025
+**Status:** Production Ready
+
 ## Architecture Overview
 
 The YNAB Off-Target Assignment Analysis application follows a modern web application architecture using Next.js with a focus on client-side data processing and secure API integration.
@@ -437,5 +441,126 @@ graph TD
     style MemoryCache fill:#f3e5f5
     style APICache fill:#e8f5e8
 ```
+
+## Current Implementation Data Flow
+
+### Core Metrics Calculation Architecture
+
+The application implements a sophisticated calculation engine for analyzing budget target alignment:
+
+```mermaid
+graph TD
+    subgraph "Data Input Layer"
+        YNABData[YNAB Category Data]
+        BudgetInfo[Budget Metadata]
+        MonthData[Month Selection]
+    end
+
+    subgraph "Processing Layer"
+        CategoryProcessor[Category Processor]
+        TargetExtractor[Target Extractor]
+        AlignmentCalculator[Alignment Calculator]
+    end
+
+    subgraph "Calculation Engine"
+        TotalAssigned[Total Assigned Calculator]
+        TotalTargeted[Total Targeted Calculator]
+        VarianceAnalyzer[Variance Analyzer]
+        StatusDeterminer[Status Determiner]
+    end
+
+    subgraph "Output Layer"
+        MonthlyAnalysis[Monthly Analysis]
+        CategoryBreakdown[Category Breakdown]
+        KeyMetrics[Key Metrics]
+    end
+
+    YNABData --> CategoryProcessor
+    BudgetInfo --> CategoryProcessor
+    MonthData --> CategoryProcessor
+
+    CategoryProcessor --> TargetExtractor
+    CategoryProcessor --> AlignmentCalculator
+
+    TargetExtractor --> TotalTargeted
+    AlignmentCalculator --> TotalAssigned
+    AlignmentCalculator --> VarianceAnalyzer
+    AlignmentCalculator --> StatusDeterminer
+
+    TotalAssigned --> MonthlyAnalysis
+    TotalTargeted --> MonthlyAnalysis
+    VarianceAnalyzer --> CategoryBreakdown
+    StatusDeterminer --> KeyMetrics
+
+    style CategoryProcessor fill:#e3f2fd
+    style TotalAssigned fill:#e8f5e8
+    style TotalTargeted fill:#fff3e0
+    style MonthlyAnalysis fill:#f3e5f5
+```
+
+### Month Selection and Validation Architecture
+
+```mermaid
+graph TD
+    subgraph "Budget Data Source"
+        BudgetAPI[Budget API Response]
+        FirstMonth[firstMonth Property]
+        LastMonth[lastMonth Property]
+    end
+
+    subgraph "Month Generation"
+        MonthGenerator[Month Generator]
+        DateValidator[Date Validator]
+        RangeChecker[Range Checker]
+    end
+
+    subgraph "Frontend Components"
+        MonthSelector[MonthSelector Component]
+        BudgetSelector[BudgetSelector Component]
+        ValidationLayer[Validation Layer]
+    end
+
+    subgraph "API Validation"
+        ServerValidation[Server-Side Validation]
+        ErrorHandler[Error Handler]
+        SafeDefault[Safe Default Logic]
+    end
+
+    BudgetAPI --> FirstMonth
+    BudgetAPI --> LastMonth
+
+    FirstMonth --> MonthGenerator
+    LastMonth --> MonthGenerator
+    MonthGenerator --> DateValidator
+    DateValidator --> RangeChecker
+
+    RangeChecker --> MonthSelector
+    MonthSelector --> BudgetSelector
+    BudgetSelector --> ValidationLayer
+
+    ValidationLayer --> ServerValidation
+    ServerValidation --> ErrorHandler
+    ServerValidation --> SafeDefault
+
+    style MonthGenerator fill:#e8f5e8
+    style ServerValidation fill:#ffcdd2
+    style MonthSelector fill:#e3f2fd
+```
+
+### Property Name Compatibility Layer
+
+The system handles both camelCase (frontend) and snake_case (backend) property naming:
+
+```typescript
+// Compatibility layer implementation
+const firstMonth = budget.firstMonth || budget.first_month;
+const lastMonth = budget.lastMonth || budget.last_month;
+```
+
+**Key Implementation Files:**
+- `src/lib/monthly-analysis.ts`: Core calculation engine
+- `src/lib/data-processing.ts`: Utility functions and date handling
+- `src/components/MonthSelector.tsx`: Frontend month selection
+- `src/app/api/analysis/monthly/route.ts`: Server-side validation
 
 This system architecture provides a robust, scalable, and secure foundation for the YNAB Off-Target Assignment Analysis application while maintaining simplicity for local development and deployment.

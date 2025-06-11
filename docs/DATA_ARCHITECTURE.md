@@ -1,8 +1,12 @@
 # YNAB Off-Target Assignment Analysis - Data Architecture Design
 
+**Version:** 1.0
+**Last Updated:** June 2025
+**Status:** Production Ready
+
 ## Overview
 
-This document defines the data models, structures, and flow for the YNAB Off-Target Assignment Analysis application. The application processes YNAB API data to analyze budget target alignment.
+This document defines the data models, structures, and flow for the YNAB Off-Target Assignment Analysis application. The application processes YNAB API data to analyze budget target alignment, including detailed calculation methodologies and current implementation details.
 
 ## YNAB API Data Models
 
@@ -167,6 +171,98 @@ interface DashboardSummary {
 }
 ```
 
+## Current Implementation: Core Metrics Calculation
+
+### Total Assigned Calculation
+
+**Implementation Location**: `src/lib/monthly-analysis.ts:47`
+
+```typescript
+const totalAssigned = processedCategories.reduce((sum, cat) => sum + cat.assigned, 0);
+```
+
+**Calculation Details**:
+- **Source Data**: YNAB `budgeted` field from category objects
+- **Scope**: All categories that pass filtering criteria (non-hidden, non-deleted)
+- **Units**: Milliunits (1000 = $1.00)
+- **Includes**: Both targeted and non-targeted categories
+- **Processing**: Direct summation after category processing
+
+### Total Targeted Calculation
+
+**Implementation Location**: `src/lib/monthly-analysis.ts:48-49`
+
+```typescript
+const categoriesWithTargets = processedCategories.filter(cat => cat.hasTarget);
+const totalTargeted = categoriesWithTargets.reduce((sum, cat) => sum + (cat.target || 0), 0);
+```
+
+**Calculation Details**:
+- **Source Data**: YNAB `goal_target` field via `extractTargetAmount()` function
+- **Scope**: Only categories with valid targets (`hasTarget: true`)
+- **Target Extraction**: Handles multiple goal types (TB, TBD, MF, NEED, DEBT)
+- **Null Handling**: Categories without targets are excluded from calculation
+- **Processing**: Summation of extracted target amounts
+
+### Target Extraction Logic
+
+**Implementation Location**: `src/lib/data-processing.ts:85`
+
+```typescript
+export function extractTargetAmount(category: YNABCategory): number | null {
+  switch (category.goal_type) {
+    case 'TB':   // Target Category Balance
+    case 'TBD':  // Target Category Balance by Date
+    case 'MF':   // Monthly Funding
+    case 'NEED': // Plan Your Spending
+    case 'DEBT': // Debt Payoff Goal
+      return category.goal_target || null;
+    default:
+      return null;
+  }
+}
+```
+
+### Relationship Between Metrics
+
+**Off-Target Analysis Calculation**:
+```typescript
+// Variance calculation for each category
+const variance = target !== null ? assigned - target : 0;
+
+// Alignment status determination
+const alignmentStatus = determineAlignmentStatus(assigned, target, tolerance);
+
+// Percentage calculations
+const onTargetPercentage = totalAssigned > 0 ? (onTargetAmount / totalAssigned) * 100 : 0;
+const overTargetPercentage = totalAssigned > 0 ? (overTargetAmount / totalAssigned) * 100 : 0;
+```
+
+**Key Relationships**:
+- **Variance** = Assigned - Target (positive = over-target, negative = under-target)
+- **Alignment Status** = Based on variance within tolerance threshold ($1.00 default)
+- **Percentages** = Calculated as portion of total assigned amount
+
+### Month Selection and Validation
+
+**Available Month Determination**:
+- Months generated from budget's `firstMonth` to `lastMonth` properties
+- Uses timezone-safe UTC date handling to prevent infinite loops
+- Implements duplicate prevention and safety limits
+
+**Validation Rules**:
+- Month format must be YYYY-MM-DD (first day of month)
+- Month must be within budget's valid date range
+- Server-side validation prevents invalid API calls
+- Returns 400 Bad Request with available range for invalid months
+
+**Property Name Compatibility**:
+```typescript
+// Handles both camelCase (frontend) and snake_case (backend)
+const firstMonth = budget.firstMonth || budget.first_month;
+const lastMonth = budget.lastMonth || budget.last_month;
+```
+
 ## Data Processing Logic
 
 ### Target Alignment Calculation (CONFIRMED FEASIBLE)
@@ -234,6 +330,75 @@ function formatCurrency(milliunits: number, currencyFormat: YNABCurrencyFormat):
     maximumFractionDigits: currencyFormat.decimal_digits,
   }).format(amount);
 }
+```
+
+## YNAB API Terminology Mapping
+
+### YNAB API Fields → Application Concepts
+
+| YNAB API Field | Data Type | YNAB UI Term | Application Term | Description |
+|---|---|---|---|---|
+| `budgeted` | integer (milliunits) | "Assigned This Month" | "Total Assigned" | Money allocated to categories this month |
+| `activity` | integer (milliunits) | "Activity" | Not used | Actual spending/income in category this month |
+| `balance` | integer (milliunits) | "Available" | Not used | Money remaining to spend in category |
+| `goal_target` | integer (milliunits) | "Target Amount" | "Total Targeted" | Target/goal amount for category |
+| `goal_type` | string | "Goal Type" | "Target Type" | Type of goal (TB, MF, NEED, etc.) |
+| `goal_target_month` | date | "Target Date" | Not used | Target completion date for goals |
+| `goal_percentage_complete` | integer | "Progress %" | Used in analysis | Percentage of goal completed |
+| `goal_under_funded` | integer (milliunits) | "Underfunded" | Used in variance | Amount still needed to meet goal |
+
+### Standard YNAB UI Terms → Application Usage
+
+| YNAB UI Term | Application Usage | Calculation Method |
+|---|---|---|
+| "Assigned This Month" | Core metric for Total Assigned | Sum of all `budgeted` values |
+| "Available" | Not directly used | Could be used for future features |
+| "Needed This Month" | Derived from targets | Calculated from goal fields |
+| "Target Category Balance" | Target type TB | Used in target extraction |
+| "Monthly Funding" | Target type MF | Used in target extraction |
+| "Plan Your Spending" | Target type NEED | Used in target extraction |
+
+### Application-Specific Terms
+
+| Application Term | Definition | Calculation |
+|---|---|---|
+| "Total Assigned" | Sum of all money assigned to categories | `Σ(category.budgeted)` |
+| "Total Targeted" | Sum of all category targets/goals | `Σ(category.goal_target)` where goal exists |
+| "Off-Target" | Categories where assigned ≠ target | `assigned - target ≠ 0` (within tolerance) |
+| "Budget Discipline Rating" | Overall assessment of target adherence | Based on alignment percentages |
+| "Target Alignment Score" | 0-100 score of budget discipline | Weighted score with bonuses/penalties |
+| "Variance" | Difference between assigned and target | `assigned - target` |
+| "Alignment Status" | Category classification | on-target, over-target, under-target, no-target |
+
+### Goal Type Mapping
+
+| YNAB Goal Type | Full Name | Application Handling | Target Extraction |
+|---|---|---|---|
+| `TB` | Target Category Balance | ✅ Supported | Uses `goal_target` |
+| `TBD` | Target Category Balance by Date | ✅ Supported | Uses `goal_target` |
+| `MF` | Monthly Funding | ✅ Supported | Uses `goal_target` |
+| `NEED` | Plan Your Spending | ✅ Supported | Uses `goal_target` |
+| `DEBT` | Debt Payoff Goal | ✅ Supported | Uses `goal_target` |
+| `null` | No Goal Set | ✅ Handled | Returns `null` target |
+
+### Property Name Compatibility
+
+The application handles both naming conventions used across the system:
+
+| Frontend (camelCase) | Backend (snake_case) | Source |
+|---|---|---|
+| `firstMonth` | `first_month` | Budget date range |
+| `lastMonth` | `last_month` | Budget date range |
+| `goalType` | `goal_type` | Category goal type |
+| `goalTarget` | `goal_target` | Category target amount |
+| `categoryGroupName` | `category_group_name` | Category group |
+
+**Implementation Example**:
+```typescript
+// Compatibility layer for property access
+const firstMonth = budget.firstMonth || budget.first_month;
+const lastMonth = budget.lastMonth || budget.last_month;
+const goalType = category.goalType || category.goal_type;
 ```
 
 ## YNAB API Endpoints (CONFIRMED)

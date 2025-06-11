@@ -12,6 +12,9 @@ This project has completed comprehensive planning and **thorough YNAB API resear
 - **[Product Requirements](docs/PRODUCT_REQUIREMENTS.md)** - Complete feature specifications and user stories
 - **[Data Architecture](docs/DATA_ARCHITECTURE.md)** - Data models, processing logic, and API integration
 - **[System Architecture](docs/SYSTEM_ARCHITECTURE.md)** - Technical architecture with Mermaid diagrams
+- **[API Documentation](docs/API_DOCUMENTATION.md)** - REST API endpoints and validation system
+- **[User Guide](docs/USER_GUIDE.md)** - Complete user manual and feature explanations
+- **[Development Guide](docs/DEVELOPMENT_GUIDE.md)** - Technical implementation details and recent fixes
 - **[Security Plan](docs/SECURITY_PLAN.md)** - Comprehensive security implementation strategy
 - **[Development Roadmap](docs/DEVELOPMENT_ROADMAP.md)** - Detailed timeline and milestones
 - **[Project Summary](docs/PROJECT_SUMMARY.md)** - Executive overview and key decisions
