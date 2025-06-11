@@ -50,13 +50,15 @@ describe('Data Processing Utilities', () => {
     });
 
     test('determines over-target status correctly', () => {
-      expect(determineAlignmentStatus(1500, 1000)).toBe('over-target');
-      expect(determineAlignmentStatus(2001, 1000)).toBe('over-target'); // Outside tolerance (1000 + 1)
+      // Default tolerance is 1000 milliunits ($1.00)
+      expect(determineAlignmentStatus(2001, 1000, 1000)).toBe('over-target'); // $1.001 over target (outside tolerance)
+      expect(determineAlignmentStatus(3000, 1000, 1000)).toBe('over-target'); // $2.00 over target
     });
 
     test('determines under-target status correctly', () => {
-      expect(determineAlignmentStatus(500, 1000)).toBe('under-target');
-      expect(determineAlignmentStatus(-1, 1000)).toBe('under-target'); // Outside tolerance (1000 - 1001)
+      // Default tolerance is 1000 milliunits ($1.00)
+      expect(determineAlignmentStatus(-1, 1000, 1000)).toBe('under-target'); // $1.001 under target (outside tolerance)
+      expect(determineAlignmentStatus(-500, 1000, 1000)).toBe('under-target'); // $1.50 under target
     });
 
     test('determines no-target status correctly', () => {
@@ -65,8 +67,8 @@ describe('Data Processing Utilities', () => {
     });
 
     test('respects custom tolerance', () => {
-      expect(determineAlignmentStatus(1050, 1000, 100)).toBe('on-target');
-      expect(determineAlignmentStatus(1051, 1000, 100)).toBe('over-target');
+      expect(determineAlignmentStatus(1050, 1000, 100)).toBe('on-target'); // Within $0.10 tolerance
+      expect(determineAlignmentStatus(1101, 1000, 100)).toBe('over-target'); // Outside $0.10 tolerance
     });
   });
 
@@ -143,6 +145,72 @@ describe('Data Processing Utilities', () => {
     test('returns null for unknown goal type', () => {
       const category = createMockCategory('UNKNOWN', 10000);
       expect(extractTargetAmount(category)).toBeNull();
+    });
+  });
+
+  describe('Enhanced Target Amount Extraction', () => {
+    const createEnhancedMockCategory = (
+      goalType: string | null,
+      goalTarget: number | null,
+      goalUnderFunded: number | null = null
+    ): YNABCategory => ({
+      id: 'test-id',
+      category_group_id: 'group-id',
+      name: 'Test Category',
+      hidden: false,
+      note: null,
+      budgeted: 0,
+      activity: 0,
+      balance: 0,
+      goal_type: goalType as any,
+      goal_target: goalTarget,
+      goal_under_funded: goalUnderFunded,
+      goal_target_month: null,
+      goal_creation_month: null,
+      goal_percentage_complete: null,
+      goal_months_to_budget: null,
+      goal_overall_funded: null,
+      goal_overall_left: null,
+      goal_needs_whole_amount: null,
+      goal_day: null,
+      goal_cadence: null,
+      goal_cadence_frequency: null,
+      deleted: false,
+    });
+
+    test('MF goals use goal_target (monthly funding amount)', () => {
+      const category = createEnhancedMockCategory('MF', 50000, 0);
+      expect(extractTargetAmount(category)).toBe(50000);
+    });
+
+    test('TB goals prioritize goal_under_funded when available', () => {
+      const category = createEnhancedMockCategory('TB', 100000, 25000);
+      expect(extractTargetAmount(category)).toBe(25000);
+    });
+
+    test('TB goals fallback to goal_target when goal_under_funded is null', () => {
+      const category = createEnhancedMockCategory('TB', 100000, null);
+      expect(extractTargetAmount(category)).toBe(100000);
+    });
+
+    test('TBD goals prioritize goal_under_funded for monthly progress', () => {
+      const category = createEnhancedMockCategory('TBD', 120000, 30000);
+      expect(extractTargetAmount(category)).toBe(30000);
+    });
+
+    test('NEED goals use goal_target (spending target)', () => {
+      const category = createEnhancedMockCategory('NEED', 60000, 10000);
+      expect(extractTargetAmount(category)).toBe(60000);
+    });
+
+    test('DEBT goals prioritize goal_under_funded for monthly payment', () => {
+      const category = createEnhancedMockCategory('DEBT', 500000, 50000);
+      expect(extractTargetAmount(category)).toBe(50000);
+    });
+
+    test('handles goal_under_funded of 0 correctly', () => {
+      const category = createEnhancedMockCategory('TB', 100000, 0);
+      expect(extractTargetAmount(category)).toBe(0);
     });
   });
 

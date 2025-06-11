@@ -281,6 +281,18 @@ All monetary values are in **milliunits** (YNAB format):
 - 1000 milliunits = $1.00
 - Negative values indicate overspending or debt
 
+### Target Calculation Method
+
+The API uses an enhanced target extraction method for more accurate monthly analysis:
+
+**Monthly Target Calculation**:
+- **MF (Monthly Funding)**: Uses `goal_target` (represents monthly funding amount)
+- **TB/TBD (Target Balance)**: Uses `goal_under_funded` when available (amount needed this month)
+- **NEED (Plan Your Spending)**: Uses `goal_target` (represents monthly spending target)
+- **DEBT (Debt Payoff)**: Uses `goal_under_funded` when available (monthly payment needed)
+
+**Fallback Logic**: If `goal_under_funded` is null/undefined, falls back to `goal_target`
+
 ### Date Format
 
 All dates use **YYYY-MM-DD** format in UTC timezone.

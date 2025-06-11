@@ -208,20 +208,43 @@ const totalTargeted = categoriesWithTargets.reduce((sum, cat) => sum + (cat.targ
 
 **Implementation Location**: `src/lib/data-processing.ts:85`
 
+The target extraction logic now uses a sophisticated approach that prioritizes monthly-specific calculations:
+
 ```typescript
 export function extractTargetAmount(category: YNABCategory): number | null {
+  if (!category.goal_type) return null;
+
+  const monthlyNeeded = category.goal_under_funded;
+  const overallTarget = category.goal_target;
+
   switch (category.goal_type) {
-    case 'TB':   // Target Category Balance
-    case 'TBD':  // Target Category Balance by Date
-    case 'MF':   // Monthly Funding
-    case 'NEED': // Plan Your Spending
+    case 'MF': // Monthly Funding
+      // Use overall target as it represents the monthly amount
+      return overallTarget || null;
+
+    case 'TB': // Target Category Balance
+    case 'TBD': // Target Category Balance by Date
     case 'DEBT': // Debt Payoff Goal
-      return category.goal_target || null;
+      // Use goal_under_funded (amount needed THIS MONTH) when available
+      if (monthlyNeeded !== null && monthlyNeeded !== undefined) {
+        return monthlyNeeded;
+      }
+      return overallTarget || null;
+
+    case 'NEED': // Plan Your Spending
+      // Use goal_target as it represents monthly spending target
+      return overallTarget || null;
+
     default:
       return null;
   }
 }
 ```
+
+**Key Improvements**:
+- **Monthly Focus**: Uses `goal_under_funded` for date-based and balance goals
+- **Goal Type Specific**: Different logic for different goal types
+- **Backward Compatible**: Falls back to `goal_target` when `goal_under_funded` unavailable
 
 ### Relationship Between Metrics
 
@@ -341,11 +364,13 @@ function formatCurrency(milliunits: number, currencyFormat: YNABCurrencyFormat):
 | `budgeted` | integer (milliunits) | "Assigned This Month" | "Total Assigned" | Money allocated to categories this month |
 | `activity` | integer (milliunits) | "Activity" | Not used | Actual spending/income in category this month |
 | `balance` | integer (milliunits) | "Available" | Not used | Money remaining to spend in category |
-| `goal_target` | integer (milliunits) | "Target Amount" | "Total Targeted" | Target/goal amount for category |
+| `goal_target` | integer (milliunits) | "Target Amount" | "Overall Target" | Overall target/goal amount for category |
+| `goal_under_funded` | integer (milliunits) | "Underfunded" | "Monthly Target" | Amount needed THIS MONTH to stay on track |
 | `goal_type` | string | "Goal Type" | "Target Type" | Type of goal (TB, MF, NEED, etc.) |
-| `goal_target_month` | date | "Target Date" | Not used | Target completion date for goals |
+| `goal_target_month` | date | "Target Date" | Reference only | Target completion date for goals |
 | `goal_percentage_complete` | integer | "Progress %" | Used in analysis | Percentage of goal completed |
-| `goal_under_funded` | integer (milliunits) | "Underfunded" | Used in variance | Amount still needed to meet goal |
+| `goal_overall_funded` | integer (milliunits) | "Total Funded" | Used in analysis | Total amount funded toward goal |
+| `goal_overall_left` | integer (milliunits) | "Amount Left" | Used in analysis | Total amount still needed for goal |
 
 ### Standard YNAB UI Terms → Application Usage
 

@@ -82,22 +82,46 @@ const totalTargeted = categoriesWithTargets.reduce((sum, cat) => sum + (cat.targ
 
 **Code Reference**: `extractTargetAmount()` in `src/lib/data-processing.ts:85`
 
-### Target Extraction Logic
+### Enhanced Target Extraction Logic
+
+**Updated Implementation** (`src/lib/data-processing.ts:85`):
 
 ```typescript
 export function extractTargetAmount(category: YNABCategory): number | null {
+  if (!category.goal_type) return null;
+
+  const monthlyNeeded = category.goal_under_funded;
+  const overallTarget = category.goal_target;
+
   switch (category.goal_type) {
-    case 'TB':   // Target Category Balance
-    case 'TBD':  // Target Category Balance by Date
-    case 'MF':   // Monthly Funding
-    case 'NEED': // Plan Your Spending
+    case 'MF': // Monthly Funding
+      // Use overall target as it represents the monthly amount
+      return overallTarget || null;
+
+    case 'TB': // Target Category Balance
+    case 'TBD': // Target Category Balance by Date
     case 'DEBT': // Debt Payoff Goal
-      return category.goal_target || null;
+      // Use goal_under_funded (amount needed THIS MONTH) when available
+      if (monthlyNeeded !== null && monthlyNeeded !== undefined) {
+        return monthlyNeeded;
+      }
+      return overallTarget || null;
+
+    case 'NEED': // Plan Your Spending
+      // Use goal_target as it represents monthly spending target
+      return overallTarget || null;
+
     default:
       return null;
   }
 }
 ```
+
+**Key Improvements**:
+- **Monthly Focus**: Prioritizes `goal_under_funded` for more accurate monthly calculations
+- **Goal Type Specific**: Different logic for different goal types (MF vs TB/TBD vs NEED)
+- **Backward Compatible**: Falls back to `goal_target` when `goal_under_funded` unavailable
+- **Enhanced Accuracy**: Uses YNAB's calculated monthly progress amounts for date-based goals
 
 ## Month Selection and Validation
 

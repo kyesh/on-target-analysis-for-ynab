@@ -80,29 +80,90 @@ export function calculateTargetPercentage(assigned: number, target: number | nul
 }
 
 /**
- * Extract target amount from YNAB category goal fields
+ * Extract target amount from YNAB category goal fields for monthly analysis
+ * Uses goal_under_funded when available for more accurate monthly calculations
  */
 export function extractTargetAmount(category: YNABCategory): number | null {
-  // Handle different goal types according to YNAB API research
+  // If no goal type is set, return null
+  if (!category.goal_type) {
+    return null;
+  }
+
+  // For monthly analysis, prioritize goal_under_funded when available
+  // This represents what YNAB calculates as needed THIS MONTH to stay on track
+  const monthlyNeeded = category.goal_under_funded;
+  const overallTarget = category.goal_target;
+
+  // Handle different goal types with monthly-specific logic
   switch (category.goal_type) {
-    case 'TB': // Target Category Balance
-    case 'TBD': // Target Category Balance by Date
-      return category.goal_target || null;
-    
     case 'MF': // Monthly Funding
-      return category.goal_target || null;
-    
+      // For monthly funding goals, use the overall target as it represents the monthly amount
+      // goal_under_funded might be 0 if already funded, but we want the monthly target
+      return overallTarget || null;
+
+    case 'TB': // Target Category Balance
+      // For target balance goals, use goal_under_funded if available (amount needed this month)
+      // Fall back to goal_target for total target amount
+      if (monthlyNeeded !== null && monthlyNeeded !== undefined) {
+        return monthlyNeeded;
+      }
+      return overallTarget || null;
+
+    case 'TBD': // Target Category Balance by Date
+      // For date-based targets, use goal_under_funded (monthly progress needed)
+      // This gives us what's needed THIS MONTH to stay on track for the target date
+      if (monthlyNeeded !== null && monthlyNeeded !== undefined) {
+        return monthlyNeeded;
+      }
+      return overallTarget || null;
+
     case 'NEED': // Plan Your Spending
-      // For NEED goals, use goal_target if available
-      return category.goal_target || null;
-    
+      // For spending goals, use goal_target as it represents the monthly spending target
+      // goal_under_funded might be misleading for spending categories
+      return overallTarget || null;
+
     case 'DEBT': // Debt Payoff Goal
-      // For debt goals, might use monthly payment amount
-      return category.goal_target || null;
-    
+      // For debt goals, use goal_under_funded if available (monthly payment needed)
+      // Fall back to goal_target
+      if (monthlyNeeded !== null && monthlyNeeded !== undefined) {
+        return monthlyNeeded;
+      }
+      return overallTarget || null;
+
     default:
       return null;
   }
+}
+
+/**
+ * Extract overall target amount (for reference/comparison purposes)
+ * This returns the goal_target field which represents the overall goal amount
+ */
+export function extractOverallTargetAmount(category: YNABCategory): number | null {
+  return category.goal_target || null;
+}
+
+/**
+ * Extract monthly needed amount (what YNAB calculates as needed this month)
+ * This returns the goal_under_funded field which represents monthly progress needed
+ */
+export function extractMonthlyNeededAmount(category: YNABCategory): number | null {
+  return category.goal_under_funded || null;
+}
+
+/**
+ * Get target type description for display purposes
+ */
+export function getTargetTypeDescription(goalType: string | null): string {
+  const descriptions: Record<string, string> = {
+    'TB': 'Target Category Balance',
+    'TBD': 'Target Category Balance by Date',
+    'MF': 'Monthly Funding',
+    'NEED': 'Plan Your Spending',
+    'DEBT': 'Debt Payoff Goal'
+  };
+
+  return descriptions[goalType || ''] || 'No Target';
 }
 
 /**
