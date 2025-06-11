@@ -9,6 +9,8 @@ import {
   determineAlignmentStatus,
   calculateTargetPercentage,
   extractTargetAmount,
+  extractOriginalMonthlyTarget,
+  extractCurrentNeededAmount,
   shouldIncludeCategory,
   processCategory,
   validateMonthFormat,
@@ -198,14 +200,14 @@ describe('Data Processing Utilities', () => {
       expect(extractTargetAmount(category)).toBe(30000);
     });
 
-    test('NEED goals prioritize goal_under_funded when available', () => {
+    test('NEED goals use original monthly target for variance calculations', () => {
       const category = createEnhancedMockCategory('NEED', 60000, 10000);
-      expect(extractTargetAmount(category)).toBe(10000); // Uses goal_under_funded when available
+      expect(extractTargetAmount(category)).toBe(60000); // Uses goal_target for accurate variance calculations
     });
 
-    test('NEED goals fallback to goal_target when goal_under_funded is null', () => {
+    test('NEED goals use goal_target when goal_under_funded is null', () => {
       const category = createEnhancedMockCategory('NEED', 60000, null);
-      expect(extractTargetAmount(category)).toBe(60000); // Falls back to goal_target
+      expect(extractTargetAmount(category)).toBe(60000); // Uses goal_target
     });
 
     test('DEBT goals prioritize goal_under_funded for monthly payment', () => {
@@ -216,6 +218,73 @@ describe('Data Processing Utilities', () => {
     test('handles goal_under_funded of 0 correctly', () => {
       const category = createEnhancedMockCategory('TB', 100000, 0);
       expect(extractTargetAmount(category)).toBe(0);
+    });
+  });
+
+  describe('Dual-Field Approach: Original vs Current Needed', () => {
+    const createEnhancedMockCategory = (
+      goalType: string | null,
+      goalTarget: number | null,
+      goalUnderFunded: number | null = null
+    ): YNABCategory => ({
+      id: 'test-id',
+      category_group_id: 'group-id',
+      name: 'Test Category',
+      hidden: false,
+      note: null,
+      budgeted: 0,
+      activity: 0,
+      balance: 0,
+      goal_type: goalType as any,
+      goal_target: goalTarget,
+      goal_under_funded: goalUnderFunded,
+      goal_target_month: null,
+      goal_creation_month: null,
+      goal_percentage_complete: null,
+      goal_months_to_budget: null,
+      goal_overall_funded: null,
+      goal_overall_left: null,
+      goal_needs_whole_amount: null,
+      goal_day: null,
+      goal_cadence: null,
+      goal_cadence_frequency: null,
+      deleted: false,
+    });
+
+    test('extractOriginalMonthlyTarget provides consistent variance calculation base', () => {
+      // NEED goal with goal_under_funded (remaining amount)
+      const category = createEnhancedMockCategory('NEED', 60000, 10000);
+
+      // Original target should be goal_target for variance calculations
+      expect(extractOriginalMonthlyTarget(category)).toBe(60000);
+    });
+
+    test('extractCurrentNeededAmount provides YNAB funding guidance', () => {
+      // NEED goal with goal_under_funded (remaining amount)
+      const category = createEnhancedMockCategory('NEED', 60000, 10000);
+
+      // Current needed should be goal_under_funded for funding guidance
+      expect(extractCurrentNeededAmount(category)).toBe(10000);
+    });
+
+    test('MF goals return same value for both functions', () => {
+      const category = createEnhancedMockCategory('MF', 150000, 50000);
+
+      // MF goals should use goal_target for both
+      expect(extractOriginalMonthlyTarget(category)).toBe(150000);
+      expect(extractCurrentNeededAmount(category)).toBe(150000);
+    });
+
+    test('cadence-based calculations work for original monthly target', () => {
+      const weeklyCategory = {
+        ...createEnhancedMockCategory('NEED', 100000, null), // $100/week
+        goal_cadence: 2, // Weekly
+        goal_cadence_frequency: 1,
+      };
+
+      // Should convert weekly to monthly: ($100 × 52) ÷ 12 = $433.33
+      const result = extractOriginalMonthlyTarget(weeklyCategory);
+      expect(result).toBe(433333);
     });
   });
 

@@ -16,14 +16,15 @@ export interface ProcessedCategory {
   name: string;
   categoryGroupName: string;
   assigned: number; // milliunits assigned this month
-  target: number | null; // milliunits target (null if no target)
+  target: number | null; // milliunits original monthly target for variance calculations
+  currentNeeded: number | null; // milliunits currently needed this month (YNAB's calculation)
   targetType: GoalType; // goal_type from YNAB
   variance: number; // assigned - target (positive = over-target)
   alignmentStatus: AlignmentStatus;
   percentageOfTarget: number | null; // (assigned / target) * 100
   isHidden: boolean;
   hasTarget: boolean;
-  
+
   // Additional goal information
   goalPercentageComplete?: number | null;
   goalUnderFunded?: number | null;
