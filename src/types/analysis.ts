@@ -36,6 +36,7 @@ export interface ProcessedCategory {
     rawFields: {
       goal_type: string | null;
       goal_target: number | null;
+      goal_creation_month: string | null;
       goal_cadence: number | null;
       goal_cadence_frequency: number | null;
       goal_day: number | null;
@@ -56,6 +57,8 @@ export interface MonthlyAnalysis {
   month: string; // YYYY-MM-DD format
   budgetId: string;
   budgetName: string;
+  totalIncome: number; // milliunits - from YNAB API income field
+  totalActivity: number; // milliunits - from YNAB API activity field
   totalAssigned: number; // milliunits
   totalTargeted: number; // milliunits (sum of all targets)
   onTargetAmount: number; // milliunits assigned to categories within target

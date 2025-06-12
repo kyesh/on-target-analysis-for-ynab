@@ -276,6 +276,58 @@ describe('Data Processing Utilities', () => {
       // Months to budget would be: (75000 + 0) / 3 = 25000
       expect(result).not.toBe(25000);
     });
+
+    test('Rule 6: Goal created after current month returns 0', () => {
+      const category = {
+        ...createEnhancedMockCategory('NEED', 50000, null),
+        goal_creation_month: '2024-12-15', // Created after analysis month
+        goal_cadence: 1,
+        goal_cadence_frequency: 1,
+      };
+
+      // Should return 0 because goal was created after the analysis month
+      const result = calculateNeededThisMonth(category, '2024-12-01');
+      expect(result).toBe(0);
+    });
+
+    test('Rule 6: Goal created before current month uses normal calculation', () => {
+      const category = {
+        ...createEnhancedMockCategory('NEED', 50000, null),
+        goal_creation_month: '2024-11-15', // Created before analysis month
+        goal_cadence: 1,
+        goal_cadence_frequency: 1,
+      };
+
+      // Should use normal Rule 1 calculation
+      const result = calculateNeededThisMonth(category, '2024-12-01');
+      expect(result).toBe(50000);
+    });
+
+    test('Rule 6: Goal created same month as analysis uses normal calculation', () => {
+      const category = {
+        ...createEnhancedMockCategory('NEED', 50000, null),
+        goal_creation_month: '2024-12-01', // Created same month as analysis
+        goal_cadence: 1,
+        goal_cadence_frequency: 1,
+      };
+
+      // Should use normal Rule 1 calculation
+      const result = calculateNeededThisMonth(category, '2024-12-01');
+      expect(result).toBe(50000);
+    });
+
+    test('Rule 6: Missing goal_creation_month uses normal calculation', () => {
+      const category = {
+        ...createEnhancedMockCategory('NEED', 50000, null),
+        goal_creation_month: null, // No creation month
+        goal_cadence: 1,
+        goal_cadence_frequency: 1,
+      };
+
+      // Should use normal Rule 1 calculation
+      const result = calculateNeededThisMonth(category, '2024-12-01');
+      expect(result).toBe(50000);
+    });
   });
 
   describe('Simplified Calculation Edge Cases', () => {

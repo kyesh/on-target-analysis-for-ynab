@@ -188,6 +188,30 @@ export function calculateNeededThisMonthWithRule(
     };
   }
 
+  // Rule 6: Goal Creation Month Check - Goals created after current month should not contribute
+  if (category.goal_creation_month && currentMonth) {
+    try {
+      const goalCreationDate = new Date(category.goal_creation_month + 'T00:00:00.000Z');
+      const currentMonthDate = new Date(currentMonth + 'T00:00:00.000Z');
+
+      if (goalCreationDate > currentMonthDate) {
+        return {
+          amount: 0,
+          rule: "Rule 6: Future Goal Creation",
+          debugInfo: {
+            reason: "Goal created after current analysis month",
+            goal_creation_month: category.goal_creation_month,
+            current_month: currentMonth,
+            calculation: `Goal created ${category.goal_creation_month} > analysis month ${currentMonth} → 0`
+          }
+        };
+      }
+    } catch (error) {
+      // If date parsing fails, continue with normal calculation
+      console.warn('Error parsing goal_creation_month:', category.goal_creation_month, error);
+    }
+  }
+
   // Rule 1: Monthly NEED Goals (cadence = 1, frequency = 1)
   if (category.goal_cadence === 1 && category.goal_cadence_frequency === 1) {
     return {
@@ -396,6 +420,7 @@ export function processCategory(
     rawFields: {
       goal_type: category.goal_type ?? null,
       goal_target: category.goal_target ?? null,
+      goal_creation_month: category.goal_creation_month ?? null,
       goal_cadence: category.goal_cadence ?? null,
       goal_cadence_frequency: category.goal_cadence_frequency ?? null,
       goal_day: category.goal_day ?? null,

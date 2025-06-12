@@ -135,6 +135,13 @@ export default function AnalysisDashboard({ budgetId, month }: AnalysisDashboard
   const allOverTargetCategories = [...topOverTargetCategories, ...zeroTargetWithAssignments]
     .sort((a, b) => Math.abs(b.variance) - Math.abs(a.variance)); // Sort by absolute variance
 
+  // Calculate total variance amounts for section titles
+  const totalOverTargetVariance = allOverTargetCategories
+    .reduce((sum, category) => sum + Math.abs(category.variance), 0);
+
+  const totalUnderTargetVariance = topUnderTargetCategories
+    .reduce((sum, category) => sum + Math.abs(category.variance), 0);
+
   return (
     <div className="space-y-6">
       {/* Monthly Overview */}
@@ -219,7 +226,7 @@ export default function AnalysisDashboard({ budgetId, month }: AnalysisDashboard
         <div className="bg-white shadow rounded-lg">
           <div className="px-4 py-5 sm:p-6">
             <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
-              Over-Target Categories ({allOverTargetCategories.length})
+              Over-Target Categories ({allOverTargetCategories.length}) - {formatCurrency(totalOverTargetVariance)} Over Budget
             </h3>
             {allOverTargetCategories.length > 0 ? (
               <div className="space-y-3">
@@ -258,7 +265,7 @@ export default function AnalysisDashboard({ budgetId, month }: AnalysisDashboard
         <div className="bg-white shadow rounded-lg">
           <div className="px-4 py-5 sm:p-6">
             <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
-              Under-Target Categories ({topUnderTargetCategories.length})
+              Under-Target Categories ({topUnderTargetCategories.length}) - {formatCurrency(totalUnderTargetVariance)} Under Budget
             </h3>
             {topUnderTargetCategories.length > 0 ? (
               <div className="space-y-3">

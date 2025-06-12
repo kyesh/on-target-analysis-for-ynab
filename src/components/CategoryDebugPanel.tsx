@@ -28,6 +28,7 @@ function getRuleColor(rule: string): string {
   if (rule.startsWith('Rule 3')) return 'text-purple-600 bg-purple-50';
   if (rule.startsWith('Rule 4')) return 'text-orange-600 bg-orange-50';
   if (rule.startsWith('Rule 5')) return 'text-red-600 bg-red-50';
+  if (rule.startsWith('Rule 6')) return 'text-pink-600 bg-pink-50';
   if (rule.startsWith('No Goal')) return 'text-gray-600 bg-gray-50';
   return 'text-gray-600 bg-gray-50';
 }
@@ -93,6 +94,7 @@ export function CategoryDebugPanel({ category, isOpen, onToggle }: CategoryDebug
               <div className="space-y-1">
                 <div><span className="font-medium">goal_type:</span> {rawFields.goal_type || 'null'}</div>
                 <div><span className="font-medium">goal_target:</span> {formatCurrency(rawFields.goal_target)}</div>
+                <div><span className="font-medium">goal_creation_month:</span> {rawFields.goal_creation_month || 'null'}</div>
                 <div><span className="font-medium">goal_cadence:</span> {getCadenceDescription(rawFields.goal_cadence)}</div>
                 <div><span className="font-medium">goal_cadence_frequency:</span> {rawFields.goal_cadence_frequency ?? 'null'}</div>
                 <div><span className="font-medium">goal_day:</span> {rawFields.goal_day !== null ? `${rawFields.goal_day} (${getDayName(rawFields.goal_day)})` : 'null'}</div>

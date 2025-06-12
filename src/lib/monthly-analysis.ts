@@ -80,6 +80,8 @@ export function analyzeMonth(
     month: monthData.month,
     budgetId,
     budgetName,
+    totalIncome: monthData.income || 0, // Handle null/undefined income
+    totalActivity: monthData.activity || 0, // Handle null/undefined activity
     totalAssigned,
     totalTargeted,
     onTargetAmount,
@@ -121,7 +123,7 @@ export function analyzeCategoryGroups(
   const monthData: YNABMonth = {
     month,
     note: '',
-    income: 0,
+    income: 0, // Category groups don't have income data
     budgeted: allCategories.reduce((sum, cat) => sum + cat.budgeted, 0),
     activity: allCategories.reduce((sum, cat) => sum + cat.activity, 0),
     to_be_budgeted: 0,

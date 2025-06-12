@@ -16,6 +16,20 @@ Rather than trying to handle every edge case, we use five clear rules that cover
 
 ---
 
+## 🔄 Rule Priority Order
+
+The rules are evaluated in this specific order:
+
+1. **Zero-Target Strategy**: Categories without `goal_type` → 0
+2. **Rule 6**: Goal Creation Month Check → 0 (if goal created after current month)
+3. **Rule 1**: Monthly NEED Goals → `goal_target`
+4. **Rule 2**: Weekly NEED Goals → `goal_target × day_count`
+5. **Rule 3**: Months to Budget → `(goal_overall_left + budgeted) ÷ goal_months_to_budget`
+6. **Rule 5**: Low Months to Budget → 0
+7. **Rule 4**: All other cases → `goal_target`
+
+---
+
 ## 🎯 Simplified Calculation Rules
 
 ### Zero-Target Strategy
@@ -27,6 +41,34 @@ if (!category.goal_type) {
   return 0; // Zero-target strategy
 }
 ```
+
+### Rule 1: Monthly NEED Goals
+**Condition**: `goal_cadence = 1` AND `goal_cadence_frequency = 1`
+**Calculation**: Use `goal_target` as the monthly amount
+
+```typescript
+if (category.goal_cadence === 1 && category.goal_cadence_frequency === 1) {
+  return category.goal_target;
+}
+```
+
+### Rule 6: Goal Creation Month Check (High Priority)
+**Condition**: `goal_creation_month` exists and is after the currently selected analysis month
+**Calculation**: Return `0` for goals created after the current month
+
+```typescript
+if (category.goal_creation_month && currentMonth) {
+  const goalCreationDate = new Date(category.goal_creation_month + 'T00:00:00.000Z');
+  const currentMonthDate = new Date(currentMonth + 'T00:00:00.000Z');
+
+  if (goalCreationDate > currentMonthDate) {
+    return 0; // Goal created after current month
+  }
+}
+```
+
+**Example**: Goal created in January 2025, analyzing December 2024 → $0 needed
+**Priority**: Checked early in rule evaluation sequence
 
 ### Rule 1: Monthly NEED Goals
 **Condition**: `goal_cadence = 1` AND `goal_cadence_frequency = 1`
