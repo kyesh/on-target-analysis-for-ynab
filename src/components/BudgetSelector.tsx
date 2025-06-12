@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { YNABBudget } from '@/types/ynab';
+import { SafeBudget } from '@/types/ynab';
 
 interface BudgetSelectorProps {
   onBudgetSelect: (budgetId: string) => void;
@@ -9,7 +9,7 @@ interface BudgetSelectorProps {
 }
 
 export default function BudgetSelector({ onBudgetSelect, selectedBudgetId }: BudgetSelectorProps) {
-  const [budgets, setBudgets] = useState<YNABBudget[]>([]);
+  const [budgets, setBudgets] = useState<SafeBudget[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -24,10 +24,15 @@ export default function BudgetSelector({ onBudgetSelect, selectedBudgetId }: Bud
       const data = await response.json();
       
       if (data.success) {
-        setBudgets(data.data.budgets);
-        // Auto-select first budget if none selected
-        if (!selectedBudgetId && data.data.budgets.length > 0) {
-          onBudgetSelect(data.data.budgets[0].id);
+        // Sort budgets by lastModified in descending order (most recent first)
+        const sortedBudgets = data.data.budgets.sort((a: SafeBudget, b: SafeBudget) =>
+          new Date(b.lastModified).getTime() - new Date(a.lastModified).getTime()
+        );
+        setBudgets(sortedBudgets);
+
+        // Auto-select most recently modified budget if none selected
+        if (!selectedBudgetId && sortedBudgets.length > 0) {
+          onBudgetSelect(sortedBudgets[0].id);
         }
       } else {
         setError(data.error?.message || 'Failed to load budgets');

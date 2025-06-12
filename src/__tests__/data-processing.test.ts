@@ -173,9 +173,9 @@ describe('Data Processing Utilities', () => {
       expect(extractTargetAmount(category)).toBe(20000);
     });
 
-    test('returns null for no goal type', () => {
+    test('returns 0 for no goal type (Zero Target Strategy)', () => {
       const category = createMockCategory(null, 10000);
-      expect(extractTargetAmount(category)).toBeNull();
+      expect(extractTargetAmount(category)).toBe(0);
     });
 
     test('returns goal_target for unknown goal type (fallback)', () => {
@@ -186,14 +186,19 @@ describe('Data Processing Utilities', () => {
 
   describe('Enhanced Target Amount Extraction', () => {
 
-    test('returns null for categories without goal_type', () => {
+    test('returns 0 for categories without goal_type (Zero Target Strategy)', () => {
       const category = createMockCategory(null, null);
-      expect(calculateNeededThisMonth(category)).toBeNull();
+      expect(calculateNeededThisMonth(category)).toBe(0);
     });
 
     test('returns null for categories without goal_target', () => {
       const category = createMockCategory('TB', null);
       expect(calculateNeededThisMonth(category)).toBeNull();
+    });
+
+    test('Zero-Target Strategy: returns 0 for categories without goal_type', () => {
+      const category = createMockCategory(null, null);
+      expect(calculateNeededThisMonth(category)).toBe(0);
     });
 
     test('Rule 1: Monthly NEED Goals (cadence=1, frequency=1)', () => {
@@ -233,6 +238,43 @@ describe('Data Processing Utilities', () => {
     test('Rule 4: All other cases fallback to goal_target', () => {
       const category = createEnhancedMockCategory('MF', 150000, null);
       expect(calculateNeededThisMonth(category)).toBe(150000);
+    });
+
+    test('Rule 5: Low months to budget returns 0', () => {
+      const category = {
+        ...createEnhancedMockCategory('TBD', 100000, null),
+        goal_months_to_budget: 0,
+      };
+      expect(calculateNeededThisMonth(category)).toBe(0);
+    });
+
+    test('Rule 5: Negative months to budget returns 0', () => {
+      const category = {
+        ...createEnhancedMockCategory('TBD', 100000, null),
+        goal_months_to_budget: -1,
+      };
+      expect(calculateNeededThisMonth(category)).toBe(0);
+    });
+
+    test('Rule Priority: Weekly goals take precedence over months to budget', () => {
+      const category = {
+        ...createEnhancedMockCategory('NEED', 25000, null),
+        goal_cadence: 2,
+        goal_cadence_frequency: 1,
+        goal_day: 4, // Thursday
+        goal_months_to_budget: 3, // This should NOT be used
+        goal_overall_left: 75000,
+        budgeted: 0,
+      };
+
+      // Should use Rule 2 (Weekly) not Rule 3 (Months to Budget)
+      // For December 2024, there are 5 Thursdays, so 25000 * 5 = 125000
+      const result = calculateNeededThisMonth(category, '2024-12-01');
+      expect(result).toBe(125000); // 5 Thursdays * 25000
+
+      // Verify it's NOT using months to budget calculation
+      // Months to budget would be: (75000 + 0) / 3 = 25000
+      expect(result).not.toBe(25000);
     });
   });
 

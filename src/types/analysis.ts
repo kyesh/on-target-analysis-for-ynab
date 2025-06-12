@@ -43,6 +43,7 @@ export interface ProcessedCategory {
       goal_overall_left: number | null;
       budgeted: number;
       balance: number;
+      activity: number;
     };
     // Calculation details
     calculationRule: string;

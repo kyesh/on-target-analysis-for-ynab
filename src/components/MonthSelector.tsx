@@ -27,9 +27,9 @@ export default function MonthSelector({
 
     try {
       const today = getFirstDayOfMonth();
-      const todayDate = new Date(today);
-      const budgetFirstDate = new Date(budgetFirstMonth);
-      const budgetLastDate = new Date(budgetLastMonth);
+      const todayDate = new Date(today + 'T00:00:00.000Z');
+      const budgetFirstDate = new Date(budgetFirstMonth + 'T00:00:00.000Z');
+      const budgetLastDate = new Date(budgetLastMonth + 'T00:00:00.000Z');
 
       // Choose a safe default month within budget range
       let defaultMonth: string;
@@ -60,17 +60,19 @@ export default function MonthSelector({
   }, [currentMonth, selectedMonth, budgetFirstMonth, budgetLastMonth, onMonthSelect]);
 
   const formatMonthDisplay = (monthStr: string): string => {
-    const date = new Date(monthStr);
-    return date.toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'long' 
+    // Parse as UTC to avoid timezone issues
+    const date = new Date(monthStr + 'T00:00:00.000Z');
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      timeZone: 'UTC'
     });
   };
 
   const canGoPrevious = (): boolean => {
     if (!selectedMonth || !budgetFirstMonth) return false;
     try {
-      return new Date(selectedMonth) > new Date(budgetFirstMonth);
+      return new Date(selectedMonth + 'T00:00:00.000Z') > new Date(budgetFirstMonth + 'T00:00:00.000Z');
     } catch (error) {
       console.error('Error checking previous month availability:', error);
       return false;
@@ -80,7 +82,7 @@ export default function MonthSelector({
   const canGoNext = (): boolean => {
     if (!selectedMonth || !budgetLastMonth) return false;
     try {
-      return new Date(selectedMonth) < new Date(budgetLastMonth);
+      return new Date(selectedMonth + 'T00:00:00.000Z') < new Date(budgetLastMonth + 'T00:00:00.000Z');
     } catch (error) {
       console.error('Error checking next month availability:', error);
       return false;

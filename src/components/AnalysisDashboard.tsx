@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { MonthlyAnalysisResponse } from '@/types/analysis';
 import { formatCurrency } from '@/lib/data-processing';
 import { CategoryDebugPanel, DebugToggle } from './CategoryDebugPanel';
+import { MonthlyOverview } from './MonthlyOverview';
 
 interface AnalysisDashboardProps {
   budgetId?: string;
@@ -114,8 +115,31 @@ export default function AnalysisDashboard({ budgetId, month }: AnalysisDashboard
 
   const { monthlyAnalysis, topOverTargetCategories, topUnderTargetCategories } = analysis;
 
+  // Get zero-target categories with assignments for over-target section
+  const zeroTargetWithAssignments = analysis.categories
+    .filter(category => category.neededThisMonth === 0 && category.assigned > 0)
+    .map(category => ({
+      categoryId: category.id,
+      categoryName: category.name,
+      categoryGroupName: category.categoryGroupName,
+      assigned: category.assigned,
+      target: 0,
+      variance: category.assigned, // All assigned amount is "over" the zero target
+      variancePercentage: null, // Can't calculate percentage of zero
+      targetType: null,
+      month: analysis.selectedMonth,
+    }))
+    .sort((a, b) => b.variance - a.variance); // Sort by variance (highest first)
+
+  // Combine over-target categories with zero-target categories
+  const allOverTargetCategories = [...topOverTargetCategories, ...zeroTargetWithAssignments]
+    .sort((a, b) => Math.abs(b.variance) - Math.abs(a.variance)); // Sort by absolute variance
+
   return (
     <div className="space-y-6">
+      {/* Monthly Overview */}
+      <MonthlyOverview analysis={analysis} />
+
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-white overflow-hidden shadow rounded-lg">
@@ -195,24 +219,29 @@ export default function AnalysisDashboard({ budgetId, month }: AnalysisDashboard
         <div className="bg-white shadow rounded-lg">
           <div className="px-4 py-5 sm:p-6">
             <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
-              Over-Target Categories ({topOverTargetCategories.length})
+              Over-Target Categories ({allOverTargetCategories.length})
             </h3>
-            {topOverTargetCategories.length > 0 ? (
+            {allOverTargetCategories.length > 0 ? (
               <div className="space-y-3">
-                {topOverTargetCategories.slice(0, 5).map((category) => (
+                {allOverTargetCategories.slice(0, 5).map((category) => (
                   <div key={category.categoryId} className="flex justify-between items-center p-3 bg-red-50 rounded-md">
-                    <div>
+                    <div className="flex-1">
                       <p className="text-sm font-medium text-gray-900">{category.categoryName}</p>
                       <p className="text-xs text-gray-500">{category.categoryGroupName}</p>
+                      <div className="text-xs text-gray-600 mt-1 space-x-2">
+                        <span>Target: {formatCurrency(category.target)}</span>
+                        <span>•</span>
+                        <span>Assigned: {formatCurrency(category.assigned)}</span>
+                      </div>
                     </div>
                     <div className="text-right">
                       <p className="text-sm font-medium text-red-600">
-                        +{formatCurrency(category.variance)}
+                        +{formatCurrency(category.variance)} over
                       </p>
                       <p className="text-xs text-gray-500">
                         {category.variancePercentage !== null && !isNaN(category.variancePercentage) && isFinite(category.variancePercentage)
-                          ? `${category.variancePercentage.toFixed(1)}% over`
-                          : 'Over target'
+                          ? `${category.variancePercentage.toFixed(1)}% over target`
+                          : category.target === 0 ? 'Zero target with assignment' : 'Over target'
                         }
                       </p>
                     </div>
@@ -235,17 +264,22 @@ export default function AnalysisDashboard({ budgetId, month }: AnalysisDashboard
               <div className="space-y-3">
                 {topUnderTargetCategories.slice(0, 5).map((category) => (
                   <div key={category.categoryId} className="flex justify-between items-center p-3 bg-yellow-50 rounded-md">
-                    <div>
+                    <div className="flex-1">
                       <p className="text-sm font-medium text-gray-900">{category.categoryName}</p>
                       <p className="text-xs text-gray-500">{category.categoryGroupName}</p>
+                      <div className="text-xs text-gray-600 mt-1 space-x-2">
+                        <span>Target: {formatCurrency(category.target)}</span>
+                        <span>•</span>
+                        <span>Assigned: {formatCurrency(category.assigned)}</span>
+                      </div>
                     </div>
                     <div className="text-right">
                       <p className="text-sm font-medium text-yellow-600">
-                        {formatCurrency(category.variance)}
+                        {formatCurrency(category.variance)} under
                       </p>
                       <p className="text-xs text-gray-500">
                         {category.variancePercentage !== null && !isNaN(category.variancePercentage) && isFinite(category.variancePercentage)
-                          ? `${Math.abs(category.variancePercentage).toFixed(1)}% under`
+                          ? `${Math.abs(category.variancePercentage).toFixed(1)}% under target`
                           : 'Under target'
                         }
                       </p>
@@ -274,6 +308,7 @@ export default function AnalysisDashboard({ budgetId, month }: AnalysisDashboard
           <div className="space-y-4">
             {analysis.categories
               .filter(category => category.hasTarget || category.assigned > 0)
+              .sort((a, b) => Math.abs(b.variance) - Math.abs(a.variance)) // Sort by absolute variance (largest first)
               .map((category) => (
                 <div key={category.id} className="border border-gray-200 rounded-lg p-4">
                   {/* Category Header */}

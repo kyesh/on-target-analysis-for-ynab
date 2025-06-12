@@ -12,11 +12,21 @@
 The "Needed This Month" value in YNAB can be calculated using simplified, definitive rules based on direct analysis of YNAB's behavior. This guide provides a streamlined approach that eliminates complexity while maintaining accuracy.
 
 ### Key Insight
-Rather than trying to handle every edge case, we use four clear rules that cover all practical YNAB goal scenarios with simple, maintainable logic.
+Rather than trying to handle every edge case, we use five clear rules that cover all practical YNAB goal scenarios with simple, maintainable logic. This includes a zero-target strategy for categories without goals and proper rule priority to ensure weekly goals take precedence over months-to-budget calculations.
 
 ---
 
 ## 🎯 Simplified Calculation Rules
+
+### Zero-Target Strategy
+**Condition**: `goal_type` is null or undefined
+**Calculation**: Return `0` for categories without goals
+
+```typescript
+if (!category.goal_type) {
+  return 0; // Zero-target strategy
+}
+```
 
 ### Rule 1: Monthly NEED Goals
 **Condition**: `goal_cadence = 1` AND `goal_cadence_frequency = 1`
@@ -28,7 +38,7 @@ if (category.goal_cadence === 1 && category.goal_cadence_frequency === 1) {
 }
 ```
 
-### Rule 2: Weekly NEED Goals
+### Rule 2: Weekly NEED Goals (High Priority)
 **Condition**: `goal_cadence = 2` AND `goal_cadence_frequency = 1` AND `goal_day` is set
 **Calculation**: `goal_target × count_of_goal_day_in_month`
 
@@ -41,9 +51,10 @@ if (category.goal_cadence === 2 && category.goal_cadence_frequency === 1 &&
 ```
 
 **Example**: $100 per Monday × 5 Mondays in December = $500/month
+**Priority**: Takes precedence over Rule 3 (Months to Budget)
 
-### Rule 3: Goals with Months to Budget (Priority Rule)
-**Condition**: `goal_months_to_budget` is set and > 0
+### Rule 3: Goals with Months to Budget
+**Condition**: `goal_months_to_budget > 0` AND no specific cadence rules apply
 **Calculation**: `(goal_overall_left + budgeted) ÷ goal_months_to_budget`
 
 ```typescript
@@ -54,10 +65,20 @@ if (category.goal_months_to_budget && category.goal_months_to_budget > 0) {
 }
 ```
 
-**Note**: This rule takes precedence over cadence-based calculations.
+**Note**: Only applies if no specific cadence rules (Rule 1 or 2) match.
+
+### Rule 5: Low Months to Budget
+**Condition**: `goal_months_to_budget ≤ 0`
+**Calculation**: Return `0` for completed or overdue goals
+
+```typescript
+if (typeof category.goal_months_to_budget === 'number' && category.goal_months_to_budget <= 0) {
+  return 0; // Goal completed or overdue
+}
+```
 
 ### Rule 4: All Other Cases (Fallback)
-**Condition**: Any goal type not covered by Rules 1-3
+**Condition**: Any goal type not covered by other rules
 **Calculation**: Use `goal_target` directly
 
 ```typescript

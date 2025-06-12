@@ -37,7 +37,7 @@ export interface YNABCategory {
   deleted: boolean;
 }
 
-// YNAB Budget Interface
+// YNAB Budget Interface (raw API format)
 export interface YNABBudget {
   id: string;
   name: string;
@@ -48,6 +48,16 @@ export interface YNABBudget {
     format: string;
   };
   currency_format?: YNABCurrencyFormat;
+}
+
+// Safe Budget Interface (for API responses)
+export interface SafeBudget {
+  id: string;
+  name: string;
+  lastModified: string; // ISO 8601 date
+  firstMonth: string; // YYYY-MM-DD format
+  lastMonth: string; // YYYY-MM-DD format
+  currencyFormat?: YNABCurrencyFormat;
 }
 
 // Currency Format Interface

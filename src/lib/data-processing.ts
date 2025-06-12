@@ -109,8 +109,13 @@ function countDayOccurrencesInMonth(year: number, month: number, dayOfWeek: numb
  * This replaces all previous complex calculation logic with definitive rules
  */
 export function calculateNeededThisMonth(category: YNABCategory, currentMonth?: string): number | null {
-  // Return null if no goal type is set
-  if (!category.goal_type || !category.goal_target) {
+  // Zero-Target Strategy: return 0 for categories without goals
+  if (!category.goal_type) {
+    return 0;
+  }
+
+  // Return null if goal type exists but no target is set
+  if (!category.goal_target) {
     return null;
   }
 
@@ -137,7 +142,7 @@ export function calculateNeededThisMonth(category: YNABCategory, currentMonth?: 
     try {
       // Parse month (YYYY-MM-DD format)
       const [year, month] = currentMonth.split('-').map(Number);
-      const dayCount = countDayOccurrencesInMonth(year, month, category.goal_day as number);
+      const dayCount = countDayOccurrencesInMonth(year, month, category.goal_day!);
       return Math.round(category.goal_target * dayCount);
     } catch (error) {
       console.warn('Error calculating weekly goal for month:', currentMonth, error);
@@ -157,32 +162,28 @@ export function calculateNeededThisMonthWithRule(
   category: YNABCategory,
   currentMonth?: string
 ): { amount: number | null; rule: string; debugInfo?: any } {
-  // Return null if no goal type is set
-  if (!category.goal_type || !category.goal_target) {
+  // Handle categories without goals - Zero Target Strategy
+  if (!category.goal_type) {
     return {
-      amount: null,
-      rule: "No Goal",
+      amount: 0,
+      rule: "No Goal - Zero Target",
       debugInfo: {
-        reason: "Missing goal_type or goal_target",
+        reason: "Category has no goal_type, using zero target strategy",
         goal_type: category.goal_type,
         goal_target: category.goal_target
       }
     };
   }
 
-  // Rule 3: Goals with months to budget take precedence
-  if (category.goal_months_to_budget && category.goal_months_to_budget > 0) {
-    const overallLeft = category.goal_overall_left || 0;
-    const budgeted = category.budgeted || 0;
-    const amount = Math.round((overallLeft + budgeted) / category.goal_months_to_budget);
+  // Return null if goal type exists but no target is set
+  if (!category.goal_target) {
     return {
-      amount,
-      rule: "Rule 3: Months to Budget",
+      amount: null,
+      rule: "No Goal",
       debugInfo: {
-        calculation: `(${overallLeft} + ${budgeted}) ÷ ${category.goal_months_to_budget} = ${amount}`,
-        goal_overall_left: overallLeft,
-        budgeted: budgeted,
-        goal_months_to_budget: category.goal_months_to_budget
+        reason: "Goal type exists but missing goal_target",
+        goal_type: category.goal_type,
+        goal_target: category.goal_target
       }
     };
   }
@@ -200,7 +201,7 @@ export function calculateNeededThisMonthWithRule(
     };
   }
 
-  // Rule 2: Weekly NEED Goals (cadence = 2, frequency = 1)
+  // Rule 2: Weekly NEED Goals (cadence = 2, frequency = 1) - Takes precedence over months to budget
   if (category.goal_cadence === 2 && category.goal_cadence_frequency === 1 &&
       typeof category.goal_day === 'number') {
     if (!currentMonth) {
@@ -218,7 +219,7 @@ export function calculateNeededThisMonthWithRule(
 
     try {
       const [year, month] = currentMonth.split('-').map(Number);
-      const dayCount = countDayOccurrencesInMonth(year, month, category.goal_day as number);
+      const dayCount = countDayOccurrencesInMonth(year, month, category.goal_day!);
       const amount = Math.round(category.goal_target * dayCount);
       return {
         amount,
@@ -247,6 +248,36 @@ export function calculateNeededThisMonthWithRule(
         }
       };
     }
+  }
+
+  // Rule 3: Goals with months to budget (only if no specific cadence rules apply)
+  if (category.goal_months_to_budget && category.goal_months_to_budget > 0) {
+    const overallLeft = category.goal_overall_left || 0;
+    const budgeted = category.budgeted || 0;
+    const amount = Math.round((overallLeft + budgeted) / category.goal_months_to_budget);
+    return {
+      amount,
+      rule: "Rule 3: Months to Budget",
+      debugInfo: {
+        calculation: `(${overallLeft} + ${budgeted}) ÷ ${category.goal_months_to_budget} = ${amount}`,
+        goal_overall_left: overallLeft,
+        budgeted: budgeted,
+        goal_months_to_budget: category.goal_months_to_budget
+      }
+    };
+  }
+
+  // Rule 5: Low months to budget (zero target when <= 0)
+  if (typeof category.goal_months_to_budget === 'number' && category.goal_months_to_budget <= 0) {
+    return {
+      amount: 0,
+      rule: "Rule 5: Low Months to Budget",
+      debugInfo: {
+        calculation: `goal_months_to_budget = ${category.goal_months_to_budget} (≤ 0) → 0`,
+        goal_months_to_budget: category.goal_months_to_budget,
+        reason: "Months to budget is zero or negative"
+      }
+    };
   }
 
   // Rule 4: All other cases - fallback to goal_target
@@ -360,10 +391,10 @@ export function processCategory(
   const alignmentStatus = determineAlignmentStatus(assigned, neededThisMonth, config.toleranceMilliunits);
   const percentageOfTarget = calculateTargetPercentage(assigned, neededThisMonth);
 
-  // Create debug information for categories with goals
-  const debugInfo = category.goal_type ? {
+  // Create debug information for all categories (including those without goals)
+  const debugInfo = {
     rawFields: {
-      goal_type: category.goal_type,
+      goal_type: category.goal_type ?? null,
       goal_target: category.goal_target ?? null,
       goal_cadence: category.goal_cadence ?? null,
       goal_cadence_frequency: category.goal_cadence_frequency ?? null,
@@ -372,10 +403,11 @@ export function processCategory(
       goal_overall_left: category.goal_overall_left ?? null,
       budgeted: category.budgeted,
       balance: category.balance,
+      activity: category.activity,
     },
     calculationRule: calculationResult.rule,
     calculationDetails: calculationResult.debugInfo,
-  } : undefined;
+  };
 
   return {
     id: category.id,

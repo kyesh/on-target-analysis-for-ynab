@@ -27,6 +27,8 @@ function getRuleColor(rule: string): string {
   if (rule.startsWith('Rule 2')) return 'text-green-600 bg-green-50';
   if (rule.startsWith('Rule 3')) return 'text-purple-600 bg-purple-50';
   if (rule.startsWith('Rule 4')) return 'text-orange-600 bg-orange-50';
+  if (rule.startsWith('Rule 5')) return 'text-red-600 bg-red-50';
+  if (rule.startsWith('No Goal')) return 'text-gray-600 bg-gray-50';
   return 'text-gray-600 bg-gray-50';
 }
 
@@ -37,6 +39,20 @@ function getDayName(dayNumber: number | null): string {
   if (dayNumber === null) return 'null';
   const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   return days[dayNumber] || `Day ${dayNumber}`;
+}
+
+/**
+ * Get cadence description from cadence number
+ */
+function getCadenceDescription(cadence: number | null): string {
+  if (cadence === null) return 'null';
+  const descriptions: Record<number, string> = {
+    0: '0 (One-time)',
+    1: '1 (Monthly)',
+    2: '2 (Weekly)',
+    13: '13 (Yearly)'
+  };
+  return descriptions[cadence] || `${cadence} (Unknown)`;
 }
 
 export function CategoryDebugPanel({ category, isOpen, onToggle }: CategoryDebugPanelProps) {
@@ -77,15 +93,16 @@ export function CategoryDebugPanel({ category, isOpen, onToggle }: CategoryDebug
               <div className="space-y-1">
                 <div><span className="font-medium">goal_type:</span> {rawFields.goal_type || 'null'}</div>
                 <div><span className="font-medium">goal_target:</span> {formatCurrency(rawFields.goal_target)}</div>
-                <div><span className="font-medium">goal_cadence:</span> {rawFields.goal_cadence ?? 'null'}</div>
+                <div><span className="font-medium">goal_cadence:</span> {getCadenceDescription(rawFields.goal_cadence)}</div>
                 <div><span className="font-medium">goal_cadence_frequency:</span> {rawFields.goal_cadence_frequency ?? 'null'}</div>
-                <div><span className="font-medium">goal_day:</span> {getDayName(rawFields.goal_day)}</div>
+                <div><span className="font-medium">goal_day:</span> {rawFields.goal_day !== null ? `${rawFields.goal_day} (${getDayName(rawFields.goal_day)})` : 'null'}</div>
               </div>
               <div className="space-y-1">
                 <div><span className="font-medium">goal_months_to_budget:</span> {rawFields.goal_months_to_budget ?? 'null'}</div>
                 <div><span className="font-medium">goal_overall_left:</span> {formatCurrency(rawFields.goal_overall_left)}</div>
                 <div><span className="font-medium">budgeted:</span> {formatCurrency(rawFields.budgeted)}</div>
                 <div><span className="font-medium">balance:</span> {formatCurrency(rawFields.balance)}</div>
+                <div><span className="font-medium">activity:</span> {formatCurrency(rawFields.activity)}</div>
               </div>
             </div>
           </div>
