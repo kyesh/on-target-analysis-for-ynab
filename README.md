@@ -2,205 +2,216 @@
 
 A comprehensive Next.js web application that integrates with the YNAB API to analyze budget target alignment, helping users understand how their monthly budget assignments compare against their predefined targets.
 
-## 🎯 Project Status: Planning Phase Complete ✅ API Research Confirmed
+![YNAB Analysis Dashboard](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)
+![Next.js](https://img.shields.io/badge/Next.js-14+-black)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.4+-blue)
+![React](https://img.shields.io/badge/React-18+-blue)
 
-This project has completed comprehensive planning and **thorough YNAB API research**. **✅ CONFIRMED: All target/goal data IS available through the YNAB API v1.** The project is 100% feasible and ready for development.
+## 🎯 What This Application Does
 
-## 📋 Planning Documents
+This tool provides **detailed budget analysis** for YNAB users by:
 
-### Core Documentation
-- **[Product Requirements](docs/PRODUCT_REQUIREMENTS.md)** - Complete feature specifications and user stories
-- **[Data Architecture](docs/DATA_ARCHITECTURE.md)** - Data models, processing logic, and API integration
-- **[System Architecture](docs/SYSTEM_ARCHITECTURE.md)** - Technical architecture with Mermaid diagrams
-- **[API Documentation](docs/API_DOCUMENTATION.md)** - REST API endpoints and validation system
-- **[User Guide](docs/USER_GUIDE.md)** - Complete user manual and feature explanations
-- **[Development Guide](docs/DEVELOPMENT_GUIDE.md)** - Technical implementation details and recent fixes
-- **[Security Plan](docs/SECURITY_PLAN.md)** - Comprehensive security implementation strategy
-- **[Development Roadmap](docs/DEVELOPMENT_ROADMAP.md)** - Detailed timeline and milestones
-- **[Project Summary](docs/PROJECT_SUMMARY.md)** - Executive overview and key decisions
-- **[YNAB API Research Findings](docs/YNAB_API_RESEARCH_FINDINGS.md)** - ✅ Definitive API capability confirmation
+- **Calculating "Needed This Month"** values using 7 sophisticated rules that mirror YNAB's internal logic
+- **Analyzing target alignment** to show which categories are over-target, under-target, or on-target
+- **Providing comprehensive debugging UI** with detailed calculation breakdowns and rule explanations
+- **Offering variance analysis** with dollar amounts and percentage calculations
+- **Supporting all YNAB goal types** including monthly, weekly, target balance, and months-to-budget goals
 
-## 🚀 Key Features (Planned)
+### Key Features
 
-### Monthly Budget Analysis Dashboard
-- Total money assigned in selected month
-- Amount and percentage assigned in alignment with targets
-- Amount and percentage assigned not in alignment with targets
-- Visual charts and interactive components
-
-### Detailed Category Analysis
-- Categories that received assignments above their targets
-- Specific over-target amounts for each category
-- Categories that received assignments but had no targets set
-- Advanced filtering, sorting, and export capabilities
-
-### Security & Performance
-- Secure YNAB API integration with Personal Access Token
-- Local-only processing with no data persistence
-- Rate limiting compliance (200 requests/hour)
-- Sub-3-second dashboard loading performance
-
-## 🏗️ Technical Architecture
-
-### Technology Stack
-- **Frontend**: Next.js 14+ with React 18+ and TypeScript
-- **Styling**: Tailwind CSS for responsive design
-- **API Integration**: YNAB API v1 with secure authentication
-- **Development**: ESLint, Prettier, and modern tooling
-
-### System Components
-- YNAB API Client with rate limiting and caching
-- Data Processing Engine for target alignment calculations
-- Interactive Dashboard with visualizations
-- Security Layer with token management
-- Category Analysis with drill-down capabilities
-
-## 🔒 Security Implementation
-
-### Data Protection
-- Environment variable storage for API tokens
-- No sensitive data in browser storage
-- HTTPS-only API communications
-- Comprehensive input validation
-
-### API Security
-- Built-in rate limiting
-- Token format validation
-- Error message sanitization
-- Request validation
-
-## 📊 System Architecture Diagrams
-
-The planning phase includes detailed Mermaid diagrams showing:
-- High-level system architecture
-- Data flow sequences
-- Component hierarchies
-- Security layers
-- Technology stack relationships
-
-## 🛣️ Development Roadmap
-
-### Phase 1: Foundation (Week 1)
-- Project setup and environment configuration
-- YNAB API integration foundation
-- Security implementation
-
-### Phase 2: Core Processing (Week 2)
-- Target alignment calculation engine
-- Data processing pipeline
-- Caching and optimization
-
-### Phase 3: User Interface (Week 3)
-- Dashboard implementation
-- Category analysis views
-- Data visualization components
-
-### Phase 4: Advanced Features (Week 4)
-- Settings and configuration
-- Error handling and polish
-- Performance optimization
-
-### Phase 5: Testing & Documentation (Week 5-6)
-- Comprehensive testing suite
-- Security validation
-- Documentation completion
-
-## 🎯 Success Criteria
-
-- All core features implemented and working correctly
-- Dashboard loads within 3 seconds
-- >90% test coverage achieved
-- Zero critical security vulnerabilities
-- Calculations match YNAB data exactly
-
-## 🚦 Next Steps
-
-1. **Review Planning Documents** - Review all documentation for completeness
-2. **Environment Setup** - Prepare development environment
-3. **Project Initialization** - Create Next.js project structure
-4. **Begin Development** - Start Phase 1 implementation
-
-## 📚 YNAB API Integration ✅ CONFIRMED FULLY SUPPORTED
-
-This application integrates with the YNAB API v1:
-- **Authentication**: Personal Access Token (for individual use)
-- **Rate Limiting**: 200 requests per hour
-- **Data Format**: JSON with milliunits for currency
-- **Target Data**: ✅ ALL goal/target fields confirmed available
-- **Endpoints**: Budgets, categories, and monthly data with complete goal information
-- **Historical Analysis**: ✅ Month-by-month target data fully accessible
-
-## 🔧 Development Requirements
-
-- Node.js 18+ development environment
-- YNAB account with API access
-- Personal Access Token from YNAB
-- Modern web browser for testing
+✅ **Smart Calculation Engine**: 7-rule system handles all YNAB goal types accurately  
+✅ **Interactive Debug UI**: See exactly how each calculation is performed  
+✅ **Monthly Overview**: Income, activity, budgeted amounts, and variance summaries  
+✅ **Category Analysis**: Detailed breakdown of over/under-target categories  
+✅ **Real-time Data**: Direct integration with YNAB API v1  
+✅ **Responsive Design**: Works on desktop, tablet, and mobile devices  
 
 ## 🚀 Quick Start
 
-### 1. Clone and Install
-```bash
-git clone <repository-url>
-cd YNAB_Off_Target_Assignment
-npm install
-```
+### Prerequisites
 
-### 2. Configure YNAB API Access
-1. **Get your YNAB Personal Access Token:**
-   - Visit [YNAB Developer Settings](https://app.ynab.com/settings/developer)
-   - Click "New Token" and follow the instructions
-   - Copy the generated token (format: `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`)
+- **Node.js 18+** and npm 8+
+- **YNAB account** with budget data
+- **YNAB Personal Access Token** ([Get yours here](https://app.ynab.com/settings/developer))
 
-2. **Update Environment Variables:**
-   - Open the `.env.local` file in the project root
-   - Replace `your-ynab-personal-access-token-here` with your actual token:
-   ```
-   YNAB_ACCESS_TOKEN=your-actual-token-here
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/your-username/YNAB_Off_Target_Assignment.git
+   cd YNAB_Off_Target_Assignment
    ```
 
-### 3. Start Development Server
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Configure environment**
+   ```bash
+   cp .env.example .env.local
+   ```
+   
+   Edit `.env.local` and add your YNAB Personal Access Token:
+   ```env
+   YNAB_ACCESS_TOKEN=your-ynab-personal-access-token-here
+   ```
+
+4. **Start development server**
+   ```bash
+   npm run dev
+   ```
+
+5. **Open your browser**
+   Navigate to [http://localhost:3000](http://localhost:3000)
+
+## 🔧 Configuration
+
+### Environment Variables
+
+| Variable | Description | Required | Default |
+|----------|-------------|----------|---------|
+| `YNAB_ACCESS_TOKEN` | Your YNAB Personal Access Token | ✅ Yes | - |
+| `NODE_ENV` | Environment mode | No | `development` |
+| `NEXT_PUBLIC_APP_NAME` | Application display name | No | `YNAB Off-Target Analysis` |
+| `RATE_LIMIT_REQUESTS_PER_HOUR` | YNAB API rate limit | No | `200` |
+| `CACHE_TTL_SECONDS` | Data cache duration | No | `300` |
+
+### Getting Your YNAB Access Token
+
+1. Go to [YNAB Developer Settings](https://app.ynab.com/settings/developer)
+2. Click "New Token"
+3. Give it a descriptive name (e.g., "Budget Analysis Tool")
+4. Copy the generated token
+5. Add it to your `.env.local` file
+
+⚠️ **Security Note**: Never commit your actual access token to version control!
+
+## 📊 How to Use
+
+### 1. Select Your Budget
+- Choose from your available YNAB budgets
+- The most recently modified budget is selected by default
+
+### 2. Choose Analysis Month
+- Select any month from your budget's date range
+- Navigate between months using the arrow controls
+
+### 3. Review Analysis Results
+- **Monthly Overview**: See income, spending, and budget totals
+- **Over-Target Categories**: Categories receiving more than their target
+- **Under-Target Categories**: Categories receiving less than their target
+- **Detailed Category List**: Complete breakdown with variance calculations
+
+### 4. Use Debug Mode (Optional)
+- Toggle "Show Debug Information" to see calculation details
+- Click debug panels to view:
+  - Raw YNAB API fields
+  - Applied calculation rules
+  - Step-by-step formulas
+  - Day counting for weekly goals
+
+## 🧮 Calculation Rules
+
+The application uses a sophisticated 7-rule system to calculate "Needed This Month" values:
+
+1. **Zero-Target Strategy**: Categories without goals → $0
+2. **Rule 6**: Future goal creation → $0 (goals created after analysis month)
+3. **Rule 1**: Monthly NEED goals → `goal_target`
+4. **Rule 2**: Weekly NEED goals → `goal_target × day_occurrences`
+5. **Rule 3**: Months to budget → `(goal_overall_left + budgeted) ÷ months_remaining`
+6. **Rule 5**: Low months to budget → $0 (completed/overdue goals)
+7. **Rule 4**: All other cases → `goal_target`
+
+## 🛠️ Development
+
+### Available Scripts
+
 ```bash
-npm run dev
+npm run dev          # Start development server
+npm run build        # Build for production
+npm run start        # Start production server
+npm run test         # Run test suite
+npm run test:watch   # Run tests in watch mode
+npm run lint         # Check code quality
+npm run type-check   # Verify TypeScript types
 ```
 
-### 4. Open Application
-- Navigate to [http://localhost:3000](http://localhost:3000)
-- Verify the connection status shows "Connected to YNAB API"
-
-## 🔧 Troubleshooting
-
-### Configuration Issues
-- **"Missing required environment variables"**: Ensure `.env.local` exists and contains `YNAB_ACCESS_TOKEN`
-- **"Invalid YNAB access token format"**: Token should be in format `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`
-- **"Unable to connect to YNAB API"**: Verify your token is valid and has not expired
-
-### Common Solutions
-1. **Restart the development server** after changing environment variables
-2. **Check token validity** by visiting YNAB Developer Settings
-3. **Verify internet connection** for API access
-
-## 📖 Documentation Structure
+### Project Structure
 
 ```
-docs/
-├── PRODUCT_REQUIREMENTS.md    # Feature specs and user stories
-├── DATA_ARCHITECTURE.md       # Data models and processing
-├── SYSTEM_ARCHITECTURE.md     # Technical architecture
-├── SECURITY_PLAN.md          # Security implementation
-├── DEVELOPMENT_ROADMAP.md     # Timeline and milestones
-└── PROJECT_SUMMARY.md        # Executive overview
+src/
+├── app/                 # Next.js App Router pages
+│   ├── api/            # API endpoints
+│   └── page.tsx        # Main application page
+├── components/         # React components
+│   ├── AnalysisDashboard.tsx
+│   ├── CategoryDebugPanel.tsx
+│   ├── MonthlyOverview.tsx
+│   └── ...
+├── lib/               # Core business logic
+│   ├── data-processing.ts    # Calculation engine
+│   ├── monthly-analysis.ts   # Analysis functions
+│   └── ynab-service.ts      # YNAB API client
+├── types/             # TypeScript interfaces
+│   ├── analysis.ts    # Analysis data types
+│   └── ynab.ts       # YNAB API types
+└── __tests__/         # Test files
 ```
+
+### Testing
+
+The application includes comprehensive test coverage:
+
+```bash
+npm test                    # Run all tests
+npm run test:coverage      # Generate coverage report
+```
+
+Tests cover:
+- All 7 calculation rules
+- Edge cases and error handling
+- API integration
+- Component functionality
+
+## 📚 Documentation
+
+Detailed documentation is available in the `/docs` directory:
+
+- **[Calculation Rules](docs/CALCULATION_RULES.md)** - Complete rule documentation with examples
+- **[API Reference](docs/API_REFERENCE.md)** - API endpoints and data structures
+- **[Debugging Guide](docs/DEBUGGING_GUIDE.md)** - How to use the debugging UI
+- **[Development Guide](docs/DEVELOPMENT_GUIDE.md)** - Technical implementation details
 
 ## 🤝 Contributing
 
-This project follows modern development practices:
-- TypeScript for type safety
-- Test-driven development
-- Security-first approach
-- Comprehensive documentation
-- Code quality standards
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Make your changes
+4. Add tests for new functionality
+5. Ensure all tests pass (`npm test`)
+6. Commit your changes (`git commit -m 'Add amazing feature'`)
+7. Push to the branch (`git push origin feature/amazing-feature`)
+8. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- [YNAB](https://www.ynab.com/) for providing the excellent budgeting platform and API
+- [Next.js](https://nextjs.org/) for the amazing React framework
+- [Tailwind CSS](https://tailwindcss.com/) for the utility-first CSS framework
+
+## 📞 Support
+
+If you encounter any issues or have questions:
+
+1. Check the [documentation](docs/)
+2. Search existing [issues](https://github.com/your-username/YNAB_Off_Target_Assignment/issues)
+3. Create a new issue with detailed information
 
 ---
 
-**Note**: This project is currently in the planning phase. All documentation has been completed and the project is ready for development implementation.
+**Made with ❤️ for the YNAB community**

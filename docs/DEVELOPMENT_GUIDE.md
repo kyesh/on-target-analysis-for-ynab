@@ -1,12 +1,8 @@
-# YNAB Off-Target Assignment Analysis - Development Guide
-
-**Version:** 1.0  
-**Last Updated:** June 2025  
-**Status:** Production Ready
+# Development Guide
 
 ## Overview
 
-This guide provides technical implementation details for developers working on the YNAB Off-Target Assignment Analysis application, including recent fixes and architectural decisions.
+This guide provides technical implementation details for developers working on the YNAB Off-Target Assignment Analysis application. It covers the codebase structure, development workflow, testing strategies, and recent architectural decisions.
 
 ## Core Architecture
 
