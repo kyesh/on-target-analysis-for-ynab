@@ -1,15 +1,34 @@
-import { NextResponse } from 'next/server';
-import { YNABService } from '@/lib/ynab-service';
+import { NextRequest, NextResponse } from 'next/server';
+import { AuthMiddleware } from '@/lib/auth/auth-middleware';
+import { YNABOAuthClient } from '@/lib/ynab/client-oauth';
 import { SecureErrorHandler } from '@/lib/errors';
 
 /**
  * GET /api/budgets
- * Get all available YNAB budgets
+ * Get all available YNAB budgets using OAuth token from Authorization header
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const budgets = await YNABService.getBudgets();
-    
+    // Validate authentication
+    const auth = AuthMiddleware.validateRequest(request);
+    if (!auth.valid) {
+      return NextResponse.json({
+        success: false,
+        error: {
+          type: 'AUTHENTICATION_ERROR',
+          message: auth.error || 'Authentication failed',
+          statusCode: auth.statusCode || 401,
+        }
+      }, { status: auth.statusCode || 401 });
+    }
+
+    // Create YNAB client with OAuth token
+    const ynabClient = new YNABOAuthClient(auth.token!);
+
+    // Fetch budgets
+    const response = await ynabClient.getBudgets();
+    const budgets = response.data.budgets;
+
     // Return safe budget information (no sensitive data)
     const safeBudgets = budgets.map(budget => ({
       id: budget.id,
@@ -28,15 +47,16 @@ export async function GET() {
       },
       metadata: {
         generatedAt: new Date().toISOString(),
-        cacheStats: YNABService.getCacheStats(),
+        authMethod: 'oauth',
+        rateLimitStatus: ynabClient.getRateLimitStatus(),
       }
     });
 
   } catch (error) {
     console.error('Get budgets error:', error);
-    
+
     const appError = SecureErrorHandler.handleAPIError(error, 'GET_BUDGETS');
-    
+
     return NextResponse.json({
       success: false,
       error: {

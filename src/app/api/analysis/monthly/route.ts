@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { YNABService } from '@/lib/ynab-service';
+import { AuthMiddleware } from '@/lib/auth/auth-middleware';
+import { YNABOAuthClient } from '@/lib/ynab/client-oauth';
 import { generateDashboardSummary } from '@/lib/monthly-analysis';
 import { getFirstDayOfMonth, validateMonthFormat } from '@/lib/data-processing';
 import { SecureErrorHandler } from '@/lib/errors';
@@ -126,6 +127,22 @@ export async function GET(request: NextRequest) {
   };
 
   try {
+    // Validate authentication
+    const auth = AuthMiddleware.validateRequest(request);
+    if (!auth.valid) {
+      return NextResponse.json({
+        success: false,
+        error: {
+          type: 'AUTHENTICATION_ERROR',
+          message: auth.error || 'Authentication failed',
+          statusCode: auth.statusCode || 401,
+        }
+      }, { status: auth.statusCode || 401 });
+    }
+
+    // Create YNAB client with OAuth token
+    const ynabClient = new YNABOAuthClient(auth.token!);
+
     const { searchParams } = new URL(request.url);
     const budgetId = searchParams.get('budgetId');
     const month = searchParams.get('month');
@@ -134,9 +151,35 @@ export async function GET(request: NextRequest) {
     requestInfo.month = month;
 
     // Get budget (use default if not specified)
-    const budget = budgetId
-      ? await YNABService.getBudget(budgetId)
-      : await YNABService.getDefaultBudget();
+    let budget;
+    if (budgetId) {
+      const budgetsResponse = await ynabClient.getBudgets();
+      const foundBudget = budgetsResponse.data.budgets.find(b => b.id === budgetId);
+      if (!foundBudget) {
+        return NextResponse.json({
+          success: false,
+          error: {
+            type: 'NOT_FOUND',
+            message: `Budget not found: ${budgetId}`,
+            statusCode: 404,
+          }
+        }, { status: 404 });
+      }
+      budget = foundBudget;
+    } else {
+      const budgetsResponse = await ynabClient.getBudgets();
+      if (budgetsResponse.data.budgets.length === 0) {
+        return NextResponse.json({
+          success: false,
+          error: {
+            type: 'NOT_FOUND',
+            message: 'No budgets found',
+            statusCode: 404,
+          }
+        }, { status: 404 });
+      }
+      budget = budgetsResponse.data.budgets[0];
+    }
 
     // Determine analysis month with validation
     let analysisMonth: string;
@@ -169,7 +212,8 @@ export async function GET(request: NextRequest) {
     console.log(`[MONTHLY_ANALYSIS] Processing request: Budget=${budget.name} (${budget.id}), Month=${analysisMonth}`);
 
     // Fetch month data
-    const monthData = await YNABService.getMonth(budget.id, analysisMonth);
+    const monthResponse = await ynabClient.getMonth(budget.id, analysisMonth);
+    const monthData = monthResponse.data.month;
 
     // Generate comprehensive analysis
     const dashboardSummary = generateDashboardSummary(
@@ -223,6 +267,22 @@ export async function POST(request: NextRequest) {
   };
 
   try {
+    // Validate authentication
+    const auth = AuthMiddleware.validateRequest(request);
+    if (!auth.valid) {
+      return NextResponse.json({
+        success: false,
+        error: {
+          type: 'AUTHENTICATION_ERROR',
+          message: auth.error || 'Authentication failed',
+          statusCode: auth.statusCode || 401,
+        }
+      }, { status: auth.statusCode || 401 });
+    }
+
+    // Create YNAB client with OAuth token
+    const ynabClient = new YNABOAuthClient(auth.token!);
+
     const body = await request.json();
     const { budgetId, month, config } = body;
 
@@ -230,9 +290,35 @@ export async function POST(request: NextRequest) {
     requestInfo.month = month;
 
     // Get budget
-    const budget = budgetId
-      ? await YNABService.getBudget(budgetId)
-      : await YNABService.getDefaultBudget();
+    let budget;
+    if (budgetId) {
+      const budgetsResponse = await ynabClient.getBudgets();
+      const foundBudget = budgetsResponse.data.budgets.find(b => b.id === budgetId);
+      if (!foundBudget) {
+        return NextResponse.json({
+          success: false,
+          error: {
+            type: 'NOT_FOUND',
+            message: `Budget not found: ${budgetId}`,
+            statusCode: 404,
+          }
+        }, { status: 404 });
+      }
+      budget = foundBudget;
+    } else {
+      const budgetsResponse = await ynabClient.getBudgets();
+      if (budgetsResponse.data.budgets.length === 0) {
+        return NextResponse.json({
+          success: false,
+          error: {
+            type: 'NOT_FOUND',
+            message: 'No budgets found',
+            statusCode: 404,
+          }
+        }, { status: 404 });
+      }
+      budget = budgetsResponse.data.budgets[0];
+    }
 
     // Determine analysis month with validation
     let analysisMonth: string;
@@ -265,7 +351,8 @@ export async function POST(request: NextRequest) {
     console.log(`[MONTHLY_ANALYSIS_POST] Processing request: Budget=${budget.name} (${budget.id}), Month=${analysisMonth}`);
 
     // Fetch month data
-    const monthData = await YNABService.getMonth(budget.id, analysisMonth);
+    const monthResponse = await ynabClient.getMonth(budget.id, analysisMonth);
+    const monthData = monthResponse.data.month;
 
     // Generate analysis with custom config
     const dashboardSummary = generateDashboardSummary(

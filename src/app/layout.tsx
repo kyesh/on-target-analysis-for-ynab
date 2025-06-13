@@ -1,6 +1,10 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
+import { AuthProvider } from '@/lib/auth/auth-context';
+import { SecurityInitializer } from '@/components/SecurityInitializer';
+import { ConsentBanner } from '@/components/analytics/ConsentBanner';
+import { AnalyticsInitializer } from '@/components/analytics/AnalyticsInitializer';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -25,9 +29,12 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full">
       <body className={`${inter.className} h-full bg-gray-50 antialiased`}>
-        <div className="min-h-full">
-          {children}
-        </div>
+        <SecurityInitializer />
+        <AuthProvider enableNotifications={true} autoRefreshThreshold={5}>
+          <div className="min-h-full">
+            {children}
+          </div>
+        </AuthProvider>
       </body>
     </html>
   );

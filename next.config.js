@@ -16,13 +16,15 @@ const nextConfig = {
             value: [
               "default-src 'self'",
               "script-src 'self' 'unsafe-eval' 'unsafe-inline'", // Next.js requirements
-              "style-src 'self' 'unsafe-inline'", // Tailwind CSS requirements
-              "img-src 'self' data: https:",
-              "font-src 'self'",
-              "connect-src 'self' https://api.ynab.com",
+              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com", // Tailwind CSS + Google Fonts
+              "img-src 'self' data: https: blob:",
+              "font-src 'self' https://fonts.gstatic.com",
+              "connect-src 'self' https://api.ynab.com https://app.ynab.com", // YNAB API and OAuth
               "frame-ancestors 'none'",
               "base-uri 'self'",
-              "form-action 'self'"
+              "form-action 'self'",
+              "upgrade-insecure-requests",
+              "block-all-mixed-content"
             ].join('; ')
           },
           {
