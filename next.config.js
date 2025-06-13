@@ -1,5 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Enable standalone output for Docker/Cloud Run deployment
+  output: 'standalone',
   // Enable experimental features for better performance
   experimental: {
     optimizePackageImports: ['recharts', 'lodash', 'date-fns'],

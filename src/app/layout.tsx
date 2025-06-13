@@ -30,10 +30,12 @@ export default function RootLayout({
     <html lang="en" className="h-full">
       <body className={`${inter.className} h-full bg-gray-50 antialiased`}>
         <SecurityInitializer />
+        <AnalyticsInitializer />
         <AuthProvider enableNotifications={true} autoRefreshThreshold={5}>
           <div className="min-h-full">
             {children}
           </div>
+          <ConsentBanner />
         </AuthProvider>
       </body>
     </html>

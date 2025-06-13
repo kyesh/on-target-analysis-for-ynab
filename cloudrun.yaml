@@ -1,0 +1,127 @@
+# Google Cloud Run Service Configuration
+# This file defines the Cloud Run service configuration for the YNAB Off-Target Analysis application
+
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: ynab-off-target-analysis
+  annotations:
+    run.googleapis.com/ingress: all
+    run.googleapis.com/execution-environment: gen2
+spec:
+  template:
+    metadata:
+      annotations:
+        # Scaling configuration
+        autoscaling.knative.dev/minScale: "0"
+        autoscaling.knative.dev/maxScale: "10"
+        
+        # Resource allocation
+        run.googleapis.com/memory: "1Gi"
+        run.googleapis.com/cpu: "1"
+        
+        # Timeout configuration
+        run.googleapis.com/timeout: "300s"
+        
+        # Security configuration
+        run.googleapis.com/vpc-access-connector: ""
+        run.googleapis.com/vpc-access-egress: "private-ranges-only"
+        
+        # Startup probe configuration
+        run.googleapis.com/startup-cpu-boost: "true"
+    spec:
+      containerConcurrency: 100
+      timeoutSeconds: 300
+      serviceAccountName: ynab-analysis-service-account
+      containers:
+      - name: ynab-off-target-analysis
+        image: gcr.io/PROJECT_ID/ynab-off-target-analysis:latest
+        ports:
+        - name: http1
+          containerPort: 3000
+        
+        # Environment variables
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: NEXT_TELEMETRY_DISABLED
+          value: "1"
+        - name: PORT
+          value: "3000"
+        - name: HOSTNAME
+          value: "0.0.0.0"
+        
+        # Public environment variables (from secrets)
+        - name: NEXT_PUBLIC_YNAB_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              name: ynab-oauth-client-id
+              key: client-id
+        - name: NEXT_PUBLIC_APP_URL
+          valueFrom:
+            secretKeyRef:
+              name: app-config
+              key: app-url
+        - name: NEXT_PUBLIC_POSTHOG_KEY
+          valueFrom:
+            secretKeyRef:
+              name: posthog-config
+              key: project-key
+        - name: NEXT_PUBLIC_POSTHOG_HOST
+          valueFrom:
+            secretKeyRef:
+              name: posthog-config
+              key: host
+        
+        # Private environment variables (from secrets)
+        - name: NEXTAUTH_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: nextauth-config
+              key: secret
+        - name: POSTHOG_PERSONAL_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: posthog-config
+              key: personal-api-key
+        
+        # Resource limits
+        resources:
+          limits:
+            cpu: "1"
+            memory: "1Gi"
+          requests:
+            cpu: "0.5"
+            memory: "512Mi"
+        
+        # Health checks
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+        
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        
+        startupProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 30
+  
+  traffic:
+  - percent: 100
+    latestRevision: true
