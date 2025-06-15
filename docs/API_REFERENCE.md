@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document describes the REST API endpoints for the YNAB Off-Target Assignment Analysis application. All endpoints provide comprehensive budget target alignment analysis with detailed calculation breakdowns.
+This document describes the REST API endpoints for the YNAB Off-Target Assignment Analysis application. All endpoints provide comprehensive budget target alignment analysis with detailed calculation breakdowns using OAuth 2.0 authentication.
 
 ## Base URL
 
@@ -12,7 +12,17 @@ http://localhost:3000/api
 
 ## Authentication
 
-The application uses server-side YNAB Personal Access Token authentication. No client-side authentication is required for API endpoints.
+The application uses OAuth 2.0 Bearer token authentication. All API endpoints require a valid OAuth access token in the Authorization header:
+
+```
+Authorization: Bearer <oauth-access-token>
+```
+
+### Authentication Flow
+1. User authenticates via OAuth 2.0 Implicit Grant Flow
+2. Client receives access token from YNAB
+3. Token is included in API requests via Authorization header
+4. Server validates token and processes request
 
 ## Core Endpoints
 

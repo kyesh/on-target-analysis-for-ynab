@@ -33,11 +33,13 @@ This document outlines the comprehensive security strategy for the YNAB Off-Targ
 
 ### YNAB API Authentication
 
-#### Personal Access Token Management
+#### OAuth 2.0 Configuration Management
 ```typescript
 // Environment variable configuration
 interface SecurityConfig {
-  YNAB_ACCESS_TOKEN: string; // Required: Personal Access Token
+  NEXT_PUBLIC_YNAB_CLIENT_ID: string; // Required: OAuth Client ID
+  NEXTAUTH_SECRET: string; // Required: JWT signing secret
+  NEXT_PUBLIC_APP_URL: string; // Required: Application URL for OAuth
   NODE_ENV: 'development' | 'production'; // Environment indicator
   API_BASE_URL: string; // YNAB API base URL
   RATE_LIMIT_WINDOW: number; // Rate limiting window in ms

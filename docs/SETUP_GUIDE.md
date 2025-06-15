@@ -4,7 +4,7 @@
 
 - **Node.js 18+** - [Download from nodejs.org](https://nodejs.org/)
 - **YNAB Account** - Active You Need A Budget subscription
-- **YNAB API Access** - Personal Access Token from YNAB
+- **YNAB OAuth Application** - OAuth Client ID from YNAB Developer Settings
 
 ## Quick Setup
 
@@ -14,15 +14,18 @@
 npm install
 ```
 
-### 2. Configure YNAB API Access
+### 2. Configure YNAB OAuth Access
 
-#### Get Your Personal Access Token
+#### Register Your OAuth Application
 1. Log into your YNAB account
 2. Go to [YNAB Developer Settings](https://app.ynab.com/settings/developer)
-3. Click **"New Token"**
-4. Enter a name for your token (e.g., "Off-Target Analysis")
-5. Click **"Generate"**
-6. **Copy the token immediately** (you won't be able to see it again)
+3. Click **"New Application"**
+4. Fill in application details:
+   - **Application Name**: YNAB Off-Target Analysis (Local)
+   - **Description**: Budget target alignment analysis tool
+   - **Redirect URI**: `http://localhost:3000/auth/callback`
+5. Click **"Save"**
+6. **Copy the Client ID** (you'll need this for configuration)on't be able to see it again)
 
 #### Configure Environment Variables
 1. Open the `.env.local` file in the project root

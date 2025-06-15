@@ -1,39 +1,58 @@
 # YNAB Off-Target Assignment Analysis - System Architecture
 
-**Version:** 1.0
+**Version:** 2.0
 **Last Updated:** June 2025
-**Status:** Production Ready
+**Status:** Production Ready with OAuth 2.0
 
 ## Architecture Overview
 
-The YNAB Off-Target Assignment Analysis application follows a modern web application architecture using Next.js with a focus on client-side data processing and secure API integration.
+The YNAB Off-Target Assignment Analysis application follows a modern, secure web application architecture using Next.js with OAuth 2.0 authentication, client-side data processing, privacy-first analytics, and cloud-native deployment. The architecture prioritizes security, operational simplicity, and user privacy while maintaining high performance and reliability.
 
 ## High-Level Architecture
 
 ### System Components
 
-1. **Frontend Application (Next.js)**
-   - React-based user interface
+1. **🔐 OAuth 2.0 Authentication Layer**
+   - ImplicitOAuthClient for secure authentication flow
+   - SecureTokenStorage with memory-first strategy
+   - TokenValidator with automatic expiration handling
+   - AuthProvider for React context management
+
+2. **🎨 Frontend Application (Next.js)**
+   - React-based user interface with OAuth integration
    - Client-side data processing
    - Responsive design with Tailwind CSS
-   - Local state management
+   - Secure input components with XSS prevention
 
-2. **YNAB API Integration Layer**
-   - HTTP client for YNAB API
-   - Authentication handling
+3. **🔌 YNAB OAuth API Integration Layer**
+   - YNABOAuthClient for authenticated API requests
+   - AuthMiddleware for Bearer token validation
    - Rate limiting management
-   - Response caching
+   - Response caching with SWR
 
-3. **Data Processing Engine**
-   - Category analysis algorithms
+4. **🧮 Data Processing Engine**
+   - Category analysis algorithms (7-rule system)
    - Target alignment calculations
    - Currency conversion utilities
    - Data transformation logic
 
-4. **Security Layer**
-   - Environment variable management
-   - Token storage and validation
-   - Error handling and logging
+5. **🛡️ Security & Privacy Layer**
+   - XSS prevention utilities
+   - Content Security Policy enforcement
+   - Google Cloud Secret Manager integration
+   - GDPR/CCPA compliant analytics
+
+6. **📊 Analytics & Monitoring Layer**
+   - PostHog integration with consent management
+   - Performance monitoring hooks
+   - Error tracking and reporting
+   - User behavior analytics
+
+7. **☁️ Cloud Infrastructure Layer**
+   - Google Cloud Run deployment
+   - Automated secret management
+   - Health checks and monitoring
+   - Stateless, scalable architecture
 
 ## System Architecture Diagram
 

@@ -267,17 +267,22 @@ export default function HomePage() {
                   )}
                 </div>
 
-                <h3 className="text-sm font-medium text-gray-900 mb-2">Setup Steps:</h3>
+                <h3 className="text-sm font-medium text-gray-900 mb-2">OAuth Setup Steps:</h3>
                 <ol className="list-decimal list-inside space-y-3 text-sm text-gray-700">
                   <li>
-                    <strong>Get your YNAB Personal Access Token:</strong>
+                    <strong>Register YNAB OAuth Application:</strong>
                     <br />
-                    Visit <a href="https://app.ynab.com/settings/developer" target="_blank" rel="noopener noreferrer" className="text-primary-600 hover:text-primary-700 underline">YNAB Developer Settings</a> and generate a new Personal Access Token
+                    Visit <a href="https://app.ynab.com/settings/developer" target="_blank" rel="noopener noreferrer" className="text-primary-600 hover:text-primary-700 underline">YNAB Developer Settings</a> and create a new OAuth application
+                  </li>
+                  <li>
+                    <strong>Configure OAuth Redirect URI:</strong>
+                    <br />
+                    Set redirect URI to: <code className="bg-gray-100 px-1 py-0.5 rounded text-xs">http://localhost:3000/auth/callback</code>
                   </li>
                   <li>
                     <strong>Update the .env.local file:</strong>
                     <br />
-                    The file already exists in your project root. Replace <code className="bg-gray-100 px-1 py-0.5 rounded text-xs">your-ynab-personal-access-token-here</code> with your actual token
+                    Add your OAuth Client ID: <code className="bg-gray-100 px-1 py-0.5 rounded text-xs">NEXT_PUBLIC_YNAB_CLIENT_ID=your-client-id</code>
                   </li>
                   <li>
                     <strong>Restart the development server:</strong>
@@ -286,9 +291,9 @@ export default function HomePage() {
                   </li>
                 </ol>
 
-                <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
-                  <p className="text-sm text-blue-800">
-                    <strong>Note:</strong> Your YNAB token should be a 43-character string like: <code className="bg-blue-100 px-1 py-0.5 rounded text-xs">EXAMPLE-TOKEN-DO-NOT-USE-REAL-TOKEN-HERE</code>
+                <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-md">
+                  <p className="text-sm text-green-800">
+                    <strong>🔐 Secure OAuth 2.0:</strong> No Personal Access Tokens needed! OAuth provides secure, user-controlled access to your YNAB data.
                   </p>
                 </div>
               </div>

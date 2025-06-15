@@ -2,25 +2,31 @@
 
 ## Executive Summary
 
-The YNAB Off-Target Assignment Analysis application is a comprehensive Next.js web application designed to integrate with the YNAB (You Need A Budget) API to provide detailed analysis of budget target alignment. This tool helps users understand how their monthly budget assignments compare against their predefined targets, offering insights into budget discipline and financial goal achievement.
+The YNAB Off-Target Assignment Analysis application is a secure, privacy-focused Next.js web application that integrates with the YNAB (You Need A Budget) API using OAuth 2.0 authentication to provide detailed analysis of budget target alignment. This production-ready tool helps users understand how their monthly budget assignments compare against their predefined targets, offering insights into budget discipline and financial goal achievement while maintaining the highest security standards.
 
 ## Project Objectives
 
 ### Primary Goals
 
-1. **Accurate Target Calculation**: Implement sophisticated logic to calculate "Needed This Month" values for all YNAB goal types
-2. **Comprehensive Analysis**: Provide detailed variance analysis showing over-target, under-target, and on-target categories
-3. **User-Friendly Interface**: Create an intuitive dashboard with debugging capabilities for transparency
-4. **Real-time Integration**: Connect directly with YNAB API for up-to-date budget data
-5. **Educational Value**: Help users understand their budgeting patterns and improve financial discipline
+1. **🔐 Secure Authentication**: Implement OAuth 2.0 for secure access without Personal Access Tokens
+2. **🧮 Accurate Target Calculation**: Sophisticated logic to calculate "Needed This Month" values for all YNAB goal types
+3. **📊 Comprehensive Analysis**: Detailed variance analysis showing over-target, under-target, and on-target categories
+4. **🎨 User-Friendly Interface**: Intuitive dashboard with debugging capabilities for transparency
+5. **⚡ Real-time Integration**: Secure OAuth connection with YNAB API for up-to-date budget data
+6. **🛡️ Privacy Protection**: GDPR/CCPA compliant analytics with user consent management
+7. **☁️ Production Deployment**: One-click deployment to Google Cloud Platform
+8. **📚 Educational Value**: Help users understand their budgeting patterns and improve financial discipline
 
 ### Success Metrics
 
-- **Calculation Accuracy**: 100% alignment with YNAB's internal calculations
-- **Performance**: Dashboard loads within 3 seconds
-- **Test Coverage**: >90% code coverage with comprehensive test suite
-- **User Experience**: Intuitive interface requiring minimal learning curve
-- **Reliability**: Zero critical bugs in production environment
+- **🔐 Security**: OAuth 2.0 implementation with comprehensive security hardening
+- **🧮 Calculation Accuracy**: 100% alignment with YNAB's internal calculations
+- **⚡ Performance**: Dashboard loads within 3 seconds with optimized Cloud Run deployment
+- **🧪 Test Coverage**: Comprehensive integration testing suite
+- **🎨 User Experience**: Intuitive OAuth flow requiring minimal learning curve
+- **🛡️ Privacy Compliance**: GDPR/CCPA compliant analytics with consent management
+- **☁️ Deployment**: Automated deployment with zero-downtime updates
+- **🔧 Reliability**: Production-ready with comprehensive error handling
 
 ## Key Features
 
@@ -62,10 +68,15 @@ The application implements a sophisticated 7-rule calculation system:
 ### Technology Stack
 
 - **Frontend**: Next.js 14+ with React 18+ and TypeScript
+- **Authentication**: OAuth 2.0 Implicit Grant Flow with NextAuth.js
 - **Styling**: Tailwind CSS for responsive design
-- **API Integration**: YNAB API v1 with comprehensive error handling
+- **API Integration**: YNAB OAuth API v1 with comprehensive error handling
+- **Analytics**: PostHog with GDPR/CCPA compliance
+- **Security**: XSS prevention, CSP headers, secure token storage
+- **Deployment**: Google Cloud Run with automated deployment
+- **Secret Management**: Google Cloud Secret Manager
 - **State Management**: React hooks and SWR for data fetching
-- **Testing**: Jest with React Testing Library
+- **Testing**: Jest with React Testing Library and integration tests
 - **Development**: ESLint, Prettier, and modern tooling
 
 ### System Components
@@ -80,24 +91,49 @@ The application implements a sophisticated 7-rule calculation system:
 - **Debug Interface**: Comprehensive debugging UI with collapsible panels
 - **Responsive Layout**: Mobile-first design with progressive enhancement
 
+#### OAuth Authentication System
+- **ImplicitOAuthClient**: Complete OAuth 2.0 flow with CSRF protection
+- **SecureTokenStorage**: Memory-first storage with integrity checking
+- **TokenValidator**: Automatic expiration monitoring and re-authentication
+- **AuthProvider**: React context for authentication state management
+
 #### API Integration
-- **YNAB Service**: Secure API client with rate limiting and error handling
+- **YNABOAuthClient**: OAuth-compatible YNAB API client
+- **AuthMiddleware**: Bearer token validation for API routes
 - **Data Transformation**: Convert YNAB API responses to application data models
 - **Validation Layer**: Comprehensive input validation and sanitization
 
+#### Analytics & Monitoring
+- **PostHog Integration**: Privacy-first analytics with consent management
+- **Performance Monitoring**: API response times and page load tracking
+- **Error Tracking**: Comprehensive error reporting and monitoring
+- **User Behavior Analytics**: GDPR/CCPA compliant user interaction tracking
+
 ### Security Implementation
 
+#### OAuth 2.0 Security
+- **CSRF Protection**: Secure state parameter generation and validation
+- **Token Security**: Memory-first storage with browser fingerprinting
+- **Automatic Expiration**: Token validation with re-authentication prompts
+- **URL Fragment Cleanup**: Immediate cleanup after OAuth callback
+
+#### Application Security
+- **XSS Prevention**: Comprehensive input sanitization utilities
+- **Content Security Policy**: Strict CSP headers preventing script injection
+- **Secure Input Components**: XSS-resistant form components
+- **Security Monitoring**: Client-side incident detection and reporting
+
 #### Data Protection
-- **Environment Variables**: Secure storage of API tokens
-- **No Data Persistence**: All processing happens in memory
+- **No Data Persistence**: Stateless architecture with no server-side storage
 - **HTTPS Communication**: Encrypted API communications
 - **Input Validation**: Comprehensive validation of all user inputs
+- **Privacy-First Analytics**: GDPR/CCPA compliant with user consent
 
-#### API Security
-- **Token Management**: Secure handling of YNAB Personal Access Tokens
+#### Infrastructure Security
+- **Google Cloud Secret Manager**: Secure storage of OAuth credentials
+- **Service Account Permissions**: Least-privilege access control
 - **Rate Limiting**: Built-in compliance with YNAB API limits
 - **Error Sanitization**: Prevent sensitive information leakage
-- **Request Validation**: Validate all API requests and responses
 
 ## User Experience Design
 
@@ -110,11 +146,12 @@ The application implements a sophisticated 7-rule calculation system:
 
 ### User Journey
 
-1. **Authentication**: Connect with YNAB using Personal Access Token
-2. **Budget Selection**: Choose from available budgets (most recent selected by default)
-3. **Month Selection**: Select analysis month with easy navigation
-4. **Analysis Review**: Examine monthly overview and category breakdowns
-5. **Debug Exploration**: Optionally dive into calculation details for transparency
+1. **🔐 OAuth Authentication**: Secure sign-in with YNAB OAuth (no Personal Access Token needed)
+2. **📊 Budget Selection**: Choose from available budgets (most recent selected by default)
+3. **📅 Month Selection**: Select analysis month with easy navigation
+4. **📈 Analysis Review**: Examine monthly overview and category breakdowns
+5. **🔍 Debug Exploration**: Optionally dive into calculation details for transparency
+6. **🛡️ Privacy Controls**: Manage analytics consent and privacy preferences
 
 ### Accessibility Features
 
