@@ -5,6 +5,9 @@
 
 'use client';
 
+// Force dynamic rendering for this page
+export const dynamic = 'force-dynamic';
+
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { ImplicitOAuthClient } from '@/lib/auth/implicit-oauth-client';

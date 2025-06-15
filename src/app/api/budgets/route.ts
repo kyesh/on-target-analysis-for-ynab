@@ -3,6 +3,9 @@ import { AuthMiddleware } from '@/lib/auth/auth-middleware';
 import { YNABOAuthClient } from '@/lib/ynab/client-oauth';
 import { SecureErrorHandler } from '@/lib/errors';
 
+// Force dynamic rendering for this route
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/budgets
  * Get all available YNAB budgets using OAuth token from Authorization header

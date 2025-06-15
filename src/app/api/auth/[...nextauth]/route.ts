@@ -173,6 +173,3 @@ const handler = NextAuth(authOptions);
 
 // Export for both GET and POST requests
 export { handler as GET, handler as POST };
-
-// Export auth options for use in other parts of the app
-export { authOptions };
