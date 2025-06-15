@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { DashboardSummary } from '@/types/analysis';
+import { DashboardSummary, MonthlyAnalysisResponse } from '@/types/analysis';
 import { formatCurrency } from '@/lib/data-processing';
 import { CategoryDebugPanel, DebugToggle } from './CategoryDebugPanel';
 import { MonthlyOverview } from './MonthlyOverview';
@@ -344,7 +344,7 @@ export default function AnalysisDashboard({ budgetId, month }: AnalysisDashboard
                       {category.hasTarget && (
                         <>
                           <div className="text-sm text-gray-600">
-                            Target: {formatCurrency(category.neededThisMonth)}
+                            Target: {formatCurrency(category.neededThisMonth || 0)}
                           </div>
                           <div className={`text-sm font-medium ${
                             category.variance > 0 ? 'text-red-600' :

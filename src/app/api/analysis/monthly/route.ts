@@ -4,11 +4,12 @@ import { YNABOAuthClient } from '@/lib/ynab/client-oauth';
 import { generateDashboardSummary } from '@/lib/monthly-analysis';
 import { getFirstDayOfMonth, validateMonthFormat } from '@/lib/data-processing';
 import { SecureErrorHandler } from '@/lib/errors';
+import { YNABBudget } from '@/types/ynab';
 
 /**
  * Validates that a month is within the budget's valid date range
  */
-function validateMonthInBudgetRange(month: string, budget: any): { isValid: boolean; error?: string } {
+function validateMonthInBudgetRange(month: string, budget: YNABBudget): { isValid: boolean; error?: string } {
   if (!validateMonthFormat(month)) {
     return { isValid: false, error: `Invalid month format: ${month}. Expected YYYY-MM-DD format.` };
   }
@@ -57,7 +58,7 @@ function validateMonthInBudgetRange(month: string, budget: any): { isValid: bool
 /**
  * Gets a safe default month within the budget's range
  */
-function getSafeDefaultMonth(budget: any): string {
+function getSafeDefaultMonth(budget: YNABBudget): string {
   // Handle both camelCase and snake_case property names
   const firstMonth = budget.first_month;
   const lastMonth = budget.last_month;
@@ -151,7 +152,7 @@ export async function GET(request: NextRequest) {
     requestInfo.month = month;
 
     // Get budget (use default if not specified)
-    let budget;
+    let budget: YNABBudget;
     if (budgetId) {
       const budgetsResponse = await ynabClient.getBudgets();
       const foundBudget = budgetsResponse.data.budgets.find(b => b.id === budgetId);
@@ -178,7 +179,7 @@ export async function GET(request: NextRequest) {
           }
         }, { status: 404 });
       }
-      budget = budgetsResponse.data.budgets[0];
+      budget = budgetsResponse.data.budgets[0]!;
     }
 
     // Determine analysis month with validation
@@ -290,7 +291,7 @@ export async function POST(request: NextRequest) {
     requestInfo.month = month;
 
     // Get budget
-    let budget;
+    let budget: YNABBudget;
     if (budgetId) {
       const budgetsResponse = await ynabClient.getBudgets();
       const foundBudget = budgetsResponse.data.budgets.find(b => b.id === budgetId);
@@ -317,7 +318,7 @@ export async function POST(request: NextRequest) {
           }
         }, { status: 404 });
       }
-      budget = budgetsResponse.data.budgets[0];
+      budget = budgetsResponse.data.budgets[0]!;
     }
 
     // Determine analysis month with validation

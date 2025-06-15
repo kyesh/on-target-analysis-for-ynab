@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   title: 'YNAB Off-Target Assignment Analysis',
   description: 'Analyze your YNAB budget target alignment and identify over-target spending patterns',
   keywords: ['YNAB', 'budget', 'target', 'analysis', 'financial', 'planning'],
-  authors: [{ name: 'Ken Yesh', email: 'ken.yesh@apella.io' }],
+  authors: [{ name: 'Ken Yesh' }],
   robots: 'noindex, nofollow', // Local app, no indexing needed
 };
 

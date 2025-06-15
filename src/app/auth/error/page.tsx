@@ -69,7 +69,11 @@ const ERROR_TYPES: Record<string, ErrorInfo> = {
 };
 
 export default function AuthErrorPage() {
-  const [errorInfo, setErrorInfo] = useState<ErrorInfo>(ERROR_TYPES.unknown);
+  const [errorInfo, setErrorInfo] = useState<ErrorInfo>(ERROR_TYPES.unknown || {
+    type: 'Unknown Error',
+    message: 'An unexpected error occurred',
+    description: 'Please try again or contact support if the issue persists.'
+  });
   const [errorDetails, setErrorDetails] = useState<string | null>(null);
   const searchParams = useSearchParams();
   const router = useRouter();

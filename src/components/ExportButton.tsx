@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { DashboardSummary } from '@/types/analysis';
+import { DashboardSummary, MonthlyAnalysisResponse } from '@/types/analysis';
 import { formatCurrency } from '@/lib/data-processing';
 
 interface ExportButtonProps {
@@ -39,7 +39,7 @@ export default function ExportButton({ analysis, budgetName, month }: ExportButt
       csv += 'OVER-TARGET CATEGORIES\n';
       csv += 'Category Name,Category Group,Assigned,Target,Variance,Variance %,Target Type\n';
       topOverTargetCategories.forEach(cat => {
-        csv += `"${cat.categoryName}","${cat.categoryGroupName}",${formatCurrency(cat.assigned)},${formatCurrency(cat.target)},${formatCurrency(cat.variance)},${cat.variancePercentage.toFixed(2)}%,${cat.targetType}\n`;
+        csv += `"${cat.categoryName}","${cat.categoryGroupName}",${formatCurrency(cat.assigned)},${formatCurrency(cat.target)},${formatCurrency(cat.variance)},${cat.variancePercentage?.toFixed(2) || 'N/A'}%,${cat.targetType}\n`;
       });
       csv += '\n';
     }
@@ -49,7 +49,7 @@ export default function ExportButton({ analysis, budgetName, month }: ExportButt
       csv += 'UNDER-TARGET CATEGORIES\n';
       csv += 'Category Name,Category Group,Assigned,Target,Variance,Variance %,Target Type\n';
       topUnderTargetCategories.forEach(cat => {
-        csv += `"${cat.categoryName}","${cat.categoryGroupName}",${formatCurrency(cat.assigned)},${formatCurrency(cat.target)},${formatCurrency(cat.variance)},${cat.variancePercentage.toFixed(2)}%,${cat.targetType}\n`;
+        csv += `"${cat.categoryName}","${cat.categoryGroupName}",${formatCurrency(cat.assigned)},${formatCurrency(cat.target)},${formatCurrency(cat.variance)},${cat.variancePercentage?.toFixed(2) || 'N/A'}%,${cat.targetType}\n`;
       });
     }
     

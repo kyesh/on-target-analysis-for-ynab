@@ -6,13 +6,16 @@
 // Error types for the application
 export enum ErrorType {
   AUTHENTICATION = 'authentication',
+  AUTHENTICATION_ERROR = 'authentication_error',
   RATE_LIMIT = 'rate_limit',
   NOT_FOUND = 'not_found',
   SERVER_ERROR = 'server_error',
   NETWORK_ERROR = 'network_error',
   VALIDATION_ERROR = 'validation_error',
   CONFIGURATION_ERROR = 'configuration_error',
-  DATA_PROCESSING_ERROR = 'data_processing_error'
+  DATA_PROCESSING_ERROR = 'data_processing_error',
+  API_ERROR = 'api_error',
+  TIMEOUT_ERROR = 'timeout_error'
 }
 
 // Application error class
@@ -67,7 +70,7 @@ export class SecureErrorHandler {
       'UNKNOWN_ERROR': 'An unexpected error occurred. Please try again'
     };
 
-    return errorMap[error.name] || errorMap['UNKNOWN_ERROR'];
+    return errorMap[error.name] || errorMap['UNKNOWN_ERROR'] || 'An unexpected error occurred. Please try again.';
   }
 
   /**

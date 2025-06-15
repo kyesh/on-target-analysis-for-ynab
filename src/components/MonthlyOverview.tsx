@@ -3,7 +3,7 @@
  */
 
 import React from 'react';
-import { DashboardSummary } from '../types/analysis';
+import { DashboardSummary, MonthlyAnalysisResponse } from '../types/analysis';
 import { formatCurrency } from '../lib/data-processing';
 
 interface MonthlyOverviewProps {

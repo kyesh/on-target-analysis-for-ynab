@@ -36,6 +36,9 @@ yarn-error.log*
 *.p12
 secrets/
 config/secrets.json
+scripts/setup-production-secrets.sh
+*.credentials
+.env.secrets
 
 # Logs
 logs/

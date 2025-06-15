@@ -48,17 +48,17 @@ const authOptions: NextAuthOptions = {
     async session({ session, token }) {
       if (token) {
         session.user = {
-          id: token.sub || 'unknown',
           name: token.name || null,
           email: token.email || null,
           image: null,
         };
-        
+
         // Add custom properties
         (session as any).provider = token.provider || 'implicit-grant';
         (session as any).tokenType = token.type || 'oauth';
+        (session as any).userId = token.sub || 'unknown';
       }
-      
+
       return session;
     },
     
@@ -105,7 +105,7 @@ const authOptions: NextAuthOptions = {
       // Only log in development to avoid spam
       if (process.env.NODE_ENV === 'development') {
         console.log('NextAuth Session Event:', {
-          user: message.session?.user?.id,
+          user: (message.session as any)?.userId,
           timestamp: new Date().toISOString(),
         });
       }

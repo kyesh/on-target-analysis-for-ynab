@@ -5,7 +5,7 @@ import BudgetSelector from '@/components/BudgetSelector';
 import MonthSelector from '@/components/MonthSelector';
 import AnalysisDashboard from '@/components/AnalysisDashboard';
 import ExportButton from '@/components/ExportButton';
-import { DashboardSummary } from '@/types/analysis';
+import { DashboardSummary, MonthlyAnalysisResponse } from '@/types/analysis';
 import { YNABBudget } from '@/types/ynab';
 
 export default function HomePage() {

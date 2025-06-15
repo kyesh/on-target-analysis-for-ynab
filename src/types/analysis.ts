@@ -74,6 +74,7 @@ export interface MonthlyAnalysis {
   categoriesOverTarget: number;
   categoriesUnderTarget: number;
   categoriesWithoutTargets: number;
+  budgetDisciplineRating: BudgetDisciplineRating;
   lastUpdated: string; // ISO 8601 timestamp
 }
 
@@ -103,6 +104,22 @@ export interface DashboardSummary {
     budgetDisciplineRating: BudgetDisciplineRating;
     totalVariance: number; // Total absolute variance from targets
     averageTargetAchievement: number; // Average percentage of targets met
+  };
+}
+
+// Monthly Analysis Response (API response format)
+export interface MonthlyAnalysisResponse {
+  selectedMonth: string;
+  monthlyAnalysis: MonthlyAnalysis;
+  topOverTargetCategories: CategoryVariance[];
+  topUnderTargetCategories: CategoryVariance[];
+  categoriesWithoutTargets: ProcessedCategory[];
+  categories: ProcessedCategory[];
+  keyMetrics: {
+    targetAlignmentScore: number;
+    budgetDisciplineRating: BudgetDisciplineRating;
+    totalVariance: number;
+    averageTargetAchievement: number;
   };
 }
 
