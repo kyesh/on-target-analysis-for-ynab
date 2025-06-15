@@ -9,9 +9,9 @@ import { AnalyticsInitializer } from '@/components/analytics/AnalyticsInitialize
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'YNAB Off-Target Assignment Analysis',
+  title: 'On Target Analysis for YNAB',
   description:
-    'Analyze your YNAB budget target alignment and identify over-target spending patterns',
+    'Analyze your YNAB budget target alignment and identify spending patterns that don\'t align with your financial goals',
   keywords: ['YNAB', 'budget', 'target', 'analysis', 'financial', 'planning'],
   authors: [{ name: 'Ken Yesh' }],
   robots: 'noindex, nofollow', // Local app, no indexing needed

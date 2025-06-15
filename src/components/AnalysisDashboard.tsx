@@ -5,6 +5,7 @@ import { DashboardSummary, MonthlyAnalysisResponse } from '@/types/analysis';
 import { formatCurrency } from '@/lib/data-processing';
 import { CategoryDebugPanel, DebugToggle } from './CategoryDebugPanel';
 import { MonthlyOverview } from './MonthlyOverview';
+import { ApiClient } from '@/lib/api/client';
 
 interface AnalysisDashboardProps {
   budgetId?: string;
@@ -53,8 +54,7 @@ export default function AnalysisDashboard({
         month,
       });
 
-      const response = await fetch(`/api/analysis/monthly?${params}`);
-      const data = await response.json();
+      const data = await ApiClient.get(`/api/analysis/monthly?${params}`);
 
       if (data.success) {
         setAnalysis(data.data);

@@ -7,6 +7,7 @@ import AnalysisDashboard from '@/components/AnalysisDashboard';
 import ExportButton from '@/components/ExportButton';
 import { DashboardSummary, MonthlyAnalysisResponse } from '@/types/analysis';
 import { YNABBudget } from '@/types/ynab';
+import { ApiClient } from '@/lib/api/client';
 
 export default function HomePage() {
   const [isConfigValid, setIsConfigValid] = useState<boolean | null>(null);
@@ -66,8 +67,7 @@ export default function HomePage() {
 
   const fetchBudgetDetails = async () => {
     try {
-      const response = await fetch('/api/budgets');
-      const data = await response.json();
+      const data = await ApiClient.get('/api/budgets');
 
       if (data.success) {
         const budget = data.data.budgets.find(
@@ -306,8 +306,8 @@ export default function HomePage() {
                   <MonthSelector
                     onMonthSelect={setSelectedMonth}
                     selectedMonth={selectedMonth}
-                    budgetFirstMonth={selectedBudget?.first_month}
-                    budgetLastMonth={selectedBudget?.last_month}
+                    budgetFirstMonth={selectedBudget?.firstMonth}
+                    budgetLastMonth={selectedBudget?.lastMonth}
                   />
                 </div>
 
