@@ -114,8 +114,8 @@ export class ImplicitOAuthClient {
         return { success: false, error: 'Unsupported token type' };
       }
 
-      // Validate token format (basic JWT structure check)
-      if (!this.isValidTokenFormat(accessToken)) {
+      // Validate token format (YNAB uses bearer tokens, not JWTs)
+      if (!this.isValidYnabTokenFormat(accessToken)) {
         return { success: false, error: 'Invalid token format received' };
       }
 
@@ -169,7 +169,28 @@ export class ImplicitOAuthClient {
   }
 
   /**
-   * Basic validation of JWT token format
+   * Validation for YNAB bearer token format
+   */
+  private static isValidYnabTokenFormat(token: string): boolean {
+    try {
+      // YNAB tokens are typically alphanumeric with hyphens and underscores
+      // They are not JWTs, so we use a simpler validation
+      if (!token || token.length === 0) return false;
+
+      // Check for reasonable token length (YNAB tokens are typically 40-60 characters)
+      if (token.length < 20 || token.length > 100) return false;
+
+      // Check for valid characters (alphanumeric, hyphens, underscores)
+      if (!/^[A-Za-z0-9_-]+$/.test(token)) return false;
+
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Basic validation of JWT token format (kept for compatibility)
    */
   private static isValidTokenFormat(token: string): boolean {
     try {

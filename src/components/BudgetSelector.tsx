@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { SafeBudget } from '@/types/ynab';
+import { ApiClient } from '@/lib/api/client';
 
 interface BudgetSelectorProps {
   onBudgetSelect: (budgetId: string) => void;
@@ -23,8 +24,7 @@ export default function BudgetSelector({
   const fetchBudgets = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/budgets');
-      const data = await response.json();
+      const data = await ApiClient.get('/api/budgets');
 
       if (data.success) {
         // Sort budgets by lastModified in descending order (most recent first)
@@ -42,8 +42,8 @@ export default function BudgetSelector({
       } else {
         setError(data.error?.message || 'Failed to load budgets');
       }
-    } catch (err) {
-      setError('Failed to fetch budgets');
+    } catch (err: any) {
+      setError(err.message || 'Failed to fetch budgets');
       console.error('Budget fetch error:', err);
     } finally {
       setLoading(false);

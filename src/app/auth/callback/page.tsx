@@ -47,7 +47,7 @@ export default function CallbackPage() {
             setRedirectCountdown(prev => {
               if (prev <= 1) {
                 clearInterval(countdown);
-                router.push('/dashboard');
+                router.push('/');
                 return 0;
               }
               return prev - 1;

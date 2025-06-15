@@ -1,6 +1,6 @@
 /**
  * Authentication Middleware for OAuth 2.0 Implicit Grant Flow
- * Handles Bearer token validation and extraction from request headers
+ * Handles OAuth token validation and extraction from request headers
  */
 
 import { NextRequest } from 'next/server';
@@ -43,7 +43,7 @@ export class AuthMiddleware {
         };
       }
 
-      // Check Bearer token format
+      // Check OAuth token format
       if (!authHeader.startsWith(this.BEARER_PREFIX)) {
         return {
           valid: false,
@@ -64,8 +64,8 @@ export class AuthMiddleware {
         };
       }
 
-      // Validate token format
-      const tokenValidation = this.validateTokenFormat(token);
+      // Validate token format (YNAB uses OAuth tokens, not JWTs)
+      const tokenValidation = this.validateYNABTokenFormat(token);
       if (!tokenValidation.valid) {
         return {
           valid: false,
@@ -74,15 +74,8 @@ export class AuthMiddleware {
         };
       }
 
-      // Check token expiration
-      const expirationCheck = this.checkTokenExpiration(token);
-      if (!expirationCheck.valid) {
-        return {
-          valid: false,
-          error: expirationCheck.error,
-          statusCode: 401,
-        };
-      }
+      // For YNAB OAuth tokens, we don't check expiration server-side
+      // The client handles token expiration and refresh
 
       return {
         valid: true,
@@ -99,7 +92,49 @@ export class AuthMiddleware {
   }
 
   /**
-   * Validate JWT token format (basic structure check)
+   * Validate YNAB OAuth token format
+   */
+  private static validateYNABTokenFormat(token: string): {
+    valid: boolean;
+    error?: string;
+  } {
+    try {
+      // YNAB tokens are typically alphanumeric with hyphens and underscores
+      // They are not JWTs, so we use a simpler validation
+      if (!token || token.length === 0) {
+        return {
+          valid: false,
+          error: 'Token is empty',
+        };
+      }
+
+      // Check for reasonable token length (YNAB tokens are typically 40-60 characters)
+      if (token.length < 20 || token.length > 100) {
+        return {
+          valid: false,
+          error: 'Token length is invalid',
+        };
+      }
+
+      // Check for valid characters (alphanumeric, hyphens, underscores)
+      if (!/^[A-Za-z0-9_-]+$/.test(token)) {
+        return {
+          valid: false,
+          error: 'Token contains invalid characters',
+        };
+      }
+
+      return { valid: true };
+    } catch (error) {
+      return {
+        valid: false,
+        error: 'Token format validation failed',
+      };
+    }
+  }
+
+  /**
+   * Validate JWT token format (basic structure check) - kept for compatibility
    */
   private static validateTokenFormat(token: string): {
     valid: boolean;

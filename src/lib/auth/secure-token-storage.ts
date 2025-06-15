@@ -88,7 +88,7 @@ export class SecureTokenStorage {
       // Fallback to sessionStorage
       return this.retrieveFromSessionStorage();
     } catch (error) {
-      console.warn('Token retrieval error:', error);
+      console.warn('❌ Token retrieval error:', error);
       this.clearToken();
       return null;
     }
@@ -102,12 +102,19 @@ export class SecureTokenStorage {
     if (!token) return false;
 
     try {
-      // Parse JWT payload to check expiration
-      const payload = this.parseJWTPayload(token);
-      if (!payload || !payload.exp) return false;
+      // For YNAB tokens (bearer tokens, not JWTs), check our stored expiration
+      if (this.memoryExpiresAt && Date.now() < this.memoryExpiresAt) {
+        return true;
+      }
 
-      // Check JWT expiration (exp is in seconds, Date.now() is in milliseconds)
-      return payload.exp * 1000 > Date.now();
+      // Check sessionStorage expiration
+      const stored = sessionStorage.getItem(this.STORAGE_KEY);
+      if (stored) {
+        const sessionData: StoredTokenData = JSON.parse(stored);
+        return Date.now() < sessionData.expiresAt;
+      }
+
+      return false;
     } catch {
       return false;
     }
@@ -118,13 +125,19 @@ export class SecureTokenStorage {
    */
   static getTokenExpiration(): Date | null {
     try {
-      const token = this.getToken();
-      if (!token) return null;
+      // For YNAB tokens, use our stored expiration time
+      if (this.memoryExpiresAt) {
+        return new Date(this.memoryExpiresAt);
+      }
 
-      const payload = this.parseJWTPayload(token);
-      if (!payload || !payload.exp) return null;
+      // Check sessionStorage expiration
+      const stored = sessionStorage.getItem(this.STORAGE_KEY);
+      if (stored) {
+        const sessionData: StoredTokenData = JSON.parse(stored);
+        return new Date(sessionData.expiresAt);
+      }
 
-      return new Date(payload.exp * 1000);
+      return null;
     } catch {
       return null;
     }
