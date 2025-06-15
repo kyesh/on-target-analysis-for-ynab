@@ -70,6 +70,7 @@ npm test -- --verbose                      # Detailed test output
 Each of the 7 calculation rules has comprehensive test coverage:
 
 #### Zero-Target Strategy Tests
+
 ```typescript
 test('returns 0 for categories without goal_type', () => {
   const category = createMockCategory(null, null);
@@ -78,6 +79,7 @@ test('returns 0 for categories without goal_type', () => {
 ```
 
 #### Rule 1: Monthly NEED Goals
+
 ```typescript
 test('should use goal_target for monthly NEED goals', () => {
   const category = createMockCategory({
@@ -91,6 +93,7 @@ test('should use goal_target for monthly NEED goals', () => {
 ```
 
 #### Rule 2: Weekly NEED Goals
+
 ```typescript
 test('should calculate weekly goals with day counting', () => {
   const category = createMockCategory({
@@ -106,6 +109,7 @@ test('should calculate weekly goals with day counting', () => {
 ```
 
 #### Rule Priority Tests
+
 ```typescript
 test('Weekly goals take precedence over months to budget', () => {
   const category = {
@@ -118,7 +122,7 @@ test('Weekly goals take precedence over months to budget', () => {
     goal_overall_left: 75000,
     budgeted: 0,
   };
-  
+
   const result = calculateNeededThisMonth(category, '2024-12-01');
   expect(result).toBe(125000); // Weekly calculation
   expect(result).not.toBe(25000); // Not months-to-budget calculation
@@ -128,6 +132,7 @@ test('Weekly goals take precedence over months to budget', () => {
 ### Edge Case Testing
 
 #### Date Handling
+
 ```typescript
 test('handles invalid date formats gracefully', () => {
   const category = createMockCategory({
@@ -136,13 +141,14 @@ test('handles invalid date formats gracefully', () => {
     goal_cadence: 2,
     goal_day: 4,
   });
-  
+
   // Invalid month format should fall back to goal_target
   expect(calculateNeededThisMonth(category, 'invalid-date')).toBe(25000);
 });
 ```
 
 #### Null/Undefined Values
+
 ```typescript
 test('handles null goal values correctly', () => {
   const category = createMockCategory({
@@ -158,15 +164,16 @@ test('handles null goal values correctly', () => {
 ### React Component Tests
 
 #### AnalysisDashboard Component
+
 ```typescript
 import { render, screen, fireEvent } from '@testing-library/react';
 import AnalysisDashboard from '../AnalysisDashboard';
 
 test('displays monthly overview when data is loaded', async () => {
   const mockData = createMockAnalysisData();
-  
+
   render(<AnalysisDashboard budgetId="test-budget" month="2024-12-01" />);
-  
+
   await waitFor(() => {
     expect(screen.getByText('Monthly Overview')).toBeInTheDocument();
     expect(screen.getByText('$12,238.77')).toBeInTheDocument(); // Total income
@@ -175,30 +182,31 @@ test('displays monthly overview when data is loaded', async () => {
 
 test('toggles debug mode correctly', () => {
   render(<AnalysisDashboard budgetId="test-budget" month="2024-12-01" />);
-  
+
   const debugToggle = screen.getByLabelText('Show Debug Information');
   fireEvent.click(debugToggle);
-  
+
   expect(screen.getByText('Debug Information')).toBeInTheDocument();
 });
 ```
 
 #### CategoryDebugPanel Component
+
 ```typescript
 test('displays calculation rule with correct color coding', () => {
   const category = createMockCategoryWithDebug('Rule 1: Monthly NEED');
-  
+
   render(<CategoryDebugPanel category={category} isOpen={true} />);
-  
+
   const ruleElement = screen.getByText('Rule 1: Monthly NEED');
   expect(ruleElement).toHaveClass('text-blue-600', 'bg-blue-50');
 });
 
 test('shows raw YNAB API fields with proper formatting', () => {
   const category = createMockCategoryWithDebug();
-  
+
   render(<CategoryDebugPanel category={category} isOpen={true} />);
-  
+
   expect(screen.getByText('goal_type: NEED')).toBeInTheDocument();
   expect(screen.getByText('goal_target: $400.00')).toBeInTheDocument();
   expect(screen.getByText('goal_cadence: 1 (Monthly)')).toBeInTheDocument();
@@ -210,6 +218,7 @@ test('shows raw YNAB API fields with proper formatting', () => {
 ### YNAB OAuth Client Tests
 
 #### API Response Handling
+
 ```typescript
 import { YNABOAuthClient } from '../lib/ynab/client-oauth';
 
@@ -240,6 +249,7 @@ test('handles API rate limiting', async () => {
 ```
 
 #### Error Handling
+
 ```typescript
 test('handles network errors gracefully', async () => {
   global.fetch = jest.fn().mockRejectedValue(new Error('Network error'));
@@ -264,6 +274,7 @@ test('handles invalid API responses', async () => {
 ### Mock Data Creation
 
 #### Category Mocks
+
 ```typescript
 function createMockCategory(overrides = {}) {
   return {
@@ -291,6 +302,7 @@ function createEnhancedMockCategory(goalType, goalTarget, overrides = {}) {
 ```
 
 #### Analysis Data Mocks
+
 ```typescript
 function createMockAnalysisData() {
   return {
@@ -321,6 +333,7 @@ function createMockAnalysisData() {
 ### Critical Areas
 
 High coverage requirements for:
+
 - **Calculation logic**: 100% coverage required
 - **API integration**: >95% coverage
 - **Error handling**: >90% coverage
@@ -333,6 +346,7 @@ npm run test:coverage
 ```
 
 Generates reports in:
+
 - **HTML**: `coverage/lcov-report/index.html`
 - **JSON**: `coverage/coverage-final.json`
 - **LCOV**: `coverage/lcov.info`

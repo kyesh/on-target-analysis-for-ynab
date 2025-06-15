@@ -12,47 +12,50 @@ import { trackPerformance, trackError } from './events';
  * Hook to track API request performance
  */
 export function useApiPerformanceTracking() {
-  const trackApiRequest = useCallback(async <T>(
-    endpoint: string,
-    method: string,
-    requestFn: () => Promise<T>
-  ): Promise<T> => {
-    const startTime = performance.now();
-    let success = false;
-    let statusCode = 0;
+  const trackApiRequest = useCallback(
+    async <T>(
+      endpoint: string,
+      method: string,
+      requestFn: () => Promise<T>
+    ): Promise<T> => {
+      const startTime = performance.now();
+      let success = false;
+      let statusCode = 0;
 
-    try {
-      const result = await requestFn();
-      success = true;
-      statusCode = 200; // Assume success if no error thrown
-      return result;
-    } catch (error: any) {
-      success = false;
-      statusCode = error.status || error.statusCode || 500;
-      
-      // Track API error
-      trackError.apiError(
-        endpoint,
-        method,
-        statusCode,
-        error.message || 'Unknown API error',
-        error.type || 'API_ERROR'
-      );
-      
-      throw error;
-    } finally {
-      const duration = performance.now() - startTime;
-      
-      // Track API performance
-      trackPerformance.apiRequest(
-        endpoint,
-        method,
-        duration,
-        statusCode,
-        success
-      );
-    }
-  }, []);
+      try {
+        const result = await requestFn();
+        success = true;
+        statusCode = 200; // Assume success if no error thrown
+        return result;
+      } catch (error: any) {
+        success = false;
+        statusCode = error.status || error.statusCode || 500;
+
+        // Track API error
+        trackError.apiError(
+          endpoint,
+          method,
+          statusCode,
+          error.message || 'Unknown API error',
+          error.type || 'API_ERROR'
+        );
+
+        throw error;
+      } finally {
+        const duration = performance.now() - startTime;
+
+        // Track API performance
+        trackPerformance.apiRequest(
+          endpoint,
+          method,
+          duration,
+          statusCode,
+          success
+        );
+      }
+    },
+    []
+  );
 
   return { trackApiRequest };
 }
@@ -65,31 +68,47 @@ export function usePageLoadTracking(pageName: string) {
     const trackPageLoad = () => {
       // Use Navigation Timing API if available
       if (typeof window !== 'undefined' && 'performance' in window) {
-        const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
-        
+        const navigation = performance.getEntriesByType(
+          'navigation'
+        )[0] as PerformanceNavigationTiming;
+
         if (navigation) {
           const loadTime = navigation.loadEventEnd - navigation.fetchStart;
-          const domContentLoaded = navigation.domContentLoadedEventEnd - navigation.fetchStart;
-          const firstPaint = performance.getEntriesByName('first-paint')[0]?.startTime || 0;
-          const firstContentfulPaint = performance.getEntriesByName('first-contentful-paint')[0]?.startTime || 0;
+          const domContentLoaded =
+            navigation.domContentLoadedEventEnd - navigation.fetchStart;
+          const firstPaint =
+            performance.getEntriesByName('first-paint')[0]?.startTime || 0;
+          const firstContentfulPaint =
+            performance.getEntriesByName('first-contentful-paint')[0]
+              ?.startTime || 0;
 
-          trackPerformance.pageLoad(pageName, loadTime, performance.getEntriesByType('resource').length);
+          trackPerformance.pageLoad(
+            pageName,
+            loadTime,
+            performance.getEntriesByType('resource').length
+          );
 
           // Track additional performance metrics
           if (loadTime > 0) {
             trackPerformance.componentRender('page_load_complete', loadTime);
           }
-          
+
           if (domContentLoaded > 0) {
-            trackPerformance.componentRender('dom_content_loaded', domContentLoaded);
+            trackPerformance.componentRender(
+              'dom_content_loaded',
+              domContentLoaded
+            );
           }
-          
+
           if (firstPaint > 0) {
             trackPerformance.componentRender('first_paint', firstPaint);
           }
-          
+
           if (firstContentfulPaint > 0) {
-            trackPerformance.componentRender('first_contentful_paint', firstContentfulPaint);
+            trackPerformance.componentRender(
+              'first_contentful_paint',
+              firstContentfulPaint
+            );
           }
         }
       }
@@ -116,14 +135,18 @@ export function useComponentPerformanceTracking(componentName: string) {
   useEffect(() => {
     // Track component mount time
     mountTime.current = performance.now();
-    
+
     return () => {
       // Track component unmount
       const unmountTime = performance.now();
       const totalMountDuration = unmountTime - mountTime.current;
-      
-      if (totalMountDuration > 100) { // Only track if component was mounted for more than 100ms
-        trackPerformance.componentRender(`${componentName}_total_mount_duration`, totalMountDuration);
+
+      if (totalMountDuration > 100) {
+        // Only track if component was mounted for more than 100ms
+        trackPerformance.componentRender(
+          `${componentName}_total_mount_duration`,
+          totalMountDuration
+        );
       }
     };
   }, [componentName]);
@@ -132,13 +155,19 @@ export function useComponentPerformanceTracking(componentName: string) {
     renderStartTime.current = performance.now();
   }, []);
 
-  const trackRenderEnd = useCallback((renderType: string = 'render') => {
-    if (renderStartTime.current > 0) {
-      const renderDuration = performance.now() - renderStartTime.current;
-      trackPerformance.componentRender(`${componentName}_${renderType}`, renderDuration);
-      renderStartTime.current = 0;
-    }
-  }, [componentName]);
+  const trackRenderEnd = useCallback(
+    (renderType: string = 'render') => {
+      if (renderStartTime.current > 0) {
+        const renderDuration = performance.now() - renderStartTime.current;
+        trackPerformance.componentRender(
+          `${componentName}_${renderType}`,
+          renderDuration
+        );
+        renderStartTime.current = 0;
+      }
+    },
+    [componentName]
+  );
 
   return {
     trackRenderStart,
@@ -150,33 +179,39 @@ export function useComponentPerformanceTracking(componentName: string) {
  * Hook to track user interaction performance
  */
 export function useInteractionPerformanceTracking() {
-  const trackInteraction = useCallback((
-    interactionType: string,
-    targetElement: string,
-    callback?: () => void | Promise<void>
-  ) => {
-    const startTime = performance.now();
-    
-    const executeCallback = async () => {
-      try {
-        if (callback) {
-          await callback();
-        }
-      } catch (error: any) {
-        trackError.javascriptError(
-          `Interaction error in ${interactionType}`,
-          error.stack,
-          'interaction-handler',
-          0
-        );
-      } finally {
-        const duration = performance.now() - startTime;
-        trackPerformance.componentRender(`interaction_${interactionType}_${targetElement}`, duration);
-      }
-    };
+  const trackInteraction = useCallback(
+    (
+      interactionType: string,
+      targetElement: string,
+      callback?: () => void | Promise<void>
+    ) => {
+      const startTime = performance.now();
 
-    executeCallback();
-  }, []);
+      const executeCallback = async () => {
+        try {
+          if (callback) {
+            await callback();
+          }
+        } catch (error: any) {
+          trackError.javascriptError(
+            `Interaction error in ${interactionType}`,
+            error.stack,
+            'interaction-handler',
+            0
+          );
+        } finally {
+          const duration = performance.now() - startTime;
+          trackPerformance.componentRender(
+            `interaction_${interactionType}_${targetElement}`,
+            duration
+          );
+        }
+      };
+
+      executeCallback();
+    },
+    []
+  );
 
   return { trackInteraction };
 }
@@ -191,8 +226,11 @@ export function useNetworkPerformanceTracking() {
     }
 
     // Track network information if available
-    const connection = (navigator as any).connection || (navigator as any).mozConnection || (navigator as any).webkitConnection;
-    
+    const connection =
+      (navigator as any).connection ||
+      (navigator as any).mozConnection ||
+      (navigator as any).webkitConnection;
+
     if (connection) {
       const networkInfo = {
         effectiveType: connection.effectiveType,
@@ -203,7 +241,7 @@ export function useNetworkPerformanceTracking() {
 
       // Track network performance baseline
       trackPerformance.componentRender('network_baseline', 0);
-      
+
       // Listen for network changes
       const handleNetworkChange = () => {
         const newNetworkInfo = {
@@ -215,12 +253,15 @@ export function useNetworkPerformanceTracking() {
 
         // Track network change if significant
         if (newNetworkInfo.effectiveType !== networkInfo.effectiveType) {
-          trackPerformance.componentRender(`network_change_to_${newNetworkInfo.effectiveType}`, 0);
+          trackPerformance.componentRender(
+            `network_change_to_${newNetworkInfo.effectiveType}`,
+            0
+          );
         }
       };
 
       connection.addEventListener('change', handleNetworkChange);
-      
+
       return () => {
         connection.removeEventListener('change', handleNetworkChange);
       };
@@ -243,7 +284,7 @@ export function useMemoryPerformanceTracking() {
       // Track memory usage if available
       if ('memory' in performance) {
         const memory = (performance as any).memory;
-        
+
         const memoryUsage = {
           usedJSHeapSize: memory.usedJSHeapSize,
           totalJSHeapSize: memory.totalJSHeapSize,
@@ -251,17 +292,21 @@ export function useMemoryPerformanceTracking() {
         };
 
         // Track memory usage percentage
-        const memoryUsagePercentage = (memoryUsage.usedJSHeapSize / memoryUsage.jsHeapSizeLimit) * 100;
-        
+        const memoryUsagePercentage =
+          (memoryUsage.usedJSHeapSize / memoryUsage.jsHeapSizeLimit) * 100;
+
         if (memoryUsagePercentage > 80) {
-          trackPerformance.componentRender('high_memory_usage', memoryUsagePercentage);
+          trackPerformance.componentRender(
+            'high_memory_usage',
+            memoryUsagePercentage
+          );
         }
       }
     };
 
     // Track memory usage periodically
     const interval = setInterval(trackMemoryUsage, 30000); // Every 30 seconds
-    
+
     // Initial tracking
     trackMemoryUsage();
 
@@ -272,17 +317,21 @@ export function useMemoryPerformanceTracking() {
 /**
  * Comprehensive performance tracking hook that combines all performance monitoring
  */
-export function usePerformanceTracking(componentName: string, pageName?: string) {
+export function usePerformanceTracking(
+  componentName: string,
+  pageName?: string
+) {
   const { trackApiRequest } = useApiPerformanceTracking();
-  const { trackRenderStart, trackRenderEnd } = useComponentPerformanceTracking(componentName);
+  const { trackRenderStart, trackRenderEnd } =
+    useComponentPerformanceTracking(componentName);
   const { trackInteraction } = useInteractionPerformanceTracking();
 
   // Track page load if pageName is provided
   usePageLoadTracking(pageName || componentName);
-  
+
   // Track network performance
   useNetworkPerformanceTracking();
-  
+
   // Track memory performance
   useMemoryPerformanceTracking();
 

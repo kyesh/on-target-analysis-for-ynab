@@ -51,7 +51,8 @@ export class PostHogClient {
     }
 
     const apiKey = process.env.NEXT_PUBLIC_POSTHOG_KEY;
-    const host = process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://app.posthog.com';
+    const host =
+      process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://app.posthog.com';
 
     if (!apiKey) {
       console.warn('PostHog API key not configured');
@@ -61,33 +62,33 @@ export class PostHogClient {
     try {
       posthog.init(apiKey, {
         api_host: host,
-        
+
         // Privacy and compliance settings
         opt_out_capturing_by_default: true, // Require explicit consent
         respect_dnt: true, // Respect Do Not Track
         disable_session_recording: true, // Disable session recording for privacy
         disable_surveys: true, // Disable surveys
-        
+
         // Performance settings
-        loaded: (posthog) => {
+        loaded: posthog => {
           if (process.env.NODE_ENV === 'development') {
             console.log('PostHog loaded successfully');
           }
         },
-        
+
         // Capture settings
         capture_pageview: false, // We'll handle pageviews manually
         capture_pageleave: true,
-        
+
         // Cross-domain tracking
         cross_subdomain_cookie: false,
-        
+
         // Security settings
         secure_cookie: process.env.NODE_ENV === 'production',
-        
+
         // Persistence settings
         persistence: 'localStorage+cookie',
-        
+
         // Bootstrap configuration
         bootstrap: {
           distinctID: this.generateAnonymousId(),
@@ -95,10 +96,9 @@ export class PostHogClient {
       });
 
       this.initialized = true;
-      
+
       // Check for existing consent
       this.checkExistingConsent();
-      
     } catch (error) {
       console.error('Failed to initialize PostHog:', error);
     }
@@ -109,24 +109,27 @@ export class PostHogClient {
    */
   setConsent(consent: ConsentSettings): void {
     this.consentGiven = consent.analytics;
-    
+
     // Store consent preferences
-    localStorage.setItem('analytics_consent', JSON.stringify({
-      ...consent,
-      timestamp: new Date().toISOString(),
-      version: '1.0',
-    }));
+    localStorage.setItem(
+      'analytics_consent',
+      JSON.stringify({
+        ...consent,
+        timestamp: new Date().toISOString(),
+        version: '1.0',
+      })
+    );
 
     if (this.consentGiven) {
       // Opt in to capturing
       posthog.opt_in_capturing();
-      
+
       // Process queued events
       this.processQueuedEvents();
     } else {
       // Opt out of capturing
       posthog.opt_out_capturing();
-      
+
       // Clear queued events
       this.queuedEvents = [];
     }
@@ -141,7 +144,7 @@ export class PostHogClient {
       if (storedConsent) {
         const consent = JSON.parse(storedConsent);
         this.consentGiven = consent.analytics;
-        
+
         if (this.consentGiven) {
           posthog.opt_in_capturing();
           this.processQueuedEvents();
@@ -256,8 +259,11 @@ export class PostHogClient {
    * Generate anonymous ID for bootstrap
    */
   private generateAnonymousId(): string {
-    return 'anon_' + Math.random().toString(36).substring(2, 15) + 
-           Math.random().toString(36).substring(2, 15);
+    return (
+      'anon_' +
+      Math.random().toString(36).substring(2, 15) +
+      Math.random().toString(36).substring(2, 15)
+    );
   }
 
   /**
@@ -276,7 +282,7 @@ export class PostHogClient {
     } catch (error) {
       console.warn('Failed to get consent status:', error);
     }
-    
+
     return { given: false };
   }
 

@@ -123,7 +123,10 @@ describe('Data Processing Utilities', () => {
   });
 
   describe('Target Amount Extraction', () => {
-    const createMockCategory = (goalType: string | null, goalTarget: number | null): YNABCategory => ({
+    const createMockCategory = (
+      goalType: string | null,
+      goalTarget: number | null
+    ): YNABCategory => ({
       id: 'test-id',
       category_group_id: 'group-id',
       name: 'Test Category',
@@ -185,7 +188,6 @@ describe('Data Processing Utilities', () => {
   });
 
   describe('Enhanced Target Amount Extraction', () => {
-
     test('returns 0 for categories without goal_type (Zero Target Strategy)', () => {
       const category = createMockCategory(null, null);
       expect(calculateNeededThisMonth(category)).toBe(0);
@@ -359,10 +361,10 @@ describe('Data Processing Utilities', () => {
     });
   });
 
-
-
   describe('Category Inclusion Logic', () => {
-    const createMockCategory = (overrides: Partial<YNABCategory> = {}): YNABCategory => ({
+    const createMockCategory = (
+      overrides: Partial<YNABCategory> = {}
+    ): YNABCategory => ({
       id: 'test-id',
       category_group_id: 'group-id',
       name: 'Test Category',
@@ -400,7 +402,7 @@ describe('Data Processing Utilities', () => {
 
     test('includes deleted categories when configured', () => {
       const category = createMockCategory({ deleted: true });
-      const config = { 
+      const config = {
         toleranceMilliunits: 1000,
         includeHiddenCategories: false,
         includeDeletedCategories: true,
@@ -416,7 +418,7 @@ describe('Data Processing Utilities', () => {
 
     test('includes hidden categories when configured', () => {
       const category = createMockCategory({ hidden: true });
-      const config = { 
+      const config = {
         toleranceMilliunits: 1000,
         includeHiddenCategories: true,
         includeDeletedCategories: false,
@@ -427,7 +429,7 @@ describe('Data Processing Utilities', () => {
 
     test('excludes categories below assignment threshold', () => {
       const category = createMockCategory({ budgeted: 500 });
-      const config = { 
+      const config = {
         toleranceMilliunits: 1000,
         includeHiddenCategories: false,
         includeDeletedCategories: false,

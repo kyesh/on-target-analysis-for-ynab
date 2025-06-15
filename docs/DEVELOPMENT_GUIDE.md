@@ -50,10 +50,14 @@ src/
 **Location**: `src/lib/monthly-analysis.ts:47`
 
 ```typescript
-const totalAssigned = processedCategories.reduce((sum, cat) => sum + cat.assigned, 0);
+const totalAssigned = processedCategories.reduce(
+  (sum, cat) => sum + cat.assigned,
+  0
+);
 ```
 
 **Implementation Details**:
+
 - Sums `budgeted` field from all YNAB categories
 - Includes both targeted and non-targeted categories
 - Values in milliunits (1000 = $1.00)
@@ -67,10 +71,14 @@ const totalAssigned = processedCategories.reduce((sum, cat) => sum + cat.assigne
 
 ```typescript
 const categoriesWithTargets = processedCategories.filter(cat => cat.hasTarget);
-const totalTargeted = categoriesWithTargets.reduce((sum, cat) => sum + (cat.target || 0), 0);
+const totalTargeted = categoriesWithTargets.reduce(
+  (sum, cat) => sum + (cat.target || 0),
+  0
+);
 ```
 
 **Implementation Details**:
+
 - Only includes categories with valid targets (`hasTarget: true`)
 - Extracts target from `goal_target` field via `extractTargetAmount()`
 - Handles different goal types (TB, TBD, MF, NEED, DEBT)
@@ -114,6 +122,7 @@ export function extractTargetAmount(category: YNABCategory): number | null {
 ```
 
 **Key Improvements**:
+
 - **Monthly Focus**: Prioritizes `goal_under_funded` (**VERIFIED** as "Needed This Month") for accurate monthly calculations
 - **Goal Type Specific**: Different logic for different goal types (MF vs TB/TBD vs NEED)
 - **Backward Compatible**: Falls back to `goal_target` when `goal_under_funded` unavailable
@@ -129,13 +138,13 @@ export function extractTargetAmount(category: YNABCategory): number | null {
 ```typescript
 const generateMonthOptions = (): string[] => {
   if (!budgetFirstMonth || !budgetLastMonth) return [];
-  
+
   const months: string[] = [];
   const monthsSet = new Set<string>();
   let current = budgetFirstMonth;
-  
+
   const budgetLastDate = new Date(budgetLastMonth + 'T00:00:00.000Z');
-  
+
   while (new Date(current + 'T00:00:00.000Z') <= budgetLastDate) {
     if (!monthsSet.has(current)) {
       months.push(current);
@@ -143,12 +152,13 @@ const generateMonthOptions = (): string[] => {
     }
     current = getNextMonth(current);
   }
-  
+
   return months.reverse(); // Most recent first
 };
 ```
 
 **Key Features**:
+
 - Uses budget's `firstMonth` and `lastMonth` properties
 - Generates all months within range
 - Prevents duplicates with Set data structure
@@ -159,41 +169,45 @@ const generateMonthOptions = (): string[] => {
 **Location**: `src/app/api/analysis/monthly/route.ts:7`
 
 ```typescript
-function validateMonthInBudgetRange(month: string, budget: any): { isValid: boolean; error?: string } {
+function validateMonthInBudgetRange(
+  month: string,
+  budget: any
+): { isValid: boolean; error?: string } {
   // Handle both camelCase and snake_case property names
   const firstMonth = budget.firstMonth || budget.first_month;
   const lastMonth = budget.lastMonth || budget.last_month;
-  
+
   if (!firstMonth || !lastMonth) {
-    return { 
-      isValid: false, 
-      error: `Budget ${budget.name} is missing date range information.` 
+    return {
+      isValid: false,
+      error: `Budget ${budget.name} is missing date range information.`,
     };
   }
-  
+
   const requestedDate = new Date(month);
   const budgetFirstDate = new Date(firstMonth);
   const budgetLastDate = new Date(lastMonth);
-  
+
   if (requestedDate < budgetFirstDate) {
-    return { 
-      isValid: false, 
-      error: `Month ${month} is before budget start date ${firstMonth}` 
+    return {
+      isValid: false,
+      error: `Month ${month} is before budget start date ${firstMonth}`,
     };
   }
-  
+
   if (requestedDate > budgetLastDate) {
-    return { 
-      isValid: false, 
-      error: `Month ${month} is after budget end date ${lastMonth}` 
+    return {
+      isValid: false,
+      error: `Month ${month} is after budget end date ${lastMonth}`,
     };
   }
-  
+
   return { isValid: true };
 }
 ```
 
 **Validation Rules**:
+
 1. Month format must be YYYY-MM-DD
 2. Month must be within budget's date range
 3. Budget must have valid `firstMonth` and `lastMonth`
@@ -207,22 +221,22 @@ function validateMonthInBudgetRange(month: string, budget: any): { isValid: bool
 function getSafeDefaultMonth(budget: any): string {
   const firstMonth = budget.firstMonth || budget.first_month;
   const lastMonth = budget.lastMonth || budget.last_month;
-  
+
   const currentMonth = getFirstDayOfMonth();
   const budgetLastDate = new Date(lastMonth);
   const budgetFirstDate = new Date(firstMonth);
   const currentDate = new Date(currentMonth);
-  
+
   // If current month is within budget range, use it
   if (currentDate >= budgetFirstDate && currentDate <= budgetLastDate) {
     return currentMonth;
   }
-  
+
   // If current month is after budget range, use budget's last month
   if (currentDate > budgetLastDate) {
     return lastMonth;
   }
-  
+
   // If current month is before budget range, use budget's first month
   return firstMonth;
 }
@@ -276,7 +290,13 @@ useEffect(() => {
     }, 0);
     return () => clearTimeout(timer);
   }
-}, [currentMonth, selectedMonth, budgetFirstMonth, budgetLastMonth, onMonthSelect]);
+}, [
+  currentMonth,
+  selectedMonth,
+  budgetFirstMonth,
+  budgetLastMonth,
+  onMonthSelect,
+]);
 ```
 
 ### Property Name Compatibility
@@ -296,6 +316,7 @@ const lastMonth = budget.lastMonth || budget.last_month;
 ### Service Layer Architecture
 
 **YNABOAuthClient** (`src/lib/ynab/client-oauth.ts`):
+
 - OAuth-based HTTP client for YNAB API
 - Handles authentication with OAuth tokens
 - Provides rate limiting and error handling
@@ -318,6 +339,7 @@ class YNABOAuthClient {
 ```
 
 **Cache TTL**:
+
 - Budget data: 10 minutes (changes infrequently)
 - Month data: 5 minutes (can change during active budgeting)
 
@@ -332,6 +354,7 @@ class YNABOAuthClient {
 ### API Error Responses
 
 **Structure**:
+
 ```typescript
 {
   success: false,
@@ -345,6 +368,7 @@ class YNABOAuthClient {
 ```
 
 **Error Types**:
+
 - `invalid_month`: Month validation failed
 - `budget_not_found`: Budget ID not found
 - `ynab_api_error`: YNAB API returned error
@@ -353,6 +377,7 @@ class YNABOAuthClient {
 ### Frontend Error Boundaries
 
 **AnalysisDashboard** includes comprehensive error handling:
+
 - Loading states for async operations
 - Retry mechanisms for failed requests
 - User-friendly error messages
@@ -365,12 +390,14 @@ class YNABOAuthClient {
 **Location**: `src/__tests__/`
 
 **Coverage**:
+
 - Data processing functions
 - Date manipulation utilities
 - Validation logic
 - Currency conversion
 
 **Example**:
+
 ```typescript
 describe('getNextMonth', () => {
   it('should correctly increment month', () => {
@@ -383,6 +410,7 @@ describe('getNextMonth', () => {
 ### Integration Testing
 
 **Browser Automation**: Playwright for end-to-end testing
+
 - Dropdown functionality
 - API integration
 - Error handling
@@ -433,25 +461,30 @@ npm run dev      # Development server
 ### Common Issues
 
 **"getNextMonth returned same month"**:
+
 - Check timezone handling in date functions
 - Verify UTC parsing implementation
 
 **"Duplicate React keys"**:
+
 - Ensure unique keys in month option generation
 - Check for duplicate months in arrays
 
 **"setState during render"**:
+
 - Move state updates to useEffect hooks
 - Use setTimeout for deferred updates
 
 ### Debug Tools
 
 **Cache Clearing** (Development):
+
 ```bash
 curl -X POST http://localhost:3000/api/debug/clear-cache
 ```
 
 **Console Logging**:
+
 - Structured JSON logs for API errors
 - Request context included in error logs
 - Performance timing for slow operations

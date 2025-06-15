@@ -10,21 +10,21 @@ import type { NextAuthOptions } from 'next-auth';
 const authOptions: NextAuthOptions = {
   // No providers needed since OAuth is handled client-side
   providers: [],
-  
+
   // Use JWT strategy (no database needed)
   session: {
     strategy: 'jwt',
     maxAge: 2 * 60 * 60, // 2 hours (shorter for security with implicit grant)
     updateAge: 30 * 60, // 30 minutes
   },
-  
+
   // Custom pages for OAuth flow
   pages: {
     signIn: '/auth/signin',
     signOut: '/auth/signout',
     error: '/auth/error',
   },
-  
+
   callbacks: {
     // JWT callback - minimal handling since tokens are managed client-side
     async jwt({ token, user, account }) {
@@ -34,16 +34,16 @@ const authOptions: NextAuthOptions = {
         token.name = user.name;
         token.email = user.email;
       }
-      
+
       // Store account info if available
       if (account) {
         token.provider = account.provider;
         token.type = account.type;
       }
-      
+
       return token;
     },
-    
+
     // Session callback - return minimal session info
     async session({ session, token }) {
       if (token) {
@@ -61,29 +61,29 @@ const authOptions: NextAuthOptions = {
 
       return session;
     },
-    
+
     // Redirect callback - handle post-authentication redirects
     async redirect({ url, baseUrl }) {
       // Allow relative URLs
       if (url.startsWith('/')) {
         return `${baseUrl}${url}`;
       }
-      
+
       // Allow same-origin URLs
       if (new URL(url).origin === baseUrl) {
         return url;
       }
-      
+
       // Default to base URL for security
       return baseUrl;
     },
-    
+
     // Sign in callback - always allow (authentication handled client-side)
     async signIn({ user, account, profile }) {
       return true;
     },
   },
-  
+
   // Events for logging and monitoring
   events: {
     async signIn(message) {
@@ -93,14 +93,14 @@ const authOptions: NextAuthOptions = {
         timestamp: new Date().toISOString(),
       });
     },
-    
+
     async signOut(message) {
       console.log('NextAuth SignOut Event:', {
         token: message.token?.sub,
         timestamp: new Date().toISOString(),
       });
     },
-    
+
     async session(message) {
       // Only log in development to avoid spam
       if (process.env.NODE_ENV === 'development') {
@@ -111,7 +111,7 @@ const authOptions: NextAuthOptions = {
       }
     },
   },
-  
+
   // Security configuration
   cookies: {
     sessionToken: {
@@ -145,13 +145,13 @@ const authOptions: NextAuthOptions = {
       },
     },
   },
-  
+
   // Debug mode for development
   debug: process.env.NODE_ENV === 'development',
-  
+
   // Secret for JWT signing
   secret: process.env.NEXTAUTH_SECRET,
-  
+
   // Custom logger
   logger: {
     error(code, metadata) {

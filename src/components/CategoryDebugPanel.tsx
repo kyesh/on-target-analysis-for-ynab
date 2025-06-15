@@ -38,7 +38,15 @@ function getRuleColor(rule: string): string {
  */
 function getDayName(dayNumber: number | null): string {
   if (dayNumber === null) return 'null';
-  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const days = [
+    'Sunday',
+    'Monday',
+    'Tuesday',
+    'Wednesday',
+    'Thursday',
+    'Friday',
+    'Saturday',
+  ];
   return days[dayNumber] || `Day ${dayNumber}`;
 }
 
@@ -51,12 +59,16 @@ function getCadenceDescription(cadence: number | null): string {
     0: '0 (One-time)',
     1: '1 (Monthly)',
     2: '2 (Weekly)',
-    13: '13 (Yearly)'
+    13: '13 (Yearly)',
   };
   return descriptions[cadence] || `${cadence} (Unknown)`;
 }
 
-export function CategoryDebugPanel({ category, isOpen, onToggle }: CategoryDebugPanelProps) {
+export function CategoryDebugPanel({
+  category,
+  isOpen,
+  onToggle,
+}: CategoryDebugPanelProps) {
   if (!category.debugInfo) {
     return null;
   }
@@ -64,47 +76,90 @@ export function CategoryDebugPanel({ category, isOpen, onToggle }: CategoryDebug
   const { rawFields, calculationRule, calculationDetails } = category.debugInfo;
 
   return (
-    <div className="mt-2 border border-gray-200 rounded-lg">
+    <div className="mt-2 rounded-lg border border-gray-200">
       {/* Toggle Button */}
       <button
         onClick={onToggle}
-        className="w-full px-3 py-2 text-left text-sm font-medium text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-t-lg flex items-center justify-between"
+        className="flex w-full items-center justify-between rounded-t-lg bg-gray-50 px-3 py-2 text-left text-sm font-medium text-gray-700 hover:bg-gray-100"
       >
         <span>🔍 Debug Information</span>
-        <span className={`transform transition-transform ${isOpen ? 'rotate-180' : ''}`}>
+        <span
+          className={`transform transition-transform ${isOpen ? 'rotate-180' : ''}`}
+        >
           ▼
         </span>
       </button>
 
       {/* Debug Content */}
       {isOpen && (
-        <div className="p-4 space-y-4 bg-white">
+        <div className="space-y-4 bg-white p-4">
           {/* Calculation Rule */}
           <div>
-            <h4 className="text-sm font-semibold text-gray-800 mb-2">Applied Rule</h4>
-            <div className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${getRuleColor(calculationRule)}`}>
+            <h4 className="mb-2 text-sm font-semibold text-gray-800">
+              Applied Rule
+            </h4>
+            <div
+              className={`inline-block rounded-full px-3 py-1 text-sm font-medium ${getRuleColor(calculationRule)}`}
+            >
               {calculationRule}
             </div>
           </div>
 
           {/* Raw YNAB API Fields */}
           <div>
-            <h4 className="text-sm font-semibold text-gray-800 mb-2">Raw YNAB API Fields</h4>
+            <h4 className="mb-2 text-sm font-semibold text-gray-800">
+              Raw YNAB API Fields
+            </h4>
             <div className="grid grid-cols-2 gap-2 text-xs">
               <div className="space-y-1">
-                <div><span className="font-medium">goal_type:</span> {rawFields.goal_type || 'null'}</div>
-                <div><span className="font-medium">goal_target:</span> {formatCurrency(rawFields.goal_target)}</div>
-                <div><span className="font-medium">goal_creation_month:</span> {rawFields.goal_creation_month || 'null'}</div>
-                <div><span className="font-medium">goal_cadence:</span> {getCadenceDescription(rawFields.goal_cadence)}</div>
-                <div><span className="font-medium">goal_cadence_frequency:</span> {rawFields.goal_cadence_frequency ?? 'null'}</div>
-                <div><span className="font-medium">goal_day:</span> {rawFields.goal_day !== null ? `${rawFields.goal_day} (${getDayName(rawFields.goal_day)})` : 'null'}</div>
+                <div>
+                  <span className="font-medium">goal_type:</span>{' '}
+                  {rawFields.goal_type || 'null'}
+                </div>
+                <div>
+                  <span className="font-medium">goal_target:</span>{' '}
+                  {formatCurrency(rawFields.goal_target)}
+                </div>
+                <div>
+                  <span className="font-medium">goal_creation_month:</span>{' '}
+                  {rawFields.goal_creation_month || 'null'}
+                </div>
+                <div>
+                  <span className="font-medium">goal_cadence:</span>{' '}
+                  {getCadenceDescription(rawFields.goal_cadence)}
+                </div>
+                <div>
+                  <span className="font-medium">goal_cadence_frequency:</span>{' '}
+                  {rawFields.goal_cadence_frequency ?? 'null'}
+                </div>
+                <div>
+                  <span className="font-medium">goal_day:</span>{' '}
+                  {rawFields.goal_day !== null
+                    ? `${rawFields.goal_day} (${getDayName(rawFields.goal_day)})`
+                    : 'null'}
+                </div>
               </div>
               <div className="space-y-1">
-                <div><span className="font-medium">goal_months_to_budget:</span> {rawFields.goal_months_to_budget ?? 'null'}</div>
-                <div><span className="font-medium">goal_overall_left:</span> {formatCurrency(rawFields.goal_overall_left)}</div>
-                <div><span className="font-medium">budgeted:</span> {formatCurrency(rawFields.budgeted)}</div>
-                <div><span className="font-medium">balance:</span> {formatCurrency(rawFields.balance)}</div>
-                <div><span className="font-medium">activity:</span> {formatCurrency(rawFields.activity)}</div>
+                <div>
+                  <span className="font-medium">goal_months_to_budget:</span>{' '}
+                  {rawFields.goal_months_to_budget ?? 'null'}
+                </div>
+                <div>
+                  <span className="font-medium">goal_overall_left:</span>{' '}
+                  {formatCurrency(rawFields.goal_overall_left)}
+                </div>
+                <div>
+                  <span className="font-medium">budgeted:</span>{' '}
+                  {formatCurrency(rawFields.budgeted)}
+                </div>
+                <div>
+                  <span className="font-medium">balance:</span>{' '}
+                  {formatCurrency(rawFields.balance)}
+                </div>
+                <div>
+                  <span className="font-medium">activity:</span>{' '}
+                  {formatCurrency(rawFields.activity)}
+                </div>
               </div>
             </div>
           </div>
@@ -112,22 +167,39 @@ export function CategoryDebugPanel({ category, isOpen, onToggle }: CategoryDebug
           {/* Calculation Details */}
           {calculationDetails && (
             <div>
-              <h4 className="text-sm font-semibold text-gray-800 mb-2">Calculation Details</h4>
-              <div className="bg-gray-50 p-3 rounded text-xs space-y-1">
+              <h4 className="mb-2 text-sm font-semibold text-gray-800">
+                Calculation Details
+              </h4>
+              <div className="space-y-1 rounded bg-gray-50 p-3 text-xs">
                 {calculationDetails.calculation && (
-                  <div><span className="font-medium">Formula:</span> {calculationDetails.calculation}</div>
+                  <div>
+                    <span className="font-medium">Formula:</span>{' '}
+                    {calculationDetails.calculation}
+                  </div>
                 )}
                 {calculationDetails.dayCount && (
-                  <div><span className="font-medium">Day Count:</span> {calculationDetails.dayCount}</div>
+                  <div>
+                    <span className="font-medium">Day Count:</span>{' '}
+                    {calculationDetails.dayCount}
+                  </div>
                 )}
                 {calculationDetails.currentMonth && (
-                  <div><span className="font-medium">Current Month:</span> {calculationDetails.currentMonth}</div>
+                  <div>
+                    <span className="font-medium">Current Month:</span>{' '}
+                    {calculationDetails.currentMonth}
+                  </div>
                 )}
                 {calculationDetails.reason && (
-                  <div><span className="font-medium">Reason:</span> {calculationDetails.reason}</div>
+                  <div>
+                    <span className="font-medium">Reason:</span>{' '}
+                    {calculationDetails.reason}
+                  </div>
                 )}
                 {calculationDetails.error && (
-                  <div className="text-red-600"><span className="font-medium">Error:</span> {calculationDetails.error}</div>
+                  <div className="text-red-600">
+                    <span className="font-medium">Error:</span>{' '}
+                    {calculationDetails.error}
+                  </div>
                 )}
               </div>
             </div>
@@ -135,12 +207,26 @@ export function CategoryDebugPanel({ category, isOpen, onToggle }: CategoryDebug
 
           {/* Calculated Values */}
           <div>
-            <h4 className="text-sm font-semibold text-gray-800 mb-2">Calculated Values</h4>
+            <h4 className="mb-2 text-sm font-semibold text-gray-800">
+              Calculated Values
+            </h4>
             <div className="grid grid-cols-2 gap-2 text-xs">
-              <div><span className="font-medium">neededThisMonth:</span> {formatCurrency(category.neededThisMonth)}</div>
-              <div><span className="font-medium">assigned:</span> {formatCurrency(category.assigned)}</div>
-              <div><span className="font-medium">variance:</span> {formatCurrency(category.variance)}</div>
-              <div><span className="font-medium">percentageOfTarget:</span> {category.percentageOfTarget?.toFixed(1)}%</div>
+              <div>
+                <span className="font-medium">neededThisMonth:</span>{' '}
+                {formatCurrency(category.neededThisMonth)}
+              </div>
+              <div>
+                <span className="font-medium">assigned:</span>{' '}
+                {formatCurrency(category.assigned)}
+              </div>
+              <div>
+                <span className="font-medium">variance:</span>{' '}
+                {formatCurrency(category.variance)}
+              </div>
+              <div>
+                <span className="font-medium">percentageOfTarget:</span>{' '}
+                {category.percentageOfTarget?.toFixed(1)}%
+              </div>
             </div>
           </div>
         </div>
@@ -159,18 +245,21 @@ interface DebugToggleProps {
 
 export function DebugToggle({ isEnabled, onToggle }: DebugToggleProps) {
   return (
-    <div className="flex items-center space-x-2 mb-4">
+    <div className="mb-4 flex items-center space-x-2">
       <label className="flex items-center space-x-2 text-sm">
         <input
           type="checkbox"
           checked={isEnabled}
-          onChange={(e) => onToggle(e.target.checked)}
+          onChange={e => onToggle(e.target.checked)}
           className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
         />
-        <span className="font-medium text-gray-700">Show Debug Information</span>
+        <span className="font-medium text-gray-700">
+          Show Debug Information
+        </span>
       </label>
       <span className="text-xs text-gray-500">
-        (Shows YNAB API fields and calculation details for categories with goals)
+        (Shows YNAB API fields and calculation details for categories with
+        goals)
       </span>
     </div>
   );

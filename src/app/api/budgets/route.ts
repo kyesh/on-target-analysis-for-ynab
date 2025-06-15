@@ -15,14 +15,17 @@ export async function GET(request: NextRequest) {
     // Validate authentication
     const auth = AuthMiddleware.validateRequest(request);
     if (!auth.valid) {
-      return NextResponse.json({
-        success: false,
-        error: {
-          type: 'AUTHENTICATION_ERROR',
-          message: auth.error || 'Authentication failed',
-          statusCode: auth.statusCode || 401,
-        }
-      }, { status: auth.statusCode || 401 });
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            type: 'AUTHENTICATION_ERROR',
+            message: auth.error || 'Authentication failed',
+            statusCode: auth.statusCode || 401,
+          },
+        },
+        { status: auth.statusCode || 401 }
+      );
     }
 
     // Create YNAB client with OAuth token
@@ -52,21 +55,23 @@ export async function GET(request: NextRequest) {
         generatedAt: new Date().toISOString(),
         authMethod: 'oauth',
         rateLimitStatus: ynabClient.getRateLimitStatus(),
-      }
+      },
     });
-
   } catch (error) {
     console.error('Get budgets error:', error);
 
     const appError = SecureErrorHandler.handleAPIError(error, 'GET_BUDGETS');
 
-    return NextResponse.json({
-      success: false,
-      error: {
-        type: appError.type,
-        message: appError.userMessage,
-        statusCode: appError.statusCode,
-      }
-    }, { status: appError.statusCode });
+    return NextResponse.json(
+      {
+        success: false,
+        error: {
+          type: appError.type,
+          message: appError.userMessage,
+          statusCode: appError.statusCode,
+        },
+      },
+      { status: appError.statusCode }
+    );
   }
 }

@@ -78,21 +78,26 @@ export class XSSPrevention {
 
     try {
       const parsed = new URL(url.trim());
-      
+
       // Check if protocol is safe
       if (!this.SAFE_PROTOCOLS.includes(parsed.protocol)) {
         return null;
       }
 
       // Additional checks for YNAB OAuth URLs
-      if (parsed.protocol === 'https:' && 
-          (parsed.hostname === 'app.ynab.com' || parsed.hostname === 'api.ynab.com')) {
+      if (
+        parsed.protocol === 'https:' &&
+        (parsed.hostname === 'app.ynab.com' ||
+          parsed.hostname === 'api.ynab.com')
+      ) {
         return parsed.toString();
       }
 
       // Allow same-origin URLs
-      if (typeof window !== 'undefined' && 
-          parsed.origin === window.location.origin) {
+      if (
+        typeof window !== 'undefined' &&
+        parsed.origin === window.location.origin
+      ) {
         return parsed.toString();
       }
 
@@ -192,16 +197,21 @@ export class XSSPrevention {
 
     try {
       const parsed = new URL(url);
-      
+
       // Must be HTTPS in production
-      if (process.env.NODE_ENV === 'production' && parsed.protocol !== 'https:') {
+      if (
+        process.env.NODE_ENV === 'production' &&
+        parsed.protocol !== 'https:'
+      ) {
         return false;
       }
 
       // Allow HTTP for localhost in development
-      if (process.env.NODE_ENV === 'development' && 
-          parsed.protocol === 'http:' && 
-          parsed.hostname === 'localhost') {
+      if (
+        process.env.NODE_ENV === 'development' &&
+        parsed.protocol === 'http:' &&
+        parsed.hostname === 'localhost'
+      ) {
         return true;
       }
 
@@ -228,12 +238,16 @@ export class XSSPrevention {
     if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
       const array = new Uint8Array(16);
       crypto.getRandomValues(array);
-      return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+      return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join(
+        ''
+      );
     }
-    
+
     // Fallback for environments without crypto
-    return Math.random().toString(36).substring(2, 15) + 
-           Math.random().toString(36).substring(2, 15);
+    return (
+      Math.random().toString(36).substring(2, 15) +
+      Math.random().toString(36).substring(2, 15)
+    );
   }
 
   /**
@@ -298,13 +312,16 @@ export class XSSPrevention {
 
     // Monitor for suspicious DOM modifications
     if (typeof MutationObserver !== 'undefined') {
-      const observer = new MutationObserver((mutations) => {
-        mutations.forEach((mutation) => {
+      const observer = new MutationObserver(mutations => {
+        mutations.forEach(mutation => {
           if (mutation.type === 'childList') {
-            mutation.addedNodes.forEach((node) => {
+            mutation.addedNodes.forEach(node => {
               if (node.nodeType === Node.ELEMENT_NODE) {
                 const element = node as Element;
-                if (element.tagName === 'SCRIPT' || element.tagName === 'IFRAME') {
+                if (
+                  element.tagName === 'SCRIPT' ||
+                  element.tagName === 'IFRAME'
+                ) {
                   this.reportSecurityIncident('Suspicious DOM modification', {
                     tagName: element.tagName,
                     innerHTML: element.innerHTML.substring(0, 100),
@@ -326,7 +343,10 @@ export class XSSPrevention {
   /**
    * Report security incidents
    */
-  private static reportSecurityIncident(incident: string, details: any = {}): void {
+  private static reportSecurityIncident(
+    incident: string,
+    details: any = {}
+  ): void {
     console.warn(`Security incident: ${incident}`, details);
 
     // In production, send to security monitoring service

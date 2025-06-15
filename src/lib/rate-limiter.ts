@@ -23,12 +23,17 @@ export class RateLimiter {
   /**
    * Check if a request can be made
    */
-  canMakeRequest(identifier: string = 'default', endpoint: string = ''): boolean {
+  canMakeRequest(
+    identifier: string = 'default',
+    endpoint: string = ''
+  ): boolean {
     const now = Date.now();
     const requests = this.requests.get(identifier) || [];
 
     // Remove requests outside the window
-    const validRequests = requests.filter(req => now - req.timestamp < this.windowMs);
+    const validRequests = requests.filter(
+      req => now - req.timestamp < this.windowMs
+    );
 
     // Check if we're at the limit
     if (validRequests.length >= this.maxRequests) {
@@ -61,7 +66,7 @@ export class RateLimiter {
   getCurrentRequestCount(identifier: string = 'default'): number {
     const now = Date.now();
     const requests = this.requests.get(identifier) || [];
-    
+
     // Count only valid requests within the window
     return requests.filter(req => now - req.timestamp < this.windowMs).length;
   }
@@ -70,7 +75,10 @@ export class RateLimiter {
    * Get remaining requests for identifier
    */
   getRemainingRequests(identifier: string = 'default'): number {
-    return Math.max(0, this.maxRequests - this.getCurrentRequestCount(identifier));
+    return Math.max(
+      0,
+      this.maxRequests - this.getCurrentRequestCount(identifier)
+    );
   }
 
   /**
@@ -86,7 +94,7 @@ export class RateLimiter {
       used: currentCount,
       remaining,
       resetTime,
-      resetAt: new Date(Date.now() + resetTime).toISOString()
+      resetAt: new Date(Date.now() + resetTime).toISOString(),
     };
   }
 
@@ -121,10 +129,10 @@ export class RateLimiter {
     if (process.env.NODE_ENV !== 'development') {
       return [];
     }
-    
+
     const now = Date.now();
     const requests = this.requests.get(identifier) || [];
-    
+
     return requests
       .filter(req => now - req.timestamp < this.windowMs)
       .sort((a, b) => b.timestamp - a.timestamp);
@@ -147,11 +155,15 @@ export function withRateLimit<T extends (...args: any[]) => Promise<any>>(
 }
 
 // Utility to wait for rate limit reset
-export async function waitForRateLimit(identifier: string = 'default'): Promise<void> {
+export async function waitForRateLimit(
+  identifier: string = 'default'
+): Promise<void> {
   const resetTime = globalRateLimiter.getTimeUntilReset(identifier);
-  
+
   if (resetTime > 0) {
-    console.warn(`Rate limit exceeded. Waiting ${Math.ceil(resetTime / 1000)} seconds...`);
+    console.warn(
+      `Rate limit exceeded. Waiting ${Math.ceil(resetTime / 1000)} seconds...`
+    );
     await new Promise(resolve => setTimeout(resolve, resetTime));
   }
 }

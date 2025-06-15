@@ -8,7 +8,8 @@
 import React, { useState, useCallback, forwardRef } from 'react';
 import { XSSPrevention } from '@/lib/security/xss-prevention';
 
-export interface SecureInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange'> {
+export interface SecureInputProps
+  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange'> {
   value: string;
   onChange: (value: string) => void;
   sanitize?: boolean;
@@ -18,110 +19,138 @@ export interface SecureInputProps extends Omit<React.InputHTMLAttributes<HTMLInp
   onSecurityViolation?: (violation: string, originalValue: string) => void;
 }
 
-export const SecureInput = forwardRef<HTMLInputElement, SecureInputProps>(({
-  value,
-  onChange,
-  sanitize = true,
-  maxLength = 1000,
-  allowedPatterns = [],
-  blockedPatterns = [],
-  onSecurityViolation,
-  className = '',
-  ...props
-}, ref) => {
-  const [hasSecurityViolation, setHasSecurityViolation] = useState(false);
+export const SecureInput = forwardRef<HTMLInputElement, SecureInputProps>(
+  (
+    {
+      value,
+      onChange,
+      sanitize = true,
+      maxLength = 1000,
+      allowedPatterns = [],
+      blockedPatterns = [],
+      onSecurityViolation,
+      className = '',
+      ...props
+    },
+    ref
+  ) => {
+    const [hasSecurityViolation, setHasSecurityViolation] = useState(false);
 
-  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const rawValue = e.target.value;
-    let processedValue = rawValue;
+    const handleChange = useCallback(
+      (e: React.ChangeEvent<HTMLInputElement>) => {
+        const rawValue = e.target.value;
+        let processedValue = rawValue;
 
-    // Apply length limit
-    if (processedValue.length > maxLength) {
-      processedValue = processedValue.substring(0, maxLength);
-    }
+        // Apply length limit
+        if (processedValue.length > maxLength) {
+          processedValue = processedValue.substring(0, maxLength);
+        }
 
-    // Check for blocked patterns
-    const hasBlockedPattern = blockedPatterns.some(pattern => pattern.test(processedValue));
-    if (hasBlockedPattern) {
-      setHasSecurityViolation(true);
-      onSecurityViolation?.('Blocked pattern detected', rawValue);
-      return; // Don't update value
-    }
+        // Check for blocked patterns
+        const hasBlockedPattern = blockedPatterns.some(pattern =>
+          pattern.test(processedValue)
+        );
+        if (hasBlockedPattern) {
+          setHasSecurityViolation(true);
+          onSecurityViolation?.('Blocked pattern detected', rawValue);
+          return; // Don't update value
+        }
 
-    // Check allowed patterns (if specified)
-    if (allowedPatterns.length > 0) {
-      const hasAllowedPattern = allowedPatterns.some(pattern => pattern.test(processedValue));
-      if (!hasAllowedPattern && processedValue.length > 0) {
-        setHasSecurityViolation(true);
-        onSecurityViolation?.('Value does not match allowed patterns', rawValue);
-        return; // Don't update value
-      }
-    }
+        // Check allowed patterns (if specified)
+        if (allowedPatterns.length > 0) {
+          const hasAllowedPattern = allowedPatterns.some(pattern =>
+            pattern.test(processedValue)
+          );
+          if (!hasAllowedPattern && processedValue.length > 0) {
+            setHasSecurityViolation(true);
+            onSecurityViolation?.(
+              'Value does not match allowed patterns',
+              rawValue
+            );
+            return; // Don't update value
+          }
+        }
 
-    // Apply sanitization
-    if (sanitize) {
-      const originalValue = processedValue;
-      processedValue = XSSPrevention.sanitizeInput(processedValue);
-      
-      // Check if sanitization changed the value
-      if (originalValue !== processedValue) {
-        setHasSecurityViolation(true);
-        onSecurityViolation?.('Input was sanitized', originalValue);
-      }
-    }
+        // Apply sanitization
+        if (sanitize) {
+          const originalValue = processedValue;
+          processedValue = XSSPrevention.sanitizeInput(processedValue);
 
-    // Clear security violation flag if value is now clean
-    if (hasSecurityViolation && processedValue === rawValue) {
-      setHasSecurityViolation(false);
-    }
+          // Check if sanitization changed the value
+          if (originalValue !== processedValue) {
+            setHasSecurityViolation(true);
+            onSecurityViolation?.('Input was sanitized', originalValue);
+          }
+        }
 
-    onChange(processedValue);
-  }, [onChange, sanitize, maxLength, allowedPatterns, blockedPatterns, onSecurityViolation, hasSecurityViolation]);
+        // Clear security violation flag if value is now clean
+        if (hasSecurityViolation && processedValue === rawValue) {
+          setHasSecurityViolation(false);
+        }
 
-  const baseClassName = [
-    'block w-full rounded-md border-gray-300 shadow-sm',
-    'focus:border-blue-500 focus:ring-blue-500',
-    'disabled:bg-gray-50 disabled:text-gray-500',
-    hasSecurityViolation ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : '',
-    className
-  ].filter(Boolean).join(' ');
+        onChange(processedValue);
+      },
+      [
+        onChange,
+        sanitize,
+        maxLength,
+        allowedPatterns,
+        blockedPatterns,
+        onSecurityViolation,
+        hasSecurityViolation,
+      ]
+    );
 
-  return (
-    <div className="relative">
-      <input
-        ref={ref}
-        value={value}
-        onChange={handleChange}
-        className={baseClassName}
-        {...props}
-      />
-      
-      {hasSecurityViolation && (
-        <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-          <svg
-            className="h-5 w-5 text-red-500"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"
-            />
-          </svg>
-        </div>
-      )}
-    </div>
-  );
-});
+    const baseClassName = [
+      'block w-full rounded-md border-gray-300 shadow-sm',
+      'focus:border-blue-500 focus:ring-blue-500',
+      'disabled:bg-gray-50 disabled:text-gray-500',
+      hasSecurityViolation
+        ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
+        : '',
+      className,
+    ]
+      .filter(Boolean)
+      .join(' ');
+
+    return (
+      <div className="relative">
+        <input
+          ref={ref}
+          value={value}
+          onChange={handleChange}
+          className={baseClassName}
+          {...props}
+        />
+
+        {hasSecurityViolation && (
+          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+            <svg
+              className="h-5 w-5 text-red-500"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"
+              />
+            </svg>
+          </div>
+        )}
+      </div>
+    );
+  }
+);
 
 SecureInput.displayName = 'SecureInput';
 
 // Specialized secure inputs for common use cases
 
-export interface SecureTextAreaProps extends Omit<React.TextareaHTMLAttributes<HTMLTextAreaElement>, 'onChange'> {
+export interface SecureTextAreaProps
+  extends Omit<React.TextareaHTMLAttributes<HTMLTextAreaElement>, 'onChange'> {
   value: string;
   onChange: (value: string) => void;
   sanitize?: boolean;
@@ -129,81 +158,96 @@ export interface SecureTextAreaProps extends Omit<React.TextareaHTMLAttributes<H
   onSecurityViolation?: (violation: string, originalValue: string) => void;
 }
 
-export const SecureTextArea = forwardRef<HTMLTextAreaElement, SecureTextAreaProps>(({
-  value,
-  onChange,
-  sanitize = true,
-  maxLength = 5000,
-  onSecurityViolation,
-  className = '',
-  ...props
-}, ref) => {
-  const [hasSecurityViolation, setHasSecurityViolation] = useState(false);
+export const SecureTextArea = forwardRef<
+  HTMLTextAreaElement,
+  SecureTextAreaProps
+>(
+  (
+    {
+      value,
+      onChange,
+      sanitize = true,
+      maxLength = 5000,
+      onSecurityViolation,
+      className = '',
+      ...props
+    },
+    ref
+  ) => {
+    const [hasSecurityViolation, setHasSecurityViolation] = useState(false);
 
-  const handleChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const rawValue = e.target.value;
-    let processedValue = rawValue;
+    const handleChange = useCallback(
+      (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        const rawValue = e.target.value;
+        let processedValue = rawValue;
 
-    // Apply length limit
-    if (processedValue.length > maxLength) {
-      processedValue = processedValue.substring(0, maxLength);
-    }
+        // Apply length limit
+        if (processedValue.length > maxLength) {
+          processedValue = processedValue.substring(0, maxLength);
+        }
 
-    // Apply sanitization
-    if (sanitize) {
-      const originalValue = processedValue;
-      processedValue = XSSPrevention.sanitizeInput(processedValue);
-      
-      // Check if sanitization changed the value
-      if (originalValue !== processedValue) {
-        setHasSecurityViolation(true);
-        onSecurityViolation?.('Input was sanitized', originalValue);
-      } else if (hasSecurityViolation) {
-        setHasSecurityViolation(false);
-      }
-    }
+        // Apply sanitization
+        if (sanitize) {
+          const originalValue = processedValue;
+          processedValue = XSSPrevention.sanitizeInput(processedValue);
 
-    onChange(processedValue);
-  }, [onChange, sanitize, maxLength, onSecurityViolation, hasSecurityViolation]);
+          // Check if sanitization changed the value
+          if (originalValue !== processedValue) {
+            setHasSecurityViolation(true);
+            onSecurityViolation?.('Input was sanitized', originalValue);
+          } else if (hasSecurityViolation) {
+            setHasSecurityViolation(false);
+          }
+        }
 
-  const baseClassName = [
-    'block w-full rounded-md border-gray-300 shadow-sm',
-    'focus:border-blue-500 focus:ring-blue-500',
-    'disabled:bg-gray-50 disabled:text-gray-500',
-    hasSecurityViolation ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : '',
-    className
-  ].filter(Boolean).join(' ');
+        onChange(processedValue);
+      },
+      [onChange, sanitize, maxLength, onSecurityViolation, hasSecurityViolation]
+    );
 
-  return (
-    <div className="relative">
-      <textarea
-        ref={ref}
-        value={value}
-        onChange={handleChange}
-        className={baseClassName}
-        {...props}
-      />
-      
-      {hasSecurityViolation && (
-        <div className="absolute top-3 right-3 pointer-events-none">
-          <svg
-            className="h-5 w-5 text-red-500"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"
-            />
-          </svg>
-        </div>
-      )}
-    </div>
-  );
-});
+    const baseClassName = [
+      'block w-full rounded-md border-gray-300 shadow-sm',
+      'focus:border-blue-500 focus:ring-blue-500',
+      'disabled:bg-gray-50 disabled:text-gray-500',
+      hasSecurityViolation
+        ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
+        : '',
+      className,
+    ]
+      .filter(Boolean)
+      .join(' ');
+
+    return (
+      <div className="relative">
+        <textarea
+          ref={ref}
+          value={value}
+          onChange={handleChange}
+          className={baseClassName}
+          {...props}
+        />
+
+        {hasSecurityViolation && (
+          <div className="pointer-events-none absolute right-3 top-3">
+            <svg
+              className="h-5 w-5 text-red-500"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"
+              />
+            </svg>
+          </div>
+        )}
+      </div>
+    );
+  }
+);
 
 SecureTextArea.displayName = 'SecureTextArea';
 
@@ -213,66 +257,73 @@ export interface SecureUrlInputProps extends Omit<SecureInputProps, 'type'> {
   requireHttps?: boolean;
 }
 
-export const SecureUrlInput = forwardRef<HTMLInputElement, SecureUrlInputProps>(({
-  allowedDomains = [],
-  requireHttps = true,
-  onSecurityViolation,
-  ...props
-}, ref) => {
-  const handleSecurityViolation = useCallback((violation: string, originalValue: string) => {
-    // Additional URL-specific validation
-    const sanitizedUrl = XSSPrevention.sanitizeUrl(originalValue);
-    
-    if (!sanitizedUrl) {
-      onSecurityViolation?.('Invalid URL format', originalValue);
-      return;
-    }
+export const SecureUrlInput = forwardRef<HTMLInputElement, SecureUrlInputProps>(
+  (
+    { allowedDomains = [], requireHttps = true, onSecurityViolation, ...props },
+    ref
+  ) => {
+    const handleSecurityViolation = useCallback(
+      (violation: string, originalValue: string) => {
+        // Additional URL-specific validation
+        const sanitizedUrl = XSSPrevention.sanitizeUrl(originalValue);
 
-    try {
-      const url = new URL(sanitizedUrl);
-      
-      if (requireHttps && url.protocol !== 'https:') {
-        onSecurityViolation?.('HTTPS required', originalValue);
-        return;
-      }
+        if (!sanitizedUrl) {
+          onSecurityViolation?.('Invalid URL format', originalValue);
+          return;
+        }
 
-      if (allowedDomains.length > 0 && !allowedDomains.includes(url.hostname)) {
-        onSecurityViolation?.('Domain not allowed', originalValue);
-        return;
-      }
-    } catch {
-      onSecurityViolation?.('URL parsing failed', originalValue);
-      return;
-    }
+        try {
+          const url = new URL(sanitizedUrl);
 
-    onSecurityViolation?.(violation, originalValue);
-  }, [allowedDomains, requireHttps, onSecurityViolation]);
+          if (requireHttps && url.protocol !== 'https:') {
+            onSecurityViolation?.('HTTPS required', originalValue);
+            return;
+          }
 
-  return (
-    <SecureInput
-      ref={ref}
-      type="url"
-      allowedPatterns={[/^https?:\/\/.+/]} // Basic URL pattern
-      onSecurityViolation={handleSecurityViolation}
-      {...props}
-    />
-  );
-});
+          if (
+            allowedDomains.length > 0 &&
+            !allowedDomains.includes(url.hostname)
+          ) {
+            onSecurityViolation?.('Domain not allowed', originalValue);
+            return;
+          }
+        } catch {
+          onSecurityViolation?.('URL parsing failed', originalValue);
+          return;
+        }
 
-SecureUrlInput.displayName = 'SecureUrlInput';
+        onSecurityViolation?.(violation, originalValue);
+      },
+      [allowedDomains, requireHttps, onSecurityViolation]
+    );
 
-// Email input with validation
-export const SecureEmailInput = forwardRef<HTMLInputElement, Omit<SecureInputProps, 'type'>>(
-  (props, ref) => {
     return (
       <SecureInput
         ref={ref}
-        type="email"
-        allowedPatterns={[/^[^\s@]+@[^\s@]+\.[^\s@]+$/]} // Basic email pattern
+        type="url"
+        allowedPatterns={[/^https?:\/\/.+/]} // Basic URL pattern
+        onSecurityViolation={handleSecurityViolation}
         {...props}
       />
     );
   }
 );
+
+SecureUrlInput.displayName = 'SecureUrlInput';
+
+// Email input with validation
+export const SecureEmailInput = forwardRef<
+  HTMLInputElement,
+  Omit<SecureInputProps, 'type'>
+>((props, ref) => {
+  return (
+    <SecureInput
+      ref={ref}
+      type="email"
+      allowedPatterns={[/^[^\s@]+@[^\s@]+\.[^\s@]+$/]} // Basic email pattern
+      {...props}
+    />
+  );
+});
 
 SecureEmailInput.displayName = 'SecureEmailInput';

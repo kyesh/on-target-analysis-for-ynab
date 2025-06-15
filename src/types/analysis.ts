@@ -5,10 +5,18 @@
 import { YNABCategory, GoalType } from './ynab';
 
 // Target Alignment Status
-export type AlignmentStatus = 'on-target' | 'over-target' | 'under-target' | 'no-target';
+export type AlignmentStatus =
+  | 'on-target'
+  | 'over-target'
+  | 'under-target'
+  | 'no-target';
 
 // Budget Discipline Rating
-export type BudgetDisciplineRating = 'Excellent' | 'Good' | 'Fair' | 'Needs Improvement';
+export type BudgetDisciplineRating =
+  | 'Excellent'
+  | 'Good'
+  | 'Fair'
+  | 'Needs Improvement';
 
 // Processed Category Analysis
 export interface ProcessedCategory {
@@ -125,11 +133,11 @@ export interface MonthlyAnalysisResponse {
 
 // Goal Type Descriptions
 export const GOAL_TYPE_DESCRIPTIONS: Record<string, string> = {
-  'TB': 'Target Category Balance',
-  'TBD': 'Target Category Balance by Date',
-  'MF': 'Monthly Funding',
-  'NEED': 'Plan Your Spending',
-  'DEBT': 'Debt Payoff Goal'
+  TB: 'Target Category Balance',
+  TBD: 'Target Category Balance by Date',
+  MF: 'Monthly Funding',
+  NEED: 'Plan Your Spending',
+  DEBT: 'Debt Payoff Goal',
 };
 
 // Analysis Configuration
@@ -150,7 +158,12 @@ export interface FilterOptions {
 }
 
 // Sort Options
-export type SortField = 'name' | 'assigned' | 'target' | 'variance' | 'variancePercentage';
+export type SortField =
+  | 'name'
+  | 'assigned'
+  | 'target'
+  | 'variance'
+  | 'variancePercentage';
 export type SortDirection = 'asc' | 'desc';
 
 export interface SortOptions {

@@ -4,12 +4,12 @@
  */
 
 import { YNABCategory, YNABMonth, GoalType } from '@/types/ynab';
-import { 
-  ProcessedCategory, 
-  AlignmentStatus, 
+import {
+  ProcessedCategory,
+  AlignmentStatus,
   MonthlyAnalysis,
   CategoryVariance,
-  AnalysisConfig 
+  AnalysisConfig,
 } from '@/types/analysis';
 
 /**
@@ -60,28 +60,27 @@ export function determineAlignmentStatus(
   }
 
   const variance = assigned - target;
-  
+
   if (Math.abs(variance) <= tolerance) {
     return 'on-target';
   }
-  
+
   return variance > 0 ? 'over-target' : 'under-target';
 }
 
 /**
  * Calculate percentage of target achieved
  */
-export function calculateTargetPercentage(assigned: number, target: number | null): number | null {
+export function calculateTargetPercentage(
+  assigned: number,
+  target: number | null
+): number | null {
   if (target === null || target === 0) {
     return null;
   }
-  
+
   return (assigned / target) * 100;
 }
-
-
-
-
 
 /**
  * Type-safe wrapper for counting day occurrences with optional goal_day
@@ -90,7 +89,11 @@ export function calculateTargetPercentage(assigned: number, target: number | nul
  * @param goalDay - Optional goal day from YNAB category
  * @returns Number of occurrences or 1 as fallback
  */
-function safeCountDayOccurrences(year: number, month: number, goalDay: number | null | undefined): number {
+function safeCountDayOccurrences(
+  year: number,
+  month: number,
+  goalDay: number | null | undefined
+): number {
   if (typeof goalDay === 'number') {
     return countDayOccurrencesInMonth(year, month, goalDay);
   }
@@ -104,7 +107,11 @@ function safeCountDayOccurrences(year: number, month: number, goalDay: number | 
  * @param dayOfWeek - Day of week (0=Sunday, 1=Monday, ..., 6=Saturday)
  * @returns Number of occurrences of that day in the month
  */
-function countDayOccurrencesInMonth(year: number, month: number, dayOfWeek: number): number {
+function countDayOccurrencesInMonth(
+  year: number,
+  month: number,
+  dayOfWeek: number
+): number {
   const daysInMonth = new Date(year, month, 0).getDate();
   let count = 0;
 
@@ -122,7 +129,10 @@ function countDayOccurrencesInMonth(year: number, month: number, dayOfWeek: numb
  * Calculate "Needed This Month" amount based on simplified YNAB rules
  * This replaces all previous complex calculation logic with definitive rules
  */
-export function calculateNeededThisMonth(category: YNABCategory, currentMonth?: string): number | null {
+export function calculateNeededThisMonth(
+  category: YNABCategory,
+  currentMonth?: string
+): number | null {
   // Zero-Target Strategy: return 0 for categories without goals
   if (!category.goal_type) {
     return 0;
@@ -137,7 +147,9 @@ export function calculateNeededThisMonth(category: YNABCategory, currentMonth?: 
   if (category.goal_months_to_budget && category.goal_months_to_budget > 0) {
     const overallLeft = category.goal_overall_left || 0;
     const budgeted = category.budgeted || 0;
-    return Math.round((overallLeft + budgeted) / category.goal_months_to_budget);
+    return Math.round(
+      (overallLeft + budgeted) / category.goal_months_to_budget
+    );
   }
 
   // Rule 1: Monthly NEED Goals (cadence = 1, frequency = 1)
@@ -146,8 +158,11 @@ export function calculateNeededThisMonth(category: YNABCategory, currentMonth?: 
   }
 
   // Rule 2: Weekly NEED Goals (cadence = 2, frequency = 1)
-  if (category.goal_cadence === 2 && category.goal_cadence_frequency === 1 &&
-      typeof category.goal_day === 'number') {
+  if (
+    category.goal_cadence === 2 &&
+    category.goal_cadence_frequency === 1 &&
+    typeof category.goal_day === 'number'
+  ) {
     if (!currentMonth) {
       // Fallback to goal_target if no current month provided
       return category.goal_target;
@@ -167,7 +182,11 @@ export function calculateNeededThisMonth(category: YNABCategory, currentMonth?: 
       const dayCount = safeCountDayOccurrences(year, month, category.goal_day);
       return Math.round(category.goal_target * dayCount);
     } catch (error) {
-      console.warn('Error calculating weekly goal for month:', currentMonth, error);
+      console.warn(
+        'Error calculating weekly goal for month:',
+        currentMonth,
+        error
+      );
       return category.goal_target;
     }
   }
@@ -188,12 +207,12 @@ export function calculateNeededThisMonthWithRule(
   if (!category.goal_type) {
     return {
       amount: 0,
-      rule: "No Goal - Zero Target",
+      rule: 'No Goal - Zero Target',
       debugInfo: {
-        reason: "Category has no goal_type, using zero target strategy",
+        reason: 'Category has no goal_type, using zero target strategy',
         goal_type: category.goal_type,
-        goal_target: category.goal_target
-      }
+        goal_target: category.goal_target,
+      },
     };
   }
 
@@ -201,36 +220,42 @@ export function calculateNeededThisMonthWithRule(
   if (!category.goal_target) {
     return {
       amount: null,
-      rule: "No Goal",
+      rule: 'No Goal',
       debugInfo: {
-        reason: "Goal type exists but missing goal_target",
+        reason: 'Goal type exists but missing goal_target',
         goal_type: category.goal_type,
-        goal_target: category.goal_target
-      }
+        goal_target: category.goal_target,
+      },
     };
   }
 
   // Rule 6: Goal Creation Month Check - Goals created after current month should not contribute
   if (category.goal_creation_month && currentMonth) {
     try {
-      const goalCreationDate = new Date(category.goal_creation_month + 'T00:00:00.000Z');
+      const goalCreationDate = new Date(
+        category.goal_creation_month + 'T00:00:00.000Z'
+      );
       const currentMonthDate = new Date(currentMonth + 'T00:00:00.000Z');
 
       if (goalCreationDate > currentMonthDate) {
         return {
           amount: 0,
-          rule: "Rule 6: Future Goal Creation",
+          rule: 'Rule 6: Future Goal Creation',
           debugInfo: {
-            reason: "Goal created after current analysis month",
+            reason: 'Goal created after current analysis month',
             goal_creation_month: category.goal_creation_month,
             current_month: currentMonth,
-            calculation: `Goal created ${category.goal_creation_month} > analysis month ${currentMonth} → 0`
-          }
+            calculation: `Goal created ${category.goal_creation_month} > analysis month ${currentMonth} → 0`,
+          },
         };
       }
     } catch (error) {
       // If date parsing fails, continue with normal calculation
-      console.warn('Error parsing goal_creation_month:', category.goal_creation_month, error);
+      console.warn(
+        'Error parsing goal_creation_month:',
+        category.goal_creation_month,
+        error
+      );
     }
   }
 
@@ -238,28 +263,31 @@ export function calculateNeededThisMonthWithRule(
   if (category.goal_cadence === 1 && category.goal_cadence_frequency === 1) {
     return {
       amount: category.goal_target,
-      rule: "Rule 1: Monthly NEED",
+      rule: 'Rule 1: Monthly NEED',
       debugInfo: {
         calculation: `goal_target = ${category.goal_target}`,
         goal_cadence: category.goal_cadence,
-        goal_cadence_frequency: category.goal_cadence_frequency
-      }
+        goal_cadence_frequency: category.goal_cadence_frequency,
+      },
     };
   }
 
   // Rule 2: Weekly NEED Goals (cadence = 2, frequency = 1) - Takes precedence over months to budget
-  if (category.goal_cadence === 2 && category.goal_cadence_frequency === 1 &&
-      typeof category.goal_day === 'number') {
+  if (
+    category.goal_cadence === 2 &&
+    category.goal_cadence_frequency === 1 &&
+    typeof category.goal_day === 'number'
+  ) {
     if (!currentMonth) {
       return {
         amount: category.goal_target,
-        rule: "Rule 2: Weekly NEED (fallback)",
+        rule: 'Rule 2: Weekly NEED (fallback)',
         debugInfo: {
           calculation: `goal_target = ${category.goal_target} (no currentMonth provided)`,
           goal_cadence: category.goal_cadence,
           goal_cadence_frequency: category.goal_cadence_frequency,
-          goal_day: category.goal_day
-        }
+          goal_day: category.goal_day,
+        },
       };
     }
 
@@ -268,11 +296,11 @@ export function calculateNeededThisMonthWithRule(
       if (parts.length < 2) {
         return {
           amount: category.goal_target,
-          rule: "Rule 2: Weekly NEED (invalid month format)",
+          rule: 'Rule 2: Weekly NEED (invalid month format)',
           debugInfo: {
             calculation: `goal_target = ${category.goal_target} (invalid month format)`,
-            currentMonth: currentMonth
-          }
+            currentMonth: currentMonth,
+          },
         };
       }
       const year = parseInt(parts[0]!, 10);
@@ -280,11 +308,11 @@ export function calculateNeededThisMonthWithRule(
       if (isNaN(year) || isNaN(month)) {
         return {
           amount: category.goal_target,
-          rule: "Rule 2: Weekly NEED (invalid date)",
+          rule: 'Rule 2: Weekly NEED (invalid date)',
           debugInfo: {
             calculation: `goal_target = ${category.goal_target} (invalid date parsing)`,
-            currentMonth: currentMonth
-          }
+            currentMonth: currentMonth,
+          },
         };
       }
       const dayCount = safeCountDayOccurrences(year, month, category.goal_day);
@@ -298,22 +326,26 @@ export function calculateNeededThisMonthWithRule(
           goal_cadence_frequency: category.goal_cadence_frequency,
           goal_day: category.goal_day,
           currentMonth: currentMonth,
-          dayCount: dayCount
-        }
+          dayCount: dayCount,
+        },
       };
     } catch (error) {
-      console.warn('Error calculating weekly goal for month:', currentMonth, error);
+      console.warn(
+        'Error calculating weekly goal for month:',
+        currentMonth,
+        error
+      );
       return {
         amount: category.goal_target,
-        rule: "Rule 2: Weekly NEED (error fallback)",
+        rule: 'Rule 2: Weekly NEED (error fallback)',
         debugInfo: {
           calculation: `goal_target = ${category.goal_target} (error in calculation)`,
           error: error instanceof Error ? error.message : 'Unknown error',
           goal_cadence: category.goal_cadence,
           goal_cadence_frequency: category.goal_cadence_frequency,
           goal_day: category.goal_day,
-          currentMonth: currentMonth
-        }
+          currentMonth: currentMonth,
+        },
       };
     }
   }
@@ -322,43 +354,48 @@ export function calculateNeededThisMonthWithRule(
   if (category.goal_months_to_budget && category.goal_months_to_budget > 0) {
     const overallLeft = category.goal_overall_left || 0;
     const budgeted = category.budgeted || 0;
-    const amount = Math.round((overallLeft + budgeted) / category.goal_months_to_budget);
+    const amount = Math.round(
+      (overallLeft + budgeted) / category.goal_months_to_budget
+    );
     return {
       amount,
-      rule: "Rule 3: Months to Budget",
+      rule: 'Rule 3: Months to Budget',
       debugInfo: {
         calculation: `(${overallLeft} + ${budgeted}) ÷ ${category.goal_months_to_budget} = ${amount}`,
         goal_overall_left: overallLeft,
         budgeted: budgeted,
-        goal_months_to_budget: category.goal_months_to_budget
-      }
+        goal_months_to_budget: category.goal_months_to_budget,
+      },
     };
   }
 
   // Rule 5: Low months to budget (zero target when <= 0)
-  if (typeof category.goal_months_to_budget === 'number' && category.goal_months_to_budget <= 0) {
+  if (
+    typeof category.goal_months_to_budget === 'number' &&
+    category.goal_months_to_budget <= 0
+  ) {
     return {
       amount: 0,
-      rule: "Rule 5: Low Months to Budget",
+      rule: 'Rule 5: Low Months to Budget',
       debugInfo: {
         calculation: `goal_months_to_budget = ${category.goal_months_to_budget} (≤ 0) → 0`,
         goal_months_to_budget: category.goal_months_to_budget,
-        reason: "Months to budget is zero or negative"
-      }
+        reason: 'Months to budget is zero or negative',
+      },
     };
   }
 
   // Rule 4: All other cases - fallback to goal_target
   return {
     amount: category.goal_target,
-    rule: "Rule 4: Fallback",
+    rule: 'Rule 4: Fallback',
     debugInfo: {
       calculation: `goal_target = ${category.goal_target}`,
       goal_type: category.goal_type,
       goal_cadence: category.goal_cadence,
       goal_cadence_frequency: category.goal_cadence_frequency,
-      reason: "No specific rule matched"
-    }
+      reason: 'No specific rule matched',
+    },
   };
 }
 
@@ -366,7 +403,10 @@ export function calculateNeededThisMonthWithRule(
  * Extract target amount from YNAB category goal fields for monthly analysis
  * Uses the simplified calculateNeededThisMonth logic
  */
-export function extractTargetAmount(category: YNABCategory, currentMonth?: string): number | null {
+export function extractTargetAmount(
+  category: YNABCategory,
+  currentMonth?: string
+): number | null {
   return calculateNeededThisMonth(category, currentMonth);
 }
 
@@ -374,7 +414,10 @@ export function extractTargetAmount(category: YNABCategory, currentMonth?: strin
  * Extract the original monthly target amount for variance calculations
  * @deprecated Use calculateNeededThisMonth instead
  */
-export function extractOriginalMonthlyTarget(category: YNABCategory, currentMonth?: string): number | null {
+export function extractOriginalMonthlyTarget(
+  category: YNABCategory,
+  currentMonth?: string
+): number | null {
   return calculateNeededThisMonth(category, currentMonth);
 }
 
@@ -382,7 +425,10 @@ export function extractOriginalMonthlyTarget(category: YNABCategory, currentMont
  * Extract current "needed this month" amount for funding guidance
  * @deprecated Use calculateNeededThisMonth instead
  */
-export function extractCurrentNeededAmount(category: YNABCategory, currentMonth?: string): number | null {
+export function extractCurrentNeededAmount(
+  category: YNABCategory,
+  currentMonth?: string
+): number | null {
   return calculateNeededThisMonth(category, currentMonth);
 }
 
@@ -390,7 +436,9 @@ export function extractCurrentNeededAmount(category: YNABCategory, currentMonth?
  * Extract overall target amount (for reference/comparison purposes)
  * This returns the goal_target field which represents the overall goal amount
  */
-export function extractOverallTargetAmount(category: YNABCategory): number | null {
+export function extractOverallTargetAmount(
+  category: YNABCategory
+): number | null {
   return category.goal_target || null;
 }
 
@@ -398,7 +446,9 @@ export function extractOverallTargetAmount(category: YNABCategory): number | nul
  * Extract monthly needed amount (what YNAB calculates as needed this month)
  * This returns the goal_under_funded field which represents monthly progress needed
  */
-export function extractMonthlyNeededAmount(category: YNABCategory): number | null {
+export function extractMonthlyNeededAmount(
+  category: YNABCategory
+): number | null {
   return category.goal_under_funded || null;
 }
 
@@ -407,11 +457,11 @@ export function extractMonthlyNeededAmount(category: YNABCategory): number | nul
  */
 export function getTargetTypeDescription(goalType: string | null): string {
   const descriptions: Record<string, string> = {
-    'TB': 'Target Category Balance',
-    'TBD': 'Target Category Balance by Date',
-    'MF': 'Monthly Funding',
-    'NEED': 'Plan Your Spending',
-    'DEBT': 'Debt Payoff Goal'
+    TB: 'Target Category Balance',
+    TBD: 'Target Category Balance by Date',
+    MF: 'Monthly Funding',
+    NEED: 'Plan Your Spending',
+    DEBT: 'Debt Payoff Goal',
   };
 
   return descriptions[goalType || ''] || 'No Target';
@@ -421,24 +471,24 @@ export function getTargetTypeDescription(goalType: string | null): string {
  * Check if category should be included in analysis
  */
 export function shouldIncludeCategory(
-  category: YNABCategory, 
+  category: YNABCategory,
   config: AnalysisConfig = DEFAULT_ANALYSIS_CONFIG
 ): boolean {
   // Skip deleted categories unless explicitly included
   if (category.deleted && !config.includeDeletedCategories) {
     return false;
   }
-  
+
   // Skip hidden categories unless explicitly included
   if (category.hidden && !config.includeHiddenCategories) {
     return false;
   }
-  
+
   // Skip categories with assignments below threshold
   if (Math.abs(category.budgeted) < config.minimumAssignmentThreshold) {
     return false;
   }
-  
+
   return true;
 }
 
@@ -452,12 +502,22 @@ export function processCategory(
   currentMonth?: string
 ): ProcessedCategory {
   // Use simplified calculation with debug information
-  const calculationResult = calculateNeededThisMonthWithRule(category, currentMonth);
+  const calculationResult = calculateNeededThisMonthWithRule(
+    category,
+    currentMonth
+  );
   const neededThisMonth = calculationResult.amount;
   const assigned = category.budgeted;
   const variance = neededThisMonth !== null ? assigned - neededThisMonth : 0;
-  const alignmentStatus = determineAlignmentStatus(assigned, neededThisMonth, config.toleranceMilliunits);
-  const percentageOfTarget = calculateTargetPercentage(assigned, neededThisMonth);
+  const alignmentStatus = determineAlignmentStatus(
+    assigned,
+    neededThisMonth,
+    config.toleranceMilliunits
+  );
+  const percentageOfTarget = calculateTargetPercentage(
+    assigned,
+    neededThisMonth
+  );
 
   // Create debug information for all categories (including those without goals)
   const debugInfo = {
@@ -481,7 +541,8 @@ export function processCategory(
   return {
     id: category.id,
     name: category.name,
-    categoryGroupName: categoryGroupName || category.category_group_name || 'Unknown',
+    categoryGroupName:
+      categoryGroupName || category.category_group_name || 'Unknown',
     assigned,
     neededThisMonth,
     target: neededThisMonth, // Alias for backward compatibility
@@ -505,16 +566,22 @@ export function calculateCategoryVariance(
   category: ProcessedCategory,
   month: string
 ): CategoryVariance | null {
-  if (!category.hasTarget || category.neededThisMonth === null || category.neededThisMonth === 0) {
+  if (
+    !category.hasTarget ||
+    category.neededThisMonth === null ||
+    category.neededThisMonth === 0
+  ) {
     return null;
   }
 
-  const variancePercentage = (category.variance / category.neededThisMonth) * 100;
+  const variancePercentage =
+    (category.variance / category.neededThisMonth) * 100;
 
   // Handle edge cases where percentage calculation results in invalid numbers
-  const safeVariancePercentage = (!isNaN(variancePercentage) && isFinite(variancePercentage))
-    ? variancePercentage
-    : null;
+  const safeVariancePercentage =
+    !isNaN(variancePercentage) && isFinite(variancePercentage)
+      ? variancePercentage
+      : null;
 
   return {
     categoryId: category.id,
@@ -537,7 +604,7 @@ export function validateMonthFormat(month: string): boolean {
   if (!monthRegex.test(month)) {
     return false;
   }
-  
+
   const date = new Date(month);
   return date instanceof Date && !isNaN(date.getTime());
 }

@@ -43,28 +43,33 @@ This tool provides **secure, detailed budget analysis** for YNAB users by:
 ### Local Development Setup
 
 1. **Clone the repository**
+
    ```bash
    git clone https://github.com/your-username/on-target-analysis-for-ynab.git
    cd on-target-analysis-for-ynab
    ```
 
 2. **Install dependencies**
+
    ```bash
    npm install
    ```
 
 3. **Register YNAB OAuth Application**
+
    - Go to [YNAB Developer Settings](https://app.ynab.com/settings/developer)
    - Create a new OAuth application
    - Set redirect URI to: `http://localhost:3000/auth/callback` (development) or `https://ontargetanalysisforynab.com/auth/callback` (production)
    - Copy the Client ID
 
 4. **Configure environment**
+
    ```bash
    cp .env.example .env.local
    ```
 
    Edit `.env.local` and add your configuration:
+
    ```env
    NEXT_PUBLIC_YNAB_CLIENT_ID=your-oauth-client-id-here
    NEXTAUTH_SECRET=your-nextauth-secret-here
@@ -72,6 +77,7 @@ This tool provides **secure, detailed budget analysis** for YNAB users by:
    ```
 
 5. **Start development server**
+
    ```bash
    npm run dev
    ```
@@ -84,11 +90,13 @@ This tool provides **secure, detailed budget analysis** for YNAB users by:
 ### Quick Deployment to Google Cloud Platform
 
 1. **Set up secrets**
+
    ```bash
    npm run deploy:secrets
    ```
 
 2. **Deploy to Cloud Run**
+
    ```bash
    npm run deploy:gcp
    ```
@@ -104,13 +112,13 @@ For detailed deployment instructions, see [DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_
 
 ### Environment Variables
 
-| Variable | Description | Required | Default |
-|----------|-------------|----------|---------|
-| `NEXT_PUBLIC_YNAB_CLIENT_ID` | Your YNAB OAuth Client ID | ✅ Yes | - |
-| `NEXTAUTH_SECRET` | NextAuth JWT signing secret | ✅ Yes | - |
-| `NEXT_PUBLIC_APP_URL` | Application URL for OAuth | ✅ Yes | - |
-| `NEXT_PUBLIC_POSTHOG_KEY` | PostHog analytics key | No | - |
-| `NEXT_PUBLIC_POSTHOG_HOST` | PostHog host URL | No | `https://app.posthog.com` |
+| Variable                     | Description                 | Required | Default                   |
+| ---------------------------- | --------------------------- | -------- | ------------------------- |
+| `NEXT_PUBLIC_YNAB_CLIENT_ID` | Your YNAB OAuth Client ID   | ✅ Yes   | -                         |
+| `NEXTAUTH_SECRET`            | NextAuth JWT signing secret | ✅ Yes   | -                         |
+| `NEXT_PUBLIC_APP_URL`        | Application URL for OAuth   | ✅ Yes   | -                         |
+| `NEXT_PUBLIC_POSTHOG_KEY`    | PostHog analytics key       | No       | -                         |
+| `NEXT_PUBLIC_POSTHOG_HOST`   | PostHog host URL            | No       | `https://app.posthog.com` |
 
 ### OAuth Setup
 
@@ -124,20 +132,24 @@ For detailed deployment instructions, see [DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_
 ## 📊 How to Use
 
 ### 1. Select Your Budget
+
 - Choose from your available YNAB budgets
 - The most recently modified budget is selected by default
 
 ### 2. Choose Analysis Month
+
 - Select any month from your budget's date range
 - Navigate between months using the arrow controls
 
 ### 3. Review Analysis Results
+
 - **Monthly Overview**: See income, spending, and budget totals
 - **Over-Target Categories**: Categories receiving more than their target
 - **Under-Target Categories**: Categories receiving less than their target
 - **Detailed Category List**: Complete breakdown with variance calculations
 
 ### 4. Use Debug Mode (Optional)
+
 - Toggle "Show Debug Information" to see calculation details
 - Click debug panels to view:
   - Raw YNAB API fields
@@ -214,6 +226,7 @@ npm run test:coverage      # Generate coverage report
 ```
 
 Tests cover:
+
 - All 7 calculation rules
 - Edge cases and error handling
 - API integration
@@ -224,18 +237,21 @@ Tests cover:
 Comprehensive documentation is available in the `/docs` directory:
 
 ### **Core Documentation**
+
 - **[Implementation Status](docs/IMPLEMENTATION_STATUS.md)** - Complete implementation overview and decisions
 - **[Deployment Guide](docs/DEPLOYMENT_GUIDE.md)** - Step-by-step Google Cloud Platform deployment
 - **[Calculation Rules](docs/CALCULATION_RULES.md)** - Complete rule documentation with examples
 - **[API Reference](docs/API_REFERENCE.md)** - OAuth API endpoints and data structures
 
 ### **Technical Guides**
+
 - **[Debugging Guide](docs/DEBUGGING_GUIDE.md)** - How to use the debugging UI
 - **[Development Guide](docs/DEVELOPMENT_GUIDE.md)** - Technical implementation details
 - **[Testing Guide](docs/TESTING_GUIDE.md)** - Testing procedures and integration tests
 - **[Security Plan](docs/SECURITY_PLAN.md)** - Security measures and compliance
 
 ### **OAuth Implementation**
+
 - **[OAuth Implementation Plan](docs/IMPLICIT_GRANT_IMPLEMENTATION_PLAN.md)** - OAuth 2.0 implementation details
 - **[Security Checklist](docs/IMPLICIT_GRANT_SECURITY_CHECKLIST.md)** - Security measures implemented
 - **[Architecture Tradeoffs](docs/IMPLICIT_GRANT_TRADEOFFS_MIGRATION.md)** - Decision rationale

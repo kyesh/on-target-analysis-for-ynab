@@ -1,4 +1,5 @@
 # YNAB Future-Dated Goals Research Report
+
 ## "Needed This Month" Calculation for Future Goals
 
 **Date**: December 2024  
@@ -20,16 +21,19 @@
 ## Research Methodology
 
 ### 1. Official YNAB API Documentation Review
+
 - **Source**: Microsoft YNAB API Connector Documentation
 - **Confirmed**: `goal_under_funded` is officially "amount needed in current month to stay on track"
 - **Limitation**: Documentation doesn't address future-dated goal behavior
 
 ### 2. Cross-Month Behavioral Testing
+
 - **Test Period**: December 2024 - June 2025
 - **Budget ID**: b627e926-57f9-431e-aa30-d824a8a3fdb9
 - **Method**: API calls across multiple months to observe field behavior changes
 
 ### 3. Community Research
+
 - **Sources**: YNAB community forums, Reddit r/ynab, third-party tools
 - **Finding**: Limited documentation on future-dated goal calculations
 - **Insight**: Toolkit for YNAB and other tools likely face similar challenges
@@ -44,11 +48,11 @@
 
 **Examples from Real Data**:
 
-| Category | Target Date | Dec 2024 | Target Month | Behavior |
-|---|---|---|---|---|
-| Summer Camp | 2025-06-01 | `null` | `687930` | Null until target month |
-| Camp Michigania | 2025-04-15 | `null` | `580000` | Null until target month |
-| YNAB | 2025-12-23 | `null` | `0` | Null until target month |
+| Category        | Target Date | Dec 2024 | Target Month | Behavior                |
+| --------------- | ----------- | -------- | ------------ | ----------------------- |
+| Summer Camp     | 2025-06-01  | `null`   | `687930`     | Null until target month |
+| Camp Michigania | 2025-04-15  | `null`   | `580000`     | Null until target month |
+| YNAB            | 2025-12-23  | `null`   | `0`          | Null until target month |
 
 ### 2. Manual Calculation Formula
 
@@ -59,17 +63,18 @@ Monthly Needed = (goal_target - goal_overall_funded) / months_remaining
 ```
 
 **Validation Examples**:
+
 - **Summer Camp**: (800,000 - 0) / 6 months = 133,333 milliunits ($133.33/month)
 - **Camp Michigania**: (5,240,000 - 0) / 4 months = 1,310,000 milliunits ($1,310/month)
 
 ### 3. Goal Type Specific Behavior
 
-| Goal Type | Current Month | Future Month | Behavior |
-|---|---|---|---|
-| **MF (Monthly Funding)** | Uses `goal_target` | Uses `goal_target` | ✅ Consistent |
-| **NEED (Future-dated)** | Returns `null` | Returns calculated value | ❌ Inconsistent |
-| **NEED (No date)** | Returns `null` | Returns `null` | ✅ Consistent |
-| **TB/TBD** | Uses `goal_under_funded` | Uses `goal_under_funded` | ✅ Consistent |
+| Goal Type                | Current Month            | Future Month             | Behavior        |
+| ------------------------ | ------------------------ | ------------------------ | --------------- |
+| **MF (Monthly Funding)** | Uses `goal_target`       | Uses `goal_target`       | ✅ Consistent   |
+| **NEED (Future-dated)**  | Returns `null`           | Returns calculated value | ❌ Inconsistent |
+| **NEED (No date)**       | Returns `null`           | Returns `null`           | ✅ Consistent   |
+| **TB/TBD**               | Uses `goal_under_funded` | Uses `goal_under_funded` | ✅ Consistent   |
 
 ---
 
@@ -80,6 +85,7 @@ Monthly Needed = (goal_target - goal_overall_funded) / months_remaining
 **Problem**: Future-dated NEED goals fall back to `goal_target` (total amount) instead of monthly amount.
 
 **Example Impact**:
+
 - Summer Camp goal: $800 total
 - Current implementation: Shows $800 as monthly target
 - Correct implementation: Should show $133.33 as monthly target
@@ -99,7 +105,10 @@ Monthly Needed = (goal_target - goal_overall_funded) / months_remaining
 ### Enhanced Target Extraction Logic
 
 ```typescript
-export function extractTargetAmount(category: YNABCategory, currentMonth: string): number | null {
+export function extractTargetAmount(
+  category: YNABCategory,
+  currentMonth: string
+): number | null {
   if (!category.goal_type) return null;
 
   const monthlyNeeded = category.goal_under_funded;
@@ -112,28 +121,34 @@ export function extractTargetAmount(category: YNABCategory, currentMonth: string
         return calculateMonthlyNeededForFutureGoal(category, currentMonth);
       }
       return monthlyNeeded !== null ? monthlyNeeded : overallTarget || null;
-    
+
     case 'MF':
       return overallTarget || null;
-    
-    case 'TB': case 'TBD': case 'DEBT':
+
+    case 'TB':
+    case 'TBD':
+    case 'DEBT':
       return monthlyNeeded !== null ? monthlyNeeded : overallTarget || null;
-    
+
     default:
       return null;
   }
 }
 
 function calculateMonthlyNeededForFutureGoal(
-  category: YNABCategory, 
+  category: YNABCategory,
   currentMonth: string
 ): number | null {
   if (!category.goal_target_month || !category.goal_target) return null;
-  
-  const monthsRemaining = calculateMonthsBetween(currentMonth, category.goal_target_month);
+
+  const monthsRemaining = calculateMonthsBetween(
+    currentMonth,
+    category.goal_target_month
+  );
   if (monthsRemaining <= 0) return null;
-  
-  const remainingNeeded = category.goal_target - (category.goal_overall_funded || 0);
+
+  const remainingNeeded =
+    category.goal_target - (category.goal_overall_funded || 0);
   return Math.max(0, Math.round(remainingNeeded / monthsRemaining));
 }
 ```
@@ -186,6 +201,7 @@ function calculateMonthlyNeededForFutureGoal(
 **Enhanced Logic**: Added manual calculation for future-dated NEED goals where `goal_under_funded = null`.
 
 **Formula Implemented**:
+
 ```
 Monthly Needed = (goal_target - goal_overall_funded) / months_remaining
 ```
@@ -195,6 +211,7 @@ Monthly Needed = (goal_target - goal_overall_funded) / months_remaining
 **Test Results**: All 42 unit tests passing, including 7 new tests for future-dated goals.
 
 **Real Data Validation**:
+
 - **Camp Michigania**: $5,240 goal ÷ 4 months = $1,310/month ✅
 - **Summer Camp**: $800 goal ÷ 6 months = $133.33/month ✅
 - **YNAB**: $110 goal ÷ 12 months = $9.17/month ✅

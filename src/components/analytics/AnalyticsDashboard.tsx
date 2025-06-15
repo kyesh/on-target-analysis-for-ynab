@@ -55,9 +55,21 @@ export function AnalyticsDashboard() {
           { from: '/analysis/monthly', to: '/dashboard', count: 32 },
         ],
         errors: [
-          { type: 'API Error', count: 12, lastOccurred: '2024-01-15T10:30:00Z' },
-          { type: 'Authentication Error', count: 8, lastOccurred: '2024-01-15T09:15:00Z' },
-          { type: 'Network Error', count: 5, lastOccurred: '2024-01-14T16:45:00Z' },
+          {
+            type: 'API Error',
+            count: 12,
+            lastOccurred: '2024-01-15T10:30:00Z',
+          },
+          {
+            type: 'Authentication Error',
+            count: 8,
+            lastOccurred: '2024-01-15T09:15:00Z',
+          },
+          {
+            type: 'Network Error',
+            count: 5,
+            lastOccurred: '2024-01-14T16:45:00Z',
+          },
         ],
         performance: {
           avgPageLoad: 1.2, // seconds
@@ -89,15 +101,15 @@ export function AnalyticsDashboard() {
 
   if (loading) {
     return (
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="rounded-lg bg-white p-6 shadow">
         <div className="animate-pulse space-y-4">
-          <div className="h-6 bg-gray-200 rounded w-1/4"></div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="h-6 w-1/4 rounded bg-gray-200"></div>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             {[1, 2, 3].map(i => (
-              <div key={i} className="h-24 bg-gray-200 rounded"></div>
+              <div key={i} className="h-24 rounded bg-gray-200"></div>
             ))}
           </div>
-          <div className="h-64 bg-gray-200 rounded"></div>
+          <div className="h-64 rounded bg-gray-200"></div>
         </div>
       </div>
     );
@@ -105,15 +117,15 @@ export function AnalyticsDashboard() {
 
   if (error) {
     return (
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="rounded-lg bg-white p-6 shadow">
         <div className="text-center">
-          <div className="text-red-600 text-lg font-semibold mb-2">
+          <div className="mb-2 text-lg font-semibold text-red-600">
             Analytics Unavailable
           </div>
-          <p className="text-gray-600 mb-4">{error}</p>
+          <p className="mb-4 text-gray-600">{error}</p>
           <button
             onClick={loadAnalyticsData}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+            className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
           >
             Retry
           </button>
@@ -130,11 +142,13 @@ export function AnalyticsDashboard() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900">Analytics Dashboard</h2>
+        <h2 className="text-2xl font-bold text-gray-900">
+          Analytics Dashboard
+        </h2>
         <select
           value={timeRange}
-          onChange={(e) => setTimeRange(e.target.value as '24h' | '7d' | '30d')}
-          className="border border-gray-300 rounded-md px-3 py-2 text-sm"
+          onChange={e => setTimeRange(e.target.value as '24h' | '7d' | '30d')}
+          className="rounded-md border border-gray-300 px-3 py-2 text-sm"
         >
           <option value="24h">Last 24 hours</option>
           <option value="7d">Last 7 days</option>
@@ -143,93 +157,128 @@ export function AnalyticsDashboard() {
       </div>
 
       {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-lg shadow p-6">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+        <div className="rounded-lg bg-white p-6 shadow">
           <div className="text-sm font-medium text-gray-500">Page Views</div>
-          <div className="text-2xl font-bold text-gray-900">{data.pageViews.toLocaleString()}</div>
+          <div className="text-2xl font-bold text-gray-900">
+            {data.pageViews.toLocaleString()}
+          </div>
         </div>
-        
-        <div className="bg-white rounded-lg shadow p-6">
+
+        <div className="rounded-lg bg-white p-6 shadow">
           <div className="text-sm font-medium text-gray-500">Unique Users</div>
-          <div className="text-2xl font-bold text-gray-900">{data.uniqueUsers}</div>
+          <div className="text-2xl font-bold text-gray-900">
+            {data.uniqueUsers}
+          </div>
         </div>
-        
-        <div className="bg-white rounded-lg shadow p-6">
+
+        <div className="rounded-lg bg-white p-6 shadow">
           <div className="text-sm font-medium text-gray-500">Avg Session</div>
-          <div className="text-2xl font-bold text-gray-900">{formatDuration(data.avgSessionDuration)}</div>
+          <div className="text-2xl font-bold text-gray-900">
+            {formatDuration(data.avgSessionDuration)}
+          </div>
         </div>
-        
-        <div className="bg-white rounded-lg shadow p-6">
+
+        <div className="rounded-lg bg-white p-6 shadow">
           <div className="text-sm font-medium text-gray-500">Error Rate</div>
-          <div className="text-2xl font-bold text-gray-900">{formatPercentage(data.performance.errorRate)}</div>
+          <div className="text-2xl font-bold text-gray-900">
+            {formatPercentage(data.performance.errorRate)}
+          </div>
         </div>
       </div>
 
       {/* Charts and Tables */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Top Pages */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Top Pages</h3>
+        <div className="rounded-lg bg-white p-6 shadow">
+          <h3 className="mb-4 text-lg font-semibold text-gray-900">
+            Top Pages
+          </h3>
           <div className="space-y-3">
             {data.topPages.map((page, index) => (
-              <div key={page.path} className="flex items-center justify-between">
+              <div
+                key={page.path}
+                className="flex items-center justify-between"
+              >
                 <div className="flex items-center space-x-3">
-                  <div className="text-sm font-medium text-gray-500">#{index + 1}</div>
+                  <div className="text-sm font-medium text-gray-500">
+                    #{index + 1}
+                  </div>
                   <div className="text-sm text-gray-900">{page.path}</div>
                 </div>
-                <div className="text-sm font-medium text-gray-900">{page.views}</div>
+                <div className="text-sm font-medium text-gray-900">
+                  {page.views}
+                </div>
               </div>
             ))}
           </div>
         </div>
 
         {/* User Flow */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">User Flow</h3>
+        <div className="rounded-lg bg-white p-6 shadow">
+          <h3 className="mb-4 text-lg font-semibold text-gray-900">
+            User Flow
+          </h3>
           <div className="space-y-3">
             {data.userFlow.map((flow, index) => (
               <div key={index} className="flex items-center space-x-2 text-sm">
                 <div className="text-gray-600">{flow.from}</div>
                 <div className="text-gray-400">→</div>
                 <div className="text-gray-600">{flow.to}</div>
-                <div className="ml-auto text-gray-900 font-medium">{flow.count}</div>
+                <div className="ml-auto font-medium text-gray-900">
+                  {flow.count}
+                </div>
               </div>
             ))}
           </div>
         </div>
 
         {/* Performance Metrics */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Performance</h3>
+        <div className="rounded-lg bg-white p-6 shadow">
+          <h3 className="mb-4 text-lg font-semibold text-gray-900">
+            Performance
+          </h3>
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="text-sm text-gray-600">Avg Page Load</div>
-              <div className="text-sm font-medium text-gray-900">{data.performance.avgPageLoad}s</div>
+              <div className="text-sm font-medium text-gray-900">
+                {data.performance.avgPageLoad}s
+              </div>
             </div>
             <div className="flex items-center justify-between">
               <div className="text-sm text-gray-600">Avg API Response</div>
-              <div className="text-sm font-medium text-gray-900">{data.performance.avgApiResponse}s</div>
+              <div className="text-sm font-medium text-gray-900">
+                {data.performance.avgApiResponse}s
+              </div>
             </div>
             <div className="flex items-center justify-between">
               <div className="text-sm text-gray-600">Error Rate</div>
-              <div className="text-sm font-medium text-gray-900">{formatPercentage(data.performance.errorRate)}</div>
+              <div className="text-sm font-medium text-gray-900">
+                {formatPercentage(data.performance.errorRate)}
+              </div>
             </div>
           </div>
         </div>
 
         {/* Recent Errors */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Errors</h3>
+        <div className="rounded-lg bg-white p-6 shadow">
+          <h3 className="mb-4 text-lg font-semibold text-gray-900">
+            Recent Errors
+          </h3>
           <div className="space-y-3">
             {data.errors.map((error, index) => (
               <div key={index} className="flex items-center justify-between">
                 <div>
-                  <div className="text-sm font-medium text-gray-900">{error.type}</div>
+                  <div className="text-sm font-medium text-gray-900">
+                    {error.type}
+                  </div>
                   <div className="text-xs text-gray-500">
                     Last: {new Date(error.lastOccurred).toLocaleDateString()}
                   </div>
                 </div>
-                <div className="text-sm font-medium text-red-600">{error.count}</div>
+                <div className="text-sm font-medium text-red-600">
+                  {error.count}
+                </div>
               </div>
             ))}
           </div>
@@ -237,18 +286,29 @@ export function AnalyticsDashboard() {
       </div>
 
       {/* Privacy Notice */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+      <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
         <div className="flex">
           <div className="flex-shrink-0">
-            <svg className="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+            <svg
+              className="h-5 w-5 text-blue-400"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fillRule="evenodd"
+                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                clipRule="evenodd"
+              />
             </svg>
           </div>
           <div className="ml-3">
-            <h3 className="text-sm font-medium text-blue-800">Privacy Protected</h3>
+            <h3 className="text-sm font-medium text-blue-800">
+              Privacy Protected
+            </h3>
             <p className="mt-1 text-sm text-blue-700">
-              All analytics data is anonymized and aggregated. No personal information is collected or stored.
-              Users can opt out of analytics tracking at any time.
+              All analytics data is anonymized and aggregated. No personal
+              information is collected or stored. Users can opt out of analytics
+              tracking at any time.
             </p>
           </div>
         </div>

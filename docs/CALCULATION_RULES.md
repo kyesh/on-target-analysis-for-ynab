@@ -19,6 +19,7 @@ The rules are evaluated in this specific order to ensure accurate calculations:
 ## Detailed Rule Documentation
 
 ### Zero-Target Strategy
+
 **Purpose**: Handle categories without any goals set  
 **Condition**: `goal_type` is null or undefined  
 **Calculation**: Return `0`  
@@ -35,6 +36,7 @@ if (!category.goal_type) {
 ---
 
 ### Rule 6: Goal Creation Month Check
+
 **Purpose**: Exclude goals created after the analysis month  
 **Condition**: `goal_creation_month` exists and is after the currently selected analysis month  
 **Calculation**: Return `0`  
@@ -42,9 +44,11 @@ if (!category.goal_type) {
 
 ```typescript
 if (category.goal_creation_month && currentMonth) {
-  const goalCreationDate = new Date(category.goal_creation_month + 'T00:00:00.000Z');
+  const goalCreationDate = new Date(
+    category.goal_creation_month + 'T00:00:00.000Z'
+  );
   const currentMonthDate = new Date(currentMonth + 'T00:00:00.000Z');
-  
+
   if (goalCreationDate > currentMonthDate) {
     return 0; // Goal created after current month
   }
@@ -57,6 +61,7 @@ if (category.goal_creation_month && currentMonth) {
 ---
 
 ### Rule 1: Monthly NEED Goals
+
 **Purpose**: Handle standard monthly recurring goals  
 **Condition**: `goal_cadence = 1` AND `goal_cadence_frequency = 1`  
 **Calculation**: Use `goal_target` as the monthly amount
@@ -72,14 +77,18 @@ if (category.goal_cadence === 1 && category.goal_cadence_frequency === 1) {
 ---
 
 ### Rule 2: Weekly NEED Goals
+
 **Purpose**: Handle weekly recurring goals with day-specific targeting  
 **Condition**: `goal_cadence = 2` AND `goal_cadence_frequency = 1` AND `goal_day` is set  
 **Calculation**: `goal_target × count_of_goal_day_in_month`  
 **Priority**: Takes precedence over Rule 3 (Months to Budget)
 
 ```typescript
-if (category.goal_cadence === 2 && category.goal_cadence_frequency === 1 &&
-    typeof category.goal_day === 'number') {
+if (
+  category.goal_cadence === 2 &&
+  category.goal_cadence_frequency === 1 &&
+  typeof category.goal_day === 'number'
+) {
   const dayCount = countDayOccurrencesInMonth(year, month, category.goal_day);
   return Math.round(category.goal_target * dayCount);
 }
@@ -91,6 +100,7 @@ if (category.goal_cadence === 2 && category.goal_cadence_frequency === 1 &&
 ---
 
 ### Rule 3: Months to Budget
+
 **Purpose**: Handle target balance goals with specific timeline  
 **Condition**: `goal_months_to_budget > 0` AND no specific cadence rules apply  
 **Calculation**: `(goal_overall_left + budgeted) ÷ goal_months_to_budget`
@@ -109,13 +119,17 @@ if (category.goal_months_to_budget && category.goal_months_to_budget > 0) {
 ---
 
 ### Rule 5: Low Months to Budget
+
 **Purpose**: Handle completed or overdue target balance goals  
 **Condition**: `goal_months_to_budget ≤ 0`  
 **Calculation**: Return `0`  
 **Rationale**: Goals that are completed or overdue should have zero monthly target
 
 ```typescript
-if (typeof category.goal_months_to_budget === 'number' && category.goal_months_to_budget <= 0) {
+if (
+  typeof category.goal_months_to_budget === 'number' &&
+  category.goal_months_to_budget <= 0
+) {
   return 0; // Goal completed or overdue
 }
 ```
@@ -125,6 +139,7 @@ if (typeof category.goal_months_to_budget === 'number' && category.goal_months_t
 ---
 
 ### Rule 4: All Other Cases (Fallback)
+
 **Purpose**: Handle any goal type not covered by specific rules  
 **Condition**: Any goal type not covered by Rules 1-3, 5-6  
 **Calculation**: Use `goal_target` directly
@@ -135,6 +150,7 @@ return category.goal_target;
 ```
 
 **Examples**:
+
 - Monthly Funding (MF) goals → Use `goal_target`
 - Target Balance (TB) goals → Use `goal_target`
 - Debt goals → Use `goal_target`
@@ -146,17 +162,25 @@ return category.goal_target;
 The `countDayOccurrencesInMonth` function accurately counts specific day occurrences:
 
 ```typescript
-function countDayOccurrencesInMonth(year: number, month: number, dayOfWeek: number): number {
+function countDayOccurrencesInMonth(
+  year: number,
+  month: number,
+  dayOfWeek: number
+): number {
   const firstDay = new Date(year, month - 1, 1);
   const lastDay = new Date(year, month, 0);
   let count = 0;
-  
-  for (let date = new Date(firstDay); date <= lastDay; date.setDate(date.getDate() + 1)) {
+
+  for (
+    let date = new Date(firstDay);
+    date <= lastDay;
+    date.setDate(date.getDate() + 1)
+  ) {
     if (date.getDay() === dayOfWeek) {
       count++;
     }
   }
-  
+
   return count;
 }
 ```
@@ -166,7 +190,9 @@ function countDayOccurrencesInMonth(year: number, month: number, dayOfWeek: numb
 All date operations use UTC to avoid timezone issues:
 
 ```typescript
-const goalCreationDate = new Date(category.goal_creation_month + 'T00:00:00.000Z');
+const goalCreationDate = new Date(
+  category.goal_creation_month + 'T00:00:00.000Z'
+);
 const currentMonthDate = new Date(currentMonth + 'T00:00:00.000Z');
 ```
 

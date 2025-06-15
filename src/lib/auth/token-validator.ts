@@ -24,14 +24,16 @@ export class TokenValidator {
   private static intervalId: NodeJS.Timeout | null = null;
   private static isRunning = false;
   private static lastValidationTime = 0;
-  private static validationCallbacks: Array<(result: TokenValidationResult) => void> = [];
+  private static validationCallbacks: Array<
+    (result: TokenValidationResult) => void
+  > = [];
 
   // Default configuration
   private static config: ValidationConfig = {
     checkInterval: 60000, // 1 minute
     warningThreshold: 5 * 60 * 1000, // 5 minutes
     autoRedirectThreshold: 1 * 60 * 1000, // 1 minute
-    enableNotifications: true
+    enableNotifications: true,
   };
 
   /**
@@ -61,7 +63,10 @@ export class TokenValidator {
 
     // Listen for page visibility changes to validate when page becomes visible
     if (typeof document !== 'undefined') {
-      document.addEventListener('visibilitychange', this.handleVisibilityChange);
+      document.addEventListener(
+        'visibilitychange',
+        this.handleVisibilityChange
+      );
     }
 
     // Listen for storage events (token changes in other tabs)
@@ -85,7 +90,10 @@ export class TokenValidator {
 
     // Remove event listeners
     if (typeof document !== 'undefined') {
-      document.removeEventListener('visibilitychange', this.handleVisibilityChange);
+      document.removeEventListener(
+        'visibilitychange',
+        this.handleVisibilityChange
+      );
     }
 
     if (typeof window !== 'undefined') {
@@ -105,23 +113,23 @@ export class TokenValidator {
       if (!token) {
         return {
           isValid: false,
-          error: 'No token available'
+          error: 'No token available',
         };
       }
 
       if (!SecureTokenStorage.isTokenValid()) {
         return {
           isValid: false,
-          error: 'Token has expired'
+          error: 'Token has expired',
         };
       }
 
       const timeUntilExpiration = SecureTokenStorage.getTimeUntilExpiration();
-      
+
       if (timeUntilExpiration === null) {
         return {
           isValid: false,
-          error: 'Unable to determine token expiration'
+          error: 'Unable to determine token expiration',
         };
       }
 
@@ -130,13 +138,13 @@ export class TokenValidator {
       return {
         isValid: true,
         expiresIn: Math.floor(timeUntilExpiration / 1000),
-        needsRefresh
+        needsRefresh,
       };
     } catch (error) {
       console.error('Token validation error:', error);
       return {
         isValid: false,
-        error: 'Token validation failed'
+        error: 'Token validation failed',
       };
     }
   }
@@ -144,14 +152,18 @@ export class TokenValidator {
   /**
    * Add callback for validation events
    */
-  static addValidationCallback(callback: (result: TokenValidationResult) => void): void {
+  static addValidationCallback(
+    callback: (result: TokenValidationResult) => void
+  ): void {
     this.validationCallbacks.push(callback);
   }
 
   /**
    * Remove validation callback
    */
-  static removeValidationCallback(callback: (result: TokenValidationResult) => void): void {
+  static removeValidationCallback(
+    callback: (result: TokenValidationResult) => void
+  ): void {
     const index = this.validationCallbacks.indexOf(callback);
     if (index > -1) {
       this.validationCallbacks.splice(index, 1);
@@ -171,7 +183,7 @@ export class TokenValidator {
       isRunning: this.isRunning,
       lastValidationTime: this.lastValidationTime,
       config: this.config,
-      currentTokenStatus: this.validateToken()
+      currentTokenStatus: this.validateToken(),
     };
   }
 
@@ -180,13 +192,13 @@ export class TokenValidator {
    */
   static forceReauthentication(reason?: string): void {
     console.log('Forcing re-authentication:', reason || 'Manual trigger');
-    
+
     // Clear current token
     SecureTokenStorage.clearToken();
-    
+
     // Stop validation
     this.stopValidation();
-    
+
     // Redirect to sign-in
     if (typeof window !== 'undefined') {
       window.location.href = '/auth/signin';
@@ -200,17 +212,21 @@ export class TokenValidator {
     if (!this.config.enableNotifications) return;
 
     const minutes = Math.floor(timeUntilExpiry / (60 * 1000));
-    const message = minutes > 0 
-      ? `Your session will expire in ${minutes} minute(s). Would you like to sign in again?`
-      : 'Your session has expired. Please sign in again to continue.';
+    const message =
+      minutes > 0
+        ? `Your session will expire in ${minutes} minute(s). Would you like to sign in again?`
+        : 'Your session has expired. Please sign in again to continue.';
 
     // Use browser notification if available and permitted
     if ('Notification' in window && Notification.permission === 'granted') {
-      const notification = new Notification('YNAB Analysis - Session Expiring', {
-        body: message,
-        icon: '/favicon.ico',
-        requireInteraction: true
-      });
+      const notification = new Notification(
+        'YNAB Analysis - Session Expiring',
+        {
+          body: message,
+          icon: '/favicon.ico',
+          requireInteraction: true,
+        }
+      );
 
       notification.onclick = () => {
         notification.close();
@@ -279,13 +295,13 @@ export class TokenValidator {
    */
   private static handleInvalidToken(error?: string): void {
     console.log('Invalid token detected:', error);
-    
+
     // Clear token storage
     SecureTokenStorage.clearToken();
-    
+
     // Stop validation
     this.stopValidation();
-    
+
     // Redirect to sign-in page
     if (typeof window !== 'undefined') {
       window.location.href = '/auth/signin';

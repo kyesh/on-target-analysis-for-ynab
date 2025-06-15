@@ -3,7 +3,9 @@
 ## Pre-Deployment Security Checklist
 
 ### Authentication and Authorization
+
 - [x] **OAuth 2.0 Implementation**
+
   - [x] YNAB OAuth application registered and configured
   - [x] OAuth 2.0 Implicit Grant Flow implemented
   - [x] Secure state parameter generation and validation (32-byte cryptographic)
@@ -11,6 +13,7 @@
   - [x] CSRF protection via state parameter
 
 - [x] **Token Management**
+
   - [x] Access tokens stored in memory-first strategy
   - [x] Token obfuscation and integrity checking
   - [x] Token expiration handling implemented
@@ -25,7 +28,9 @@
   - [ ] Session fixation protection
 
 ### Data Protection
+
 - [ ] **Encryption**
+
   - [ ] All data encrypted in transit (TLS 1.3)
   - [ ] Sensitive data encrypted at rest (AES-256)
   - [ ] Encryption keys managed securely (Google Secret Manager)
@@ -33,6 +38,7 @@
   - [ ] No hardcoded secrets in code
 
 - [ ] **Data Handling**
+
   - [ ] No permanent storage of YNAB financial data
   - [ ] Temporary data cleared after processing
   - [ ] Cache expiration configured (5 minutes max)
@@ -47,7 +53,9 @@
   - [ ] Data retention policies defined and implemented
 
 ### Infrastructure Security
+
 - [ ] **Google Cloud Platform**
+
   - [ ] IAM roles and permissions configured (least privilege)
   - [ ] Service accounts created with minimal permissions
   - [ ] VPC security groups configured
@@ -55,6 +63,7 @@
   - [ ] Secret Manager access controls configured
 
 - [ ] **Container Security**
+
   - [ ] Production Dockerfile security hardened
   - [ ] Non-root user configured in container
   - [ ] Minimal base image used (Alpine Linux)
@@ -69,7 +78,9 @@
   - [ ] Firewall rules configured
 
 ### Application Security
+
 - [ ] **Input Validation**
+
   - [ ] All user inputs validated and sanitized
   - [ ] SQL injection protection (using parameterized queries)
   - [ ] XSS protection implemented
@@ -77,6 +88,7 @@
   - [ ] File upload restrictions (if applicable)
 
 - [ ] **Error Handling**
+
   - [ ] Secure error messages (no sensitive data exposure)
   - [ ] Proper logging without sensitive data
   - [ ] Error monitoring and alerting configured
@@ -93,7 +105,9 @@
 ## Compliance Checklist
 
 ### YNAB API Compliance
+
 - [ ] **Terms of Service Compliance**
+
   - [ ] YNAB API Terms of Service reviewed and accepted
   - [ ] Read-only access permissions requested
   - [ ] Rate limiting compliance (200 requests/hour)
@@ -108,7 +122,9 @@
   - [ ] Terms of service URL provided to YNAB
 
 ### Privacy Regulations
+
 - [ ] **GDPR Compliance (EU)**
+
   - [ ] Legal basis for processing identified
   - [ ] Data subject rights implemented (access, rectification, erasure)
   - [ ] Privacy by design principles applied
@@ -116,6 +132,7 @@
   - [ ] Data processing records maintained
 
 - [ ] **CCPA Compliance (California)**
+
   - [ ] Consumer rights implemented (know, delete, opt-out)
   - [ ] Privacy policy includes CCPA disclosures
   - [ ] Non-discrimination policy implemented
@@ -130,7 +147,9 @@
   - [ ] Privacy impact assessment completed
 
 ### Security Standards
+
 - [ ] **OWASP Top 10**
+
   - [ ] Injection vulnerabilities addressed
   - [ ] Broken authentication prevented
   - [ ] Sensitive data exposure prevented
@@ -151,7 +170,9 @@
 ## Monitoring and Incident Response
 
 ### Security Monitoring
+
 - [ ] **Logging and Monitoring**
+
   - [ ] Security event logging implemented
   - [ ] Log aggregation and analysis configured
   - [ ] Real-time security monitoring enabled
@@ -166,7 +187,9 @@
   - [ ] Performance degradation alerting
 
 ### Incident Response
+
 - [ ] **Response Plan**
+
   - [ ] Security incident response plan documented
   - [ ] Incident response team identified
   - [ ] Communication procedures defined
@@ -183,7 +206,9 @@
 ## Testing and Validation
 
 ### Security Testing
+
 - [ ] **Penetration Testing**
+
   - [ ] External penetration testing completed
   - [ ] Vulnerability assessment performed
   - [ ] Security code review completed
@@ -198,7 +223,9 @@
   - [ ] Data handling procedures tested
 
 ### Performance and Reliability
+
 - [ ] **Load Testing**
+
   - [ ] Application load testing completed
   - [ ] Database performance testing
   - [ ] API rate limiting testing
@@ -215,7 +242,9 @@
 ## Documentation and Training
 
 ### Documentation
+
 - [ ] **Security Documentation**
+
   - [ ] Security architecture documented
   - [ ] Threat model documented
   - [ ] Security controls documented
@@ -230,6 +259,7 @@
   - [ ] Regulatory filing requirements understood
 
 ### Training and Awareness
+
 - [ ] **Team Training**
   - [ ] Security awareness training completed
   - [ ] Privacy compliance training completed
@@ -240,7 +270,9 @@
 ## Post-Deployment Validation
 
 ### Security Validation
+
 - [ ] **Production Security Check**
+
   - [ ] Security headers verified in production
   - [ ] SSL/TLS configuration validated
   - [ ] Authentication flows tested in production
@@ -255,6 +287,7 @@
   - [ ] Opt-out mechanisms tested
 
 ### Ongoing Monitoring
+
 - [ ] **Continuous Monitoring**
   - [ ] Security monitoring dashboard configured
   - [ ] Compliance monitoring procedures established

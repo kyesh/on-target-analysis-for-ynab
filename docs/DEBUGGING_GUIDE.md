@@ -26,10 +26,11 @@ This guide explains how to use the comprehensive debugging features in the On Ta
 Each category with goals displays a collapsible debug panel containing:
 
 #### 1. Applied Calculation Rule
+
 - **Rule identification**: Shows which of the 7 rules was applied
 - **Color coding**: Each rule has a distinct color for easy identification
   - Rule 1 (Monthly NEED): Blue
-  - Rule 2 (Weekly NEED): Green  
+  - Rule 2 (Weekly NEED): Green
   - Rule 3 (Months to Budget): Purple
   - Rule 4 (Fallback): Orange
   - Rule 5 (Low Months to Budget): Red
@@ -37,6 +38,7 @@ Each category with goals displays a collapsible debug panel containing:
   - No Goal: Gray
 
 #### 2. Raw YNAB API Fields
+
 Complete display of all relevant YNAB API fields with human-readable interpretations:
 
 ```
@@ -54,6 +56,7 @@ activity: -$300.00
 ```
 
 #### 3. Calculation Details
+
 Step-by-step breakdown of the calculation process:
 
 - **Formula used**: Exact calculation formula applied
@@ -66,6 +69,7 @@ Step-by-step breakdown of the calculation process:
 ### Rule Identification
 
 #### Rule 1: Monthly NEED
+
 ```
 Rule: Rule 1: Monthly NEED
 Calculation: goal_target = 40000
@@ -73,6 +77,7 @@ Result: $400.00 needed this month
 ```
 
 #### Rule 2: Weekly NEED
+
 ```
 Rule: Rule 2: Weekly NEED (5 occurrences)
 Calculation: 25000 × 5 = 125000
@@ -83,6 +88,7 @@ Result: $1,250.00 needed this month
 ```
 
 #### Rule 3: Months to Budget
+
 ```
 Rule: Rule 3: Months to Budget
 Calculation: (120000 + 0) ÷ 4 = 30000
@@ -93,6 +99,7 @@ Result: $300.00 needed this month
 ```
 
 #### Rule 6: Future Goal Creation
+
 ```
 Rule: Rule 6: Future Goal Creation
 Calculation: Goal created 2025-01-01 > analysis month 2024-12-01 → 0
@@ -104,12 +111,14 @@ Result: $0.00 needed this month
 ### Field Interpretations
 
 #### Goal Cadence Values
+
 - `0`: One-time goal
 - `1`: Monthly recurring
 - `2`: Weekly recurring
 - `13`: Yearly recurring
 
 #### Goal Day Values (for weekly goals)
+
 - `0`: Sunday
 - `1`: Monday
 - `2`: Tuesday
@@ -119,6 +128,7 @@ Result: $0.00 needed this month
 - `6`: Saturday
 
 #### Goal Types
+
 - `NEED`: Needed for Spending goals
 - `TB`: Target Category Balance goals
 - `TBD`: Target Category Balance by Date goals

@@ -20,7 +20,7 @@ export interface StoredTokenData {
 export class SecureTokenStorage {
   private static readonly STORAGE_KEY = 'ynab_session';
   private static readonly INTEGRITY_KEY = 'ynab_session_integrity';
-  
+
   // In-memory storage (most secure)
   private static memoryToken: string | null = null;
   private static memoryExpiresAt: number | null = null;
@@ -31,7 +31,7 @@ export class SecureTokenStorage {
   static storeToken(accessToken: string, expiresIn: number): void {
     try {
       const now = Date.now();
-      const expiresAt = now + (expiresIn * 1000);
+      const expiresAt = now + expiresIn * 1000;
 
       // Store in memory (most secure)
       this.memoryToken = accessToken;
@@ -43,7 +43,7 @@ export class SecureTokenStorage {
         expiresAt,
         timestamp: now,
         userAgent: this.getBrowserFingerprint(),
-        integrity: '' // Will be calculated below
+        integrity: '', // Will be calculated below
       };
 
       // Calculate integrity hash
@@ -71,7 +71,11 @@ export class SecureTokenStorage {
   static getToken(): string | null {
     try {
       // Check memory first (fastest and most secure)
-      if (this.memoryToken && this.memoryExpiresAt && Date.now() < this.memoryExpiresAt) {
+      if (
+        this.memoryToken &&
+        this.memoryExpiresAt &&
+        Date.now() < this.memoryExpiresAt
+      ) {
         return this.memoryToken;
       }
 
@@ -171,7 +175,9 @@ export class SecureTokenStorage {
       // Verify integrity
       const calculatedIntegrity = this.calculateIntegrity(sessionData);
       if (calculatedIntegrity !== storedIntegrity) {
-        console.warn('Token integrity check failed - possible tampering detected');
+        console.warn(
+          'Token integrity check failed - possible tampering detected'
+        );
         this.clearToken();
         return null;
       }
@@ -184,7 +190,9 @@ export class SecureTokenStorage {
 
       // Verify browser fingerprint
       if (sessionData.userAgent !== this.getBrowserFingerprint()) {
-        console.warn('Browser fingerprint mismatch - possible session hijacking');
+        console.warn(
+          'Browser fingerprint mismatch - possible session hijacking'
+        );
         this.clearToken();
         return null;
       }
@@ -208,9 +216,14 @@ export class SecureTokenStorage {
   private static obfuscateToken(token: string): string {
     try {
       const key = this.getObfuscationKey();
-      const obfuscated = token.split('').map((char, i) =>
-        String.fromCharCode(char.charCodeAt(0) ^ key.charCodeAt(i % key.length))
-      ).join('');
+      const obfuscated = token
+        .split('')
+        .map((char, i) =>
+          String.fromCharCode(
+            char.charCodeAt(0) ^ key.charCodeAt(i % key.length)
+          )
+        )
+        .join('');
       return btoa(obfuscated);
     } catch {
       // Fallback to base64 encoding if obfuscation fails
@@ -225,9 +238,14 @@ export class SecureTokenStorage {
     try {
       const key = this.getObfuscationKey();
       const decoded = atob(obfuscated);
-      return decoded.split('').map((char, i) =>
-        String.fromCharCode(char.charCodeAt(0) ^ key.charCodeAt(i % key.length))
-      ).join('');
+      return decoded
+        .split('')
+        .map((char, i) =>
+          String.fromCharCode(
+            char.charCodeAt(0) ^ key.charCodeAt(i % key.length)
+          )
+        )
+        .join('');
     } catch {
       // Fallback to base64 decoding if deobfuscation fails
       return atob(obfuscated);
@@ -244,9 +262,9 @@ export class SecureTokenStorage {
         window.location.hostname,
         screen.width.toString(),
         screen.height.toString(),
-        new Date().getTimezoneOffset().toString()
+        new Date().getTimezoneOffset().toString(),
       ].join('|');
-      
+
       return btoa(characteristics).substring(0, 16);
     } catch {
       return 'fallback-key-16';
@@ -256,23 +274,25 @@ export class SecureTokenStorage {
   /**
    * Calculate integrity hash for stored data
    */
-  private static calculateIntegrity(data: Omit<StoredTokenData, 'integrity'>): string {
+  private static calculateIntegrity(
+    data: Omit<StoredTokenData, 'integrity'>
+  ): string {
     try {
       const str = JSON.stringify({
         token: data.token,
         expiresAt: data.expiresAt,
         timestamp: data.timestamp,
-        userAgent: data.userAgent
+        userAgent: data.userAgent,
       });
-      
+
       // Simple hash function (not cryptographically secure, but sufficient for integrity checking)
       let hash = 0;
       for (let i = 0; i < str.length; i++) {
         const char = str.charCodeAt(i);
-        hash = ((hash << 5) - hash) + char;
+        hash = (hash << 5) - hash + char;
         hash = hash & hash; // Convert to 32-bit integer
       }
-      
+
       return hash.toString(16);
     } catch {
       return 'integrity-failed';
@@ -284,7 +304,10 @@ export class SecureTokenStorage {
    */
   private static getBrowserFingerprint(): string {
     try {
-      return btoa(navigator.userAgent + window.location.hostname).substring(0, 32);
+      return btoa(navigator.userAgent + window.location.hostname).substring(
+        0,
+        32
+      );
     } catch {
       return 'unknown-browser';
     }
@@ -325,7 +348,7 @@ export class SecureTokenStorage {
       hasSessionStorageToken: !!sessionStorage.getItem(this.STORAGE_KEY),
       tokenExpiration: this.getTokenExpiration(),
       timeUntilExpiration: this.getTimeUntilExpiration(),
-      isValid: this.isTokenValid()
+      isValid: this.isTokenValid(),
     };
   }
 }

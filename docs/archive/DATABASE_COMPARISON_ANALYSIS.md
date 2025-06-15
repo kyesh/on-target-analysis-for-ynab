@@ -7,6 +7,7 @@ After detailed analysis, **Cloud SQL PostgreSQL remains the recommended choice**
 ## 1. Cost Analysis
 
 ### Cloud SQL PostgreSQL Costs
+
 ```
 Instance: db-g1-small (1 vCPU, 1.7GB RAM)
 Base Cost: ~$25-35/month
@@ -21,6 +22,7 @@ Scaling costs:
 ```
 
 ### Firestore Costs
+
 ```
 Free Tier (very generous):
 - 1 GiB storage
@@ -36,13 +38,14 @@ Paid Pricing (beyond free tier):
 ```
 
 ### Usage Pattern Analysis for YNAB Application
+
 ```typescript
 // Expected operations for 1000 active users
 interface UsageEstimate {
-  dailyLogins: 300;           // 30% daily active users
-  sessionValidations: 15000;   // 50 validations per active user
-  tokenRefreshes: 100;        // ~10% need refresh daily
-  sessionCleanups: 50;        // Expired session cleanup
+  dailyLogins: 300; // 30% daily active users
+  sessionValidations: 15000; // 50 validations per active user
+  tokenRefreshes: 100; // ~10% need refresh daily
+  sessionCleanups: 50; // Expired session cleanup
 }
 
 // Firestore costs at scale (1000 users):
@@ -58,10 +61,11 @@ interface UsageEstimate {
 ## 2. Scaling Characteristics
 
 ### PostgreSQL Scaling
+
 ```sql
 -- Session validation query (optimized with indexes)
-SELECT expires_at, last_used 
-FROM user_sessions 
+SELECT expires_at, last_used
+FROM user_sessions
 WHERE session_id = $1 AND expires_at > NOW();
 
 -- Performance characteristics:
@@ -73,6 +77,7 @@ WHERE session_id = $1 AND expires_at > NOW();
 ```
 
 ### Firestore Scaling
+
 ```typescript
 // Session validation query
 const sessionDoc = await db.collection('sessions').doc(sessionId).get();
@@ -86,13 +91,14 @@ const sessionDoc = await db.collection('sessions').doc(sessionId).get();
 ```
 
 ### Scaling Comparison Table
-| Aspect | PostgreSQL | Firestore | Winner |
-|--------|------------|-----------|---------|
-| **Read Performance** | <5ms (indexed) | 10-50ms (network) | PostgreSQL |
-| **Write Performance** | 1,000 TPS | 10,000+ TPS | Firestore |
-| **Connection Limits** | 100-500 connections | Unlimited | Firestore |
-| **Global Distribution** | Single region | Multi-region | Firestore |
-| **Auto-scaling** | Manual scaling | Automatic | Firestore |
+
+| Aspect                  | PostgreSQL          | Firestore         | Winner     |
+| ----------------------- | ------------------- | ----------------- | ---------- |
+| **Read Performance**    | <5ms (indexed)      | 10-50ms (network) | PostgreSQL |
+| **Write Performance**   | 1,000 TPS           | 10,000+ TPS       | Firestore  |
+| **Connection Limits**   | 100-500 connections | Unlimited         | Firestore  |
+| **Global Distribution** | Single region       | Multi-region      | Firestore  |
+| **Auto-scaling**        | Manual scaling      | Automatic         | Firestore  |
 
 **Scaling Winner: Firestore** (better auto-scaling and global distribution)
 
@@ -101,6 +107,7 @@ const sessionDoc = await db.collection('sessions').doc(sessionId).get();
 ### Prisma ORM Integration
 
 #### PostgreSQL with Prisma (Excellent)
+
 ```typescript
 // schema.prisma
 model UserSession {
@@ -125,6 +132,7 @@ const session = await prisma.userSession.findUnique({
 ```
 
 #### Firestore with Prisma (Limited Support)
+
 ```typescript
 // Prisma doesn't natively support Firestore
 // Must use Firebase Admin SDK directly
@@ -153,13 +161,18 @@ const sessionData = sessionDoc.data() as SessionDocument;
 ### Encryption Workflow Integration
 
 #### PostgreSQL Implementation
+
 ```typescript
 // Seamless integration with existing encryption service
 export class PostgreSQLTokenStorage {
   async storeSession(sessionData: SessionData): Promise<void> {
-    const encryptedAccessToken = await TokenEncryption.encrypt(sessionData.accessToken);
-    const encryptedRefreshToken = await TokenEncryption.encrypt(sessionData.refreshToken);
-    
+    const encryptedAccessToken = await TokenEncryption.encrypt(
+      sessionData.accessToken
+    );
+    const encryptedRefreshToken = await TokenEncryption.encrypt(
+      sessionData.refreshToken
+    );
+
     await prisma.userSession.create({
       data: {
         sessionId: sessionData.sessionId,
@@ -175,47 +188,59 @@ export class PostgreSQLTokenStorage {
     const session = await prisma.userSession.findUnique({
       where: { sessionId },
     });
-    
+
     if (!session || session.expiresAt < new Date()) return null;
-    
+
     return {
       accessToken: await TokenEncryption.decrypt(session.encryptedAccessToken),
-      refreshToken: await TokenEncryption.decrypt(session.encryptedRefreshToken),
+      refreshToken: await TokenEncryption.decrypt(
+        session.encryptedRefreshToken
+      ),
     };
   }
 }
 ```
 
 #### Firestore Implementation
+
 ```typescript
 // More complex due to lack of Prisma integration
 export class FirestoreTokenStorage {
   async storeSession(sessionData: SessionData): Promise<void> {
-    const encryptedAccessToken = await TokenEncryption.encrypt(sessionData.accessToken);
-    const encryptedRefreshToken = await TokenEncryption.encrypt(sessionData.refreshToken);
-    
-    await db.collection('sessions').doc(sessionData.sessionId).set({
-      sessionId: sessionData.sessionId,
-      userId: sessionData.userId,
-      encryptedAccessToken,
-      encryptedRefreshToken,
-      expiresAt: Timestamp.fromDate(sessionData.expiresAt),
-      createdAt: Timestamp.now(),
-      lastUsed: Timestamp.now(),
-    });
+    const encryptedAccessToken = await TokenEncryption.encrypt(
+      sessionData.accessToken
+    );
+    const encryptedRefreshToken = await TokenEncryption.encrypt(
+      sessionData.refreshToken
+    );
+
+    await db
+      .collection('sessions')
+      .doc(sessionData.sessionId)
+      .set({
+        sessionId: sessionData.sessionId,
+        userId: sessionData.userId,
+        encryptedAccessToken,
+        encryptedRefreshToken,
+        expiresAt: Timestamp.fromDate(sessionData.expiresAt),
+        createdAt: Timestamp.now(),
+        lastUsed: Timestamp.now(),
+      });
   }
 
   async getTokens(sessionId: string): Promise<TokenPair | null> {
     const sessionDoc = await db.collection('sessions').doc(sessionId).get();
-    
+
     if (!sessionDoc.exists) return null;
-    
+
     const session = sessionDoc.data() as SessionDocument;
     if (session.expiresAt.toDate() < new Date()) return null;
-    
+
     return {
       accessToken: await TokenEncryption.decrypt(session.encryptedAccessToken),
-      refreshToken: await TokenEncryption.decrypt(session.encryptedRefreshToken),
+      refreshToken: await TokenEncryption.decrypt(
+        session.encryptedRefreshToken
+      ),
     };
   }
 }
@@ -224,6 +249,7 @@ export class FirestoreTokenStorage {
 ### Session Management Patterns
 
 #### PostgreSQL Transactions
+
 ```typescript
 // ACID transactions for complex operations
 async updateTokensWithCleanup(sessionId: string, newTokens: TokenPair): Promise<void> {
@@ -237,7 +263,7 @@ async updateTokensWithCleanup(sessionId: string, newTokens: TokenPair): Promise<
         lastUsed: new Date(),
       },
     });
-    
+
     // Clean up expired sessions for this user
     await tx.userSession.deleteMany({
       where: {
@@ -250,11 +276,12 @@ async updateTokensWithCleanup(sessionId: string, newTokens: TokenPair): Promise<
 ```
 
 #### Firestore Batch Operations
+
 ```typescript
 // Batch operations (limited transaction support)
 async updateTokensWithCleanup(sessionId: string, newTokens: TokenPair): Promise<void> {
   const batch = db.batch();
-  
+
   // Update current session
   const sessionRef = db.collection('sessions').doc(sessionId);
   batch.update(sessionRef, {
@@ -262,10 +289,10 @@ async updateTokensWithCleanup(sessionId: string, newTokens: TokenPair): Promise<
     encryptedRefreshToken: await TokenEncryption.encrypt(newTokens.refreshToken),
     lastUsed: Timestamp.now(),
   });
-  
+
   // Note: Cannot easily clean up expired sessions in same batch
   // Would require separate query + batch operation
-  
+
   await batch.commit();
 }
 ```
@@ -277,6 +304,7 @@ async updateTokensWithCleanup(sessionId: string, newTokens: TokenPair): Promise<
 ### Backup and Disaster Recovery
 
 #### PostgreSQL
+
 ```yaml
 # Automated backup configuration
 backup_configuration:
@@ -294,6 +322,7 @@ gcloud sql instances clone ynab-analysis-prod \
 ```
 
 #### Firestore
+
 ```typescript
 // Firestore automatic backups (limited control)
 // - Automatic multi-region replication
@@ -311,6 +340,7 @@ const backupData = backup.docs.map(doc => ({
 ### Monitoring and Alerting
 
 #### PostgreSQL Monitoring
+
 ```typescript
 // Rich monitoring capabilities
 const metrics = await cloudSQL.getMetrics({
@@ -332,6 +362,7 @@ const sessionMetrics = await prisma.userSession.aggregate({
 ```
 
 #### Firestore Monitoring
+
 ```typescript
 // Limited monitoring options
 // - Basic read/write metrics
@@ -339,7 +370,8 @@ const sessionMetrics = await prisma.userSession.aggregate({
 // - Limited custom metrics
 
 // Application-level monitoring required
-const sessionCount = await db.collection('sessions')
+const sessionCount = await db
+  .collection('sessions')
   .where('expiresAt', '>', Timestamp.now())
   .count()
   .get();
@@ -348,11 +380,12 @@ const sessionCount = await db.collection('sessions')
 ### Query Performance
 
 #### PostgreSQL Performance
+
 ```sql
 -- Optimized session validation (with proper indexes)
 EXPLAIN ANALYZE
-SELECT expires_at, last_used 
-FROM user_sessions 
+SELECT expires_at, last_used
+FROM user_sessions
 WHERE session_id = 'abc123' AND expires_at > NOW();
 
 -- Result: Index Scan, ~1-2ms execution time
@@ -361,6 +394,7 @@ WHERE session_id = 'abc123' AND expires_at > NOW();
 ```
 
 #### Firestore Performance
+
 ```typescript
 // Document lookup performance
 const start = Date.now();
@@ -379,6 +413,7 @@ const duration = Date.now() - start;
 ### Encryption Strategy Support
 
 #### PostgreSQL
+
 ```typescript
 // Full control over encryption
 class PostgreSQLSecurityManager {
@@ -388,8 +423,12 @@ class PostgreSQLSecurityManager {
       data: {
         sessionId: session.sessionId,
         userId: this.hashUserId(session.userId), // Hash PII
-        encryptedAccessToken: await this.encryptWithRotation(session.accessToken),
-        encryptedRefreshToken: await this.encryptWithRotation(session.refreshToken),
+        encryptedAccessToken: await this.encryptWithRotation(
+          session.accessToken
+        ),
+        encryptedRefreshToken: await this.encryptWithRotation(
+          session.refreshToken
+        ),
         expiresAt: session.expiresAt,
       },
     });
@@ -398,17 +437,22 @@ class PostgreSQLSecurityManager {
   // Encryption key rotation
   async rotateEncryptionKeys(): Promise<void> {
     const sessions = await prisma.userSession.findMany();
-    
-    await prisma.$transaction(async (tx) => {
+
+    await prisma.$transaction(async tx => {
       for (const session of sessions) {
-        const decryptedAccess = await this.decrypt(session.encryptedAccessToken);
-        const decryptedRefresh = await this.decrypt(session.encryptedRefreshToken);
-        
+        const decryptedAccess = await this.decrypt(
+          session.encryptedAccessToken
+        );
+        const decryptedRefresh = await this.decrypt(
+          session.encryptedRefreshToken
+        );
+
         await tx.userSession.update({
           where: { id: session.id },
           data: {
             encryptedAccessToken: await this.encryptWithNewKey(decryptedAccess),
-            encryptedRefreshToken: await this.encryptWithNewKey(decryptedRefresh),
+            encryptedRefreshToken:
+              await this.encryptWithNewKey(decryptedRefresh),
           },
         });
       }
@@ -418,36 +462,42 @@ class PostgreSQLSecurityManager {
 ```
 
 #### Firestore
+
 ```typescript
 // Application-level encryption only
 class FirestoreSecurityManager {
   async storeEncryptedSession(session: SessionData): Promise<void> {
-    await db.collection('sessions').doc(session.sessionId).set({
-      sessionId: session.sessionId,
-      userId: this.hashUserId(session.userId),
-      encryptedAccessToken: await this.encrypt(session.accessToken),
-      encryptedRefreshToken: await this.encrypt(session.refreshToken),
-      expiresAt: Timestamp.fromDate(session.expiresAt),
-    });
+    await db
+      .collection('sessions')
+      .doc(session.sessionId)
+      .set({
+        sessionId: session.sessionId,
+        userId: this.hashUserId(session.userId),
+        encryptedAccessToken: await this.encrypt(session.accessToken),
+        encryptedRefreshToken: await this.encrypt(session.refreshToken),
+        expiresAt: Timestamp.fromDate(session.expiresAt),
+      });
   }
 
   // Key rotation more complex (no transactions)
   async rotateEncryptionKeys(): Promise<void> {
     const sessions = await db.collection('sessions').get();
     const batch = db.batch();
-    
+
     // Limited to 500 operations per batch
     for (const doc of sessions.docs.slice(0, 500)) {
       const session = doc.data();
       const decryptedAccess = await this.decrypt(session.encryptedAccessToken);
-      const decryptedRefresh = await this.decrypt(session.encryptedRefreshToken);
-      
+      const decryptedRefresh = await this.decrypt(
+        session.encryptedRefreshToken
+      );
+
       batch.update(doc.ref, {
         encryptedAccessToken: await this.encryptWithNewKey(decryptedAccess),
         encryptedRefreshToken: await this.encryptWithNewKey(decryptedRefresh),
       });
     }
-    
+
     await batch.commit();
     // Need multiple batches for >500 sessions
   }
@@ -457,13 +507,14 @@ class FirestoreSecurityManager {
 ### GDPR/CCPA Compliance
 
 #### PostgreSQL Compliance
+
 ```sql
 -- Efficient data deletion for GDPR Article 17
-DELETE FROM user_sessions 
+DELETE FROM user_sessions
 WHERE user_id = $1;
 
 -- Data retention enforcement
-DELETE FROM user_sessions 
+DELETE FROM user_sessions
 WHERE expires_at < NOW() - INTERVAL '90 days';
 
 -- Audit logging
@@ -477,18 +528,19 @@ CREATE TABLE audit_log (
 ```
 
 #### Firestore Compliance
+
 ```typescript
 // More complex data deletion
 async deleteUserData(userId: string): Promise<void> {
   const sessions = await db.collection('sessions')
     .where('userId', '==', userId)
     .get();
-  
+
   const batch = db.batch();
   sessions.docs.forEach(doc => {
     batch.delete(doc.ref);
   });
-  
+
   await batch.commit();
 }
 
@@ -502,14 +554,14 @@ async deleteUserData(userId: string): Promise<void> {
 
 ### Decision Matrix
 
-| Criteria | Weight | PostgreSQL Score | Firestore Score | Weighted Score |
-|----------|--------|------------------|-----------------|----------------|
-| **Security** | 30% | 9/10 | 6/10 | 2.7 vs 1.8 |
-| **Compliance** | 25% | 9/10 | 5/10 | 2.25 vs 1.25 |
-| **Technical Integration** | 20% | 9/10 | 6/10 | 1.8 vs 1.2 |
-| **Operational** | 15% | 8/10 | 6/10 | 1.2 vs 0.9 |
-| **Cost** | 10% | 4/10 | 9/10 | 0.4 vs 0.9 |
-| **Total** | 100% | **8.35/10** | **6.05/10** | **PostgreSQL Wins** |
+| Criteria                  | Weight | PostgreSQL Score | Firestore Score | Weighted Score      |
+| ------------------------- | ------ | ---------------- | --------------- | ------------------- |
+| **Security**              | 30%    | 9/10             | 6/10            | 2.7 vs 1.8          |
+| **Compliance**            | 25%    | 9/10             | 5/10            | 2.25 vs 1.25        |
+| **Technical Integration** | 20%    | 9/10             | 6/10            | 1.8 vs 1.2          |
+| **Operational**           | 15%    | 8/10             | 6/10            | 1.2 vs 0.9          |
+| **Cost**                  | 10%    | 4/10             | 9/10            | 0.4 vs 0.9          |
+| **Total**                 | 100%   | **8.35/10**      | **6.05/10**     | **PostgreSQL Wins** |
 
 ### Key Justifications
 
@@ -524,9 +576,9 @@ async deleteUserData(userId: string): Promise<void> {
 ```typescript
 // Start with smaller instance, scale as needed
 const dbConfig = {
-  development: 'db-f1-micro',    // $7/month
-  staging: 'db-g1-small',       // $25/month  
-  production: 'db-g1-small',    // $25/month initially
+  development: 'db-f1-micro', // $7/month
+  staging: 'db-g1-small', // $25/month
+  production: 'db-g1-small', // $25/month initially
   scale_to: 'db-n1-standard-1', // $50/month when needed
 };
 ```

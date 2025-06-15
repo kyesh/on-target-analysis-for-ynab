@@ -5,6 +5,7 @@
 ### 1. Content Security Policy (Critical)
 
 #### Strict CSP Configuration
+
 ```typescript
 // next.config.js - Production CSP
 const ContentSecurityPolicy = `
@@ -24,24 +25,24 @@ const ContentSecurityPolicy = `
 const securityHeaders = [
   {
     key: 'Content-Security-Policy',
-    value: ContentSecurityPolicy.replace(/\s{2,}/g, ' ').trim()
+    value: ContentSecurityPolicy.replace(/\s{2,}/g, ' ').trim(),
   },
   {
     key: 'X-Frame-Options',
-    value: 'DENY'
+    value: 'DENY',
   },
   {
     key: 'X-Content-Type-Options',
-    value: 'nosniff'
+    value: 'nosniff',
   },
   {
     key: 'Referrer-Policy',
-    value: 'strict-origin-when-cross-origin'
+    value: 'strict-origin-when-cross-origin',
   },
   {
     key: 'Permissions-Policy',
-    value: 'camera=(), microphone=(), geolocation=(), payment=()'
-  }
+    value: 'camera=(), microphone=(), geolocation=(), payment=()',
+  },
 ];
 
 module.exports = {
@@ -59,6 +60,7 @@ module.exports = {
 ### 2. XSS Prevention (Critical)
 
 #### Input Sanitization
+
 ```typescript
 // src/lib/security/xss-prevention.ts
 export class XSSPrevention {
@@ -72,33 +74,31 @@ export class XSSPrevention {
       .trim()
       .substring(0, 1000); // Limit length
   }
-  
+
   // Validate URLs for redirects
   static isValidRedirectUrl(url: string): boolean {
     try {
       const parsed = new URL(url);
-      const allowedHosts = [
-        window.location.hostname,
-        'app.ynab.com'
-      ];
-      
-      return parsed.protocol === 'https:' && 
-             allowedHosts.includes(parsed.hostname);
+      const allowedHosts = [window.location.hostname, 'app.ynab.com'];
+
+      return (
+        parsed.protocol === 'https:' && allowedHosts.includes(parsed.hostname)
+      );
     } catch {
       return false;
     }
   }
-  
+
   // Escape HTML content
   static escapeHtml(unsafe: string): string {
     return unsafe
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
   }
-  
+
   // Validate OAuth state parameter
   static validateOAuthState(state: string): boolean {
     // State should be 64 hex characters
@@ -108,6 +108,7 @@ export class XSSPrevention {
 ```
 
 #### Component-Level Protection
+
 ```typescript
 // src/components/SecureInput.tsx
 import { XSSPrevention } from '@/lib/security/xss-prevention';
@@ -141,6 +142,7 @@ export function SecureInput({ value, onChange, placeholder, maxLength = 100 }: S
 ### 3. Token Security (Critical)
 
 #### Enhanced Token Storage
+
 ```typescript
 // src/lib/auth/secure-token-storage-enhanced.ts
 export class SecureTokenStorageEnhanced {
@@ -151,12 +153,12 @@ export class SecureTokenStorageEnhanced {
 
   // Store token with integrity check
   static storeToken(accessToken: string, expiresIn: number): void {
-    const expiresAt = Date.now() + (expiresIn * 1000);
-    
+    const expiresAt = Date.now() + expiresIn * 1000;
+
     // Store in memory
     this.token = accessToken;
     this.expiresAt = expiresAt;
-    
+
     // Create session data with integrity hash
     const sessionData = {
       token: this.obfuscateToken(accessToken),
@@ -164,9 +166,9 @@ export class SecureTokenStorageEnhanced {
       timestamp: Date.now(),
       userAgent: navigator.userAgent.substring(0, 50), // Partial fingerprint
     };
-    
+
     const integrity = this.calculateIntegrity(sessionData);
-    
+
     try {
       sessionStorage.setItem(this.STORAGE_KEY, JSON.stringify(sessionData));
       sessionStorage.setItem(this.INTEGRITY_KEY, integrity);
@@ -174,22 +176,22 @@ export class SecureTokenStorageEnhanced {
       console.warn('Failed to store token:', error);
     }
   }
-  
+
   // Retrieve token with integrity verification
   static getToken(): string | null {
     // Check memory first
     if (this.token && this.expiresAt && Date.now() < this.expiresAt) {
       return this.token;
     }
-    
+
     try {
       const stored = sessionStorage.getItem(this.STORAGE_KEY);
       const storedIntegrity = sessionStorage.getItem(this.INTEGRITY_KEY);
-      
+
       if (!stored || !storedIntegrity) return null;
-      
+
       const sessionData = JSON.parse(stored);
-      
+
       // Verify integrity
       const calculatedIntegrity = this.calculateIntegrity(sessionData);
       if (calculatedIntegrity !== storedIntegrity) {
@@ -197,18 +199,18 @@ export class SecureTokenStorageEnhanced {
         this.clearToken();
         return null;
       }
-      
+
       // Check expiration
       if (Date.now() >= sessionData.expiresAt) {
         this.clearToken();
         return null;
       }
-      
+
       // Restore to memory
       const token = this.deobfuscateToken(sessionData.token);
       this.token = token;
       this.expiresAt = sessionData.expiresAt;
-      
+
       return token;
     } catch (error) {
       console.warn('Failed to retrieve token:', error);
@@ -216,12 +218,12 @@ export class SecureTokenStorageEnhanced {
       return null;
     }
   }
-  
+
   // Clear all token data
   static clearToken(): void {
     this.token = null;
     this.expiresAt = null;
-    
+
     try {
       sessionStorage.removeItem(this.STORAGE_KEY);
       sessionStorage.removeItem(this.INTEGRITY_KEY);
@@ -229,34 +231,47 @@ export class SecureTokenStorageEnhanced {
       console.warn('Failed to clear token:', error);
     }
   }
-  
+
   // Simple obfuscation (not cryptographic security)
   private static obfuscateToken(token: string): string {
     const key = this.getObfuscationKey();
-    return btoa(token.split('').map((char, i) => 
-      String.fromCharCode(char.charCodeAt(0) ^ key.charCodeAt(i % key.length))
-    ).join(''));
+    return btoa(
+      token
+        .split('')
+        .map((char, i) =>
+          String.fromCharCode(
+            char.charCodeAt(0) ^ key.charCodeAt(i % key.length)
+          )
+        )
+        .join('')
+    );
   }
-  
+
   private static deobfuscateToken(obfuscated: string): string {
     const key = this.getObfuscationKey();
-    return atob(obfuscated).split('').map((char, i) => 
-      String.fromCharCode(char.charCodeAt(0) ^ key.charCodeAt(i % key.length))
-    ).join('');
+    return atob(obfuscated)
+      .split('')
+      .map((char, i) =>
+        String.fromCharCode(char.charCodeAt(0) ^ key.charCodeAt(i % key.length))
+      )
+      .join('');
   }
-  
+
   private static getObfuscationKey(): string {
     // Simple key derivation from browser characteristics
-    return btoa(navigator.userAgent + window.location.hostname).substring(0, 16);
+    return btoa(navigator.userAgent + window.location.hostname).substring(
+      0,
+      16
+    );
   }
-  
+
   private static calculateIntegrity(data: any): string {
     // Simple integrity check using JSON string hash
     const str = JSON.stringify(data);
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
       const char = str.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
+      hash = (hash << 5) - hash + char;
       hash = hash & hash; // Convert to 32-bit integer
     }
     return hash.toString(16);
@@ -267,12 +282,16 @@ export class SecureTokenStorageEnhanced {
 ### 4. Network Security
 
 #### HTTPS Enforcement
+
 ```typescript
 // src/lib/security/https-enforcer.ts
 export class HTTPSEnforcer {
   // Ensure all requests use HTTPS
   static enforceHTTPS(): void {
-    if (typeof window !== 'undefined' && window.location.protocol !== 'https:') {
+    if (
+      typeof window !== 'undefined' &&
+      window.location.protocol !== 'https:'
+    ) {
       if (process.env.NODE_ENV === 'production') {
         window.location.href = window.location.href.replace('http:', 'https:');
       } else {
@@ -280,14 +299,16 @@ export class HTTPSEnforcer {
       }
     }
   }
-  
+
   // Validate API URLs
   static validateApiUrl(url: string): boolean {
     try {
       const parsed = new URL(url);
-      return parsed.protocol === 'https:' && 
-             (parsed.hostname === 'api.ynab.com' || 
-              parsed.hostname === 'app.ynab.com');
+      return (
+        parsed.protocol === 'https:' &&
+        (parsed.hostname === 'api.ynab.com' ||
+          parsed.hostname === 'app.ynab.com')
+      );
     } catch {
       return false;
     }
@@ -298,6 +319,7 @@ export class HTTPSEnforcer {
 ### 5. Error Handling and Logging
 
 #### Secure Error Handling
+
 ```typescript
 // src/lib/security/secure-error-handler.ts
 export class SecureErrorHandler {
@@ -310,28 +332,34 @@ export class SecureErrorHandler {
     if (typeof window === 'undefined') {
       console.error('Auth error:', error);
     }
-    
+
     // Return sanitized error for client
-    if (error.message?.includes('401') || error.message?.includes('unauthorized')) {
+    if (
+      error.message?.includes('401') ||
+      error.message?.includes('unauthorized')
+    ) {
       return {
         userMessage: 'Your session has expired. Please sign in again.',
-        shouldRedirect: true
+        shouldRedirect: true,
       };
     }
-    
-    if (error.message?.includes('403') || error.message?.includes('forbidden')) {
+
+    if (
+      error.message?.includes('403') ||
+      error.message?.includes('forbidden')
+    ) {
       return {
         userMessage: 'Access denied. Please check your YNAB permissions.',
-        shouldRedirect: false
+        shouldRedirect: false,
       };
     }
-    
+
     return {
       userMessage: 'An authentication error occurred. Please try again.',
-      shouldRedirect: true
+      shouldRedirect: true,
     };
   }
-  
+
   // Sanitize error messages for client display
   static sanitizeErrorMessage(message: string): string {
     // Remove potentially sensitive information
@@ -347,13 +375,16 @@ export class SecureErrorHandler {
 ## Implementation Checklist
 
 ### Pre-Implementation Security Setup
+
 - [ ] **Configure Content Security Policy**
+
   - [ ] Strict script-src policy
   - [ ] Limited connect-src to YNAB domains only
   - [ ] Frame-ancestors 'none'
   - [ ] Upgrade-insecure-requests enabled
 
 - [ ] **Set up HTTPS enforcement**
+
   - [ ] Production HTTPS redirect
   - [ ] HSTS headers configured
   - [ ] Mixed content blocking enabled
@@ -364,12 +395,15 @@ export class SecureErrorHandler {
   - [ ] URL validation for redirects
 
 ### OAuth Implementation Security
+
 - [ ] **State parameter validation**
+
   - [ ] Cryptographically secure state generation
   - [ ] State verification on callback
   - [ ] State cleanup after use
 
 - [ ] **Token handling security**
+
   - [ ] Immediate URL fragment cleanup
   - [ ] Memory-first storage strategy
   - [ ] Token obfuscation in sessionStorage
@@ -381,13 +415,16 @@ export class SecureErrorHandler {
   - [ ] User-friendly error display
 
 ### Production Deployment Security
+
 - [ ] **Security headers verification**
+
   - [ ] CSP header active and tested
   - [ ] X-Frame-Options: DENY
   - [ ] X-Content-Type-Options: nosniff
   - [ ] Referrer-Policy configured
 
 - [ ] **Token lifecycle management**
+
   - [ ] Automatic token expiration handling
   - [ ] Re-authentication prompts
   - [ ] Token cleanup on logout
@@ -398,12 +435,15 @@ export class SecureErrorHandler {
   - [ ] Unusual access pattern alerts
 
 ### Security Testing Checklist
+
 - [ ] **XSS vulnerability testing**
+
   - [ ] Script injection attempts
   - [ ] HTML injection attempts
   - [ ] Event handler injection attempts
 
 - [ ] **Token security testing**
+
   - [ ] Token extraction attempts
   - [ ] Browser storage manipulation
   - [ ] Network interception testing
@@ -416,6 +456,7 @@ export class SecureErrorHandler {
 ## Security Monitoring
 
 ### Client-Side Security Monitoring
+
 ```typescript
 // src/lib/security/security-monitor.ts
 export class SecurityMonitor {
@@ -425,21 +466,23 @@ export class SecurityMonitor {
     if (window.location.href.includes('<script>')) {
       this.reportSecurityIncident('XSS attempt in URL');
     }
-    
+
     // Monitor for suspicious localStorage access
     const originalSetItem = localStorage.setItem;
-    localStorage.setItem = function(key: string, value: string) {
+    localStorage.setItem = function (key: string, value: string) {
       if (key.includes('token') || key.includes('auth')) {
-        SecurityMonitor.reportSecurityIncident('Suspicious localStorage access');
+        SecurityMonitor.reportSecurityIncident(
+          'Suspicious localStorage access'
+        );
       }
       return originalSetItem.call(this, key, value);
     };
   }
-  
+
   private static reportSecurityIncident(incident: string): void {
     // Log security incident (implement proper reporting)
     console.warn(`Security incident: ${incident}`);
-    
+
     // In production, send to security monitoring service
     if (process.env.NODE_ENV === 'production') {
       fetch('/api/security/incident', {
@@ -449,8 +492,8 @@ export class SecurityMonitor {
           incident,
           timestamp: new Date().toISOString(),
           userAgent: navigator.userAgent,
-          url: window.location.href
-        })
+          url: window.location.href,
+        }),
       }).catch(console.error);
     }
   }

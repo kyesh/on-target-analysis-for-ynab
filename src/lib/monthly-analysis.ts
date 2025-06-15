@@ -4,20 +4,20 @@
  */
 
 import { YNABMonth, YNABCategoryGroup } from '@/types/ynab';
-import { 
-  MonthlyAnalysis, 
-  ProcessedCategory, 
+import {
+  MonthlyAnalysis,
+  ProcessedCategory,
   CategoryVariance,
   DashboardSummary,
   BudgetDisciplineRating,
-  AnalysisConfig 
+  AnalysisConfig,
 } from '@/types/analysis';
 import {
   processCategory,
   shouldIncludeCategory,
   calculateCategoryVariance,
   validateMonthFormat,
-  DEFAULT_ANALYSIS_CONFIG
+  DEFAULT_ANALYSIS_CONFIG,
 } from './data-processing';
 
 /**
@@ -35,7 +35,7 @@ export function analyzeMonth(
 
   // Process all categories
   const processedCategories: ProcessedCategory[] = [];
-  
+
   monthData.categories.forEach(category => {
     if (shouldIncludeCategory(category, config)) {
       const processed = processCategory(category, '', config, monthData.month);
@@ -44,9 +44,17 @@ export function analyzeMonth(
   });
 
   // Calculate totals and metrics
-  const totalAssigned = processedCategories.reduce((sum, cat) => sum + cat.assigned, 0);
-  const categoriesWithTargets = processedCategories.filter(cat => cat.hasTarget);
-  const totalTargeted = categoriesWithTargets.reduce((sum, cat) => sum + (cat.target || 0), 0);
+  const totalAssigned = processedCategories.reduce(
+    (sum, cat) => sum + cat.assigned,
+    0
+  );
+  const categoriesWithTargets = processedCategories.filter(
+    cat => cat.hasTarget
+  );
+  const totalTargeted = categoriesWithTargets.reduce(
+    (sum, cat) => sum + (cat.target || 0),
+    0
+  );
 
   // Calculate alignment amounts
   const onTargetAmount = processedCategories
@@ -66,15 +74,25 @@ export function analyzeMonth(
     .reduce((sum, cat) => sum + cat.assigned, 0);
 
   // Calculate percentages
-  const onTargetPercentage = totalAssigned > 0 ? (onTargetAmount / totalAssigned) * 100 : 0;
-  const overTargetPercentage = totalAssigned > 0 ? (overTargetAmount / totalAssigned) * 100 : 0;
-  const underTargetPercentage = totalAssigned > 0 ? (underTargetAmount / totalAssigned) * 100 : 0;
-  const noTargetPercentage = totalAssigned > 0 ? (noTargetAmount / totalAssigned) * 100 : 0;
+  const onTargetPercentage =
+    totalAssigned > 0 ? (onTargetAmount / totalAssigned) * 100 : 0;
+  const overTargetPercentage =
+    totalAssigned > 0 ? (overTargetAmount / totalAssigned) * 100 : 0;
+  const underTargetPercentage =
+    totalAssigned > 0 ? (underTargetAmount / totalAssigned) * 100 : 0;
+  const noTargetPercentage =
+    totalAssigned > 0 ? (noTargetAmount / totalAssigned) * 100 : 0;
 
   // Count categories by status
-  const categoriesOverTarget = processedCategories.filter(cat => cat.alignmentStatus === 'over-target').length;
-  const categoriesUnderTarget = processedCategories.filter(cat => cat.alignmentStatus === 'under-target').length;
-  const categoriesWithoutTargets = processedCategories.filter(cat => cat.alignmentStatus === 'no-target').length;
+  const categoriesOverTarget = processedCategories.filter(
+    cat => cat.alignmentStatus === 'over-target'
+  ).length;
+  const categoriesUnderTarget = processedCategories.filter(
+    cat => cat.alignmentStatus === 'under-target'
+  ).length;
+  const categoriesWithoutTargets = processedCategories.filter(
+    cat => cat.alignmentStatus === 'no-target'
+  ).length;
 
   const analysis = {
     month: monthData.month,
@@ -121,7 +139,7 @@ export function analyzeCategoryGroups(
   const allCategories = categoryGroups.flatMap(group =>
     group.categories.map(category => ({
       ...category,
-      category_group_name: group.name
+      category_group_name: group.name,
     }))
   );
 
@@ -175,12 +193,14 @@ export function getTopVarianceCategories(
 /**
  * Calculate budget discipline rating based on target alignment
  */
-export function calculateBudgetDisciplineRating(analysis: MonthlyAnalysis): BudgetDisciplineRating {
+export function calculateBudgetDisciplineRating(
+  analysis: MonthlyAnalysis
+): BudgetDisciplineRating {
   const { onTargetPercentage, overTargetPercentage } = analysis;
-  
+
   // Rating based on percentage of assignments that are on-target or reasonably close
-  const disciplineScore = onTargetPercentage + (overTargetPercentage * 0.5); // Over-target gets partial credit
-  
+  const disciplineScore = onTargetPercentage + overTargetPercentage * 0.5; // Over-target gets partial credit
+
   if (disciplineScore >= 85) return 'Excellent';
   if (disciplineScore >= 70) return 'Good';
   if (disciplineScore >= 50) return 'Fair';
@@ -190,28 +210,33 @@ export function calculateBudgetDisciplineRating(analysis: MonthlyAnalysis): Budg
 /**
  * Calculate target alignment score (0-100)
  */
-export function calculateTargetAlignmentScore(analysis: MonthlyAnalysis): number {
-  const { 
-    onTargetPercentage, 
-    overTargetPercentage, 
+export function calculateTargetAlignmentScore(
+  analysis: MonthlyAnalysis
+): number {
+  const {
+    onTargetPercentage,
+    overTargetPercentage,
     underTargetPercentage,
     categoriesWithTargets,
-    categoriesAnalyzed 
+    categoriesAnalyzed,
   } = analysis;
-  
+
   // Base score from on-target percentage
   let score = onTargetPercentage;
-  
+
   // Partial credit for over-target (better than under-target)
   score += overTargetPercentage * 0.3;
-  
+
   // Penalty for under-target
   score -= underTargetPercentage * 0.5;
-  
+
   // Bonus for having targets set (encourages target setting)
-  const targetCoverage = categoriesAnalyzed > 0 ? (categoriesWithTargets / categoriesAnalyzed) * 100 : 0;
+  const targetCoverage =
+    categoriesAnalyzed > 0
+      ? (categoriesWithTargets / categoriesAnalyzed) * 100
+      : 0;
   score += targetCoverage * 0.1;
-  
+
   // Ensure score is between 0 and 100
   return Math.max(0, Math.min(100, score));
 }
@@ -226,27 +251,39 @@ export function generateDashboardSummary(
   config: AnalysisConfig = DEFAULT_ANALYSIS_CONFIG
 ): DashboardSummary {
   const monthlyAnalysis = analyzeMonth(monthData, budgetId, budgetName, config);
-  const { overTarget, underTarget } = getTopVarianceCategories(monthData, monthData.month, 10, config);
-  
+  const { overTarget, underTarget } = getTopVarianceCategories(
+    monthData,
+    monthData.month,
+    10,
+    config
+  );
+
   // Process all categories with debug information
   const allCategories = monthData.categories
     .filter(category => shouldIncludeCategory(category, config))
     .map(category => processCategory(category, '', config, monthData.month));
 
   // Get categories without targets that have assignments
-  const categoriesWithoutTargets = allCategories
-    .filter(category => !category.hasTarget && category.assigned !== 0);
+  const categoriesWithoutTargets = allCategories.filter(
+    category => !category.hasTarget && category.assigned !== 0
+  );
 
   // Calculate key metrics
   const targetAlignmentScore = calculateTargetAlignmentScore(monthlyAnalysis);
-  const budgetDisciplineRating = calculateBudgetDisciplineRating(monthlyAnalysis);
+  const budgetDisciplineRating =
+    calculateBudgetDisciplineRating(monthlyAnalysis);
 
-  const totalVariance = [...overTarget, ...underTarget]
-    .reduce((sum, variance) => sum + Math.abs(variance.variance), 0);
+  const totalVariance = [...overTarget, ...underTarget].reduce(
+    (sum, variance) => sum + Math.abs(variance.variance),
+    0
+  );
 
-  const averageTargetAchievement = monthlyAnalysis.categoriesWithTargets > 0
-    ? (monthlyAnalysis.onTargetAmount + monthlyAnalysis.overTargetAmount) / monthlyAnalysis.totalTargeted * 100
-    : 0;
+  const averageTargetAchievement =
+    monthlyAnalysis.categoriesWithTargets > 0
+      ? ((monthlyAnalysis.onTargetAmount + monthlyAnalysis.overTargetAmount) /
+          monthlyAnalysis.totalTargeted) *
+        100
+      : 0;
 
   return {
     selectedMonth: monthData.month,

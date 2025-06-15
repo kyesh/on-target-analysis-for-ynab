@@ -11,6 +11,7 @@ For the YNAB Off-Target Assignment Analysis application, this analysis compares 
 ### Authorization Code Grant Flow
 
 #### Implementation Components
+
 ```typescript
 // Required components and estimated development time
 
@@ -48,6 +49,7 @@ Total Development Time: 64-88 hours (8-11 days)
 ```
 
 #### Infrastructure Requirements
+
 ```yaml
 # Additional infrastructure components
 
@@ -71,9 +73,12 @@ Monitoring:
 ```
 
 #### Code Complexity Example
+
 ```typescript
 // Example: Token refresh with database storage
-export async function refreshTokenIfNeeded(sessionJWT: string): Promise<string | null> {
+export async function refreshTokenIfNeeded(
+  sessionJWT: string
+): Promise<string | null> {
   try {
     // 1. Validate JWT session
     const sessionData = await SessionManager.verifySessionJWT(sessionJWT);
@@ -86,8 +91,12 @@ export async function refreshTokenIfNeeded(sessionJWT: string): Promise<string |
     if (!tokenRecord) return null;
 
     // 3. Decrypt tokens
-    const accessToken = await TokenEncryption.decrypt(tokenRecord.encryptedAccessToken);
-    const refreshToken = await TokenEncryption.decrypt(tokenRecord.encryptedRefreshToken);
+    const accessToken = await TokenEncryption.decrypt(
+      tokenRecord.encryptedAccessToken
+    );
+    const refreshToken = await TokenEncryption.decrypt(
+      tokenRecord.encryptedRefreshToken
+    );
 
     // 4. Check if refresh needed (5 minutes before expiry)
     const tokenPayload = JSON.parse(atob(accessToken.split('.')[1]));
@@ -111,7 +120,11 @@ export async function refreshTokenIfNeeded(sessionJWT: string): Promise<string |
     const tokens = await response.json();
 
     // 6. Encrypt and store new tokens
-    await SessionManager.updateTokens(sessionJWT, tokens.access_token, tokens.refresh_token);
+    await SessionManager.updateTokens(
+      sessionJWT,
+      tokens.access_token,
+      tokens.refresh_token
+    );
 
     return tokens.access_token;
   } catch (error) {
@@ -124,6 +137,7 @@ export async function refreshTokenIfNeeded(sessionJWT: string): Promise<string |
 ### Implicit Grant Flow
 
 #### Implementation Components
+
 ```typescript
 // Simpler implementation with browser storage
 
@@ -151,6 +165,7 @@ Total Development Time: 22-38 hours (3-5 days)
 ```
 
 #### Code Complexity Example
+
 ```typescript
 // Example: Simpler token management
 export class ImplicitTokenManager {
@@ -158,11 +173,11 @@ export class ImplicitTokenManager {
   private static readonly EXPIRY_KEY = 'ynab_token_expiry';
 
   static storeToken(token: string, expiresIn: number): void {
-    const expiryTime = Date.now() + (expiresIn * 1000);
-    
+    const expiryTime = Date.now() + expiresIn * 1000;
+
     // Optional: Encrypt token before storage
     const encryptedToken = this.encryptForStorage(token);
-    
+
     localStorage.setItem(this.TOKEN_KEY, encryptedToken);
     localStorage.setItem(this.EXPIRY_KEY, expiryTime.toString());
   }
@@ -206,46 +221,49 @@ export class ImplicitTokenManager {
 
 ### Security Comparison
 
-| Aspect | Authorization Code | Implicit Grant | Winner |
-|--------|-------------------|----------------|---------|
-| **Token Exposure** | Server-side only | Browser-exposed | Authorization Code |
-| **Refresh Tokens** | Supported | Not supported | Authorization Code |
-| **Client Secret** | Protected | Not applicable | Authorization Code |
-| **XSS Vulnerability** | Minimal impact | High impact | Authorization Code |
-| **Token Lifetime** | Long-lived (refresh) | Short-lived only | Authorization Code |
-| **Revocation** | Granular control | Limited | Authorization Code |
+| Aspect                | Authorization Code   | Implicit Grant   | Winner             |
+| --------------------- | -------------------- | ---------------- | ------------------ |
+| **Token Exposure**    | Server-side only     | Browser-exposed  | Authorization Code |
+| **Refresh Tokens**    | Supported            | Not supported    | Authorization Code |
+| **Client Secret**     | Protected            | Not applicable   | Authorization Code |
+| **XSS Vulnerability** | Minimal impact       | High impact      | Authorization Code |
+| **Token Lifetime**    | Long-lived (refresh) | Short-lived only | Authorization Code |
+| **Revocation**        | Granular control     | Limited          | Authorization Code |
 
 ### Implementation Complexity
 
-| Aspect | Authorization Code | Implicit Grant | Winner |
-|--------|-------------------|----------------|---------|
-| **Development Time** | 64-88 hours | 22-38 hours | Implicit Grant |
-| **Infrastructure** | Database required | Browser only | Implicit Grant |
-| **Maintenance** | Higher complexity | Lower complexity | Implicit Grant |
-| **Testing** | More components | Fewer components | Implicit Grant |
-| **Debugging** | More complex | Simpler | Implicit Grant |
+| Aspect               | Authorization Code | Implicit Grant   | Winner         |
+| -------------------- | ------------------ | ---------------- | -------------- |
+| **Development Time** | 64-88 hours        | 22-38 hours      | Implicit Grant |
+| **Infrastructure**   | Database required  | Browser only     | Implicit Grant |
+| **Maintenance**      | Higher complexity  | Lower complexity | Implicit Grant |
+| **Testing**          | More components    | Fewer components | Implicit Grant |
+| **Debugging**        | More complex       | Simpler          | Implicit Grant |
 
 ### Operational Complexity
 
-| Aspect | Authorization Code | Implicit Grant | Winner |
-|--------|-------------------|----------------|---------|
-| **Scaling** | Stateless (JWT) | Stateless | Tie |
-| **Monitoring** | Database + App | App only | Implicit Grant |
-| **Backup/Recovery** | Database required | No persistence | Implicit Grant |
-| **Key Management** | Complex | Minimal | Implicit Grant |
-| **Cost** | +$30-70/month | No additional cost | Implicit Grant |
+| Aspect              | Authorization Code | Implicit Grant     | Winner         |
+| ------------------- | ------------------ | ------------------ | -------------- |
+| **Scaling**         | Stateless (JWT)    | Stateless          | Tie            |
+| **Monitoring**      | Database + App     | App only           | Implicit Grant |
+| **Backup/Recovery** | Database required  | No persistence     | Implicit Grant |
+| **Key Management**  | Complex            | Minimal            | Implicit Grant |
+| **Cost**            | +$30-70/month      | No additional cost | Implicit Grant |
 
 ## Risk Assessment for YNAB Application
 
 ### Security Risk Analysis
 
 #### High-Risk Scenarios
+
 1. **Token Theft via XSS**
+
    - **Implicit Grant**: Direct access to tokens in browser storage
    - **Authorization Code**: Tokens not accessible to client-side scripts
    - **Impact**: Complete account compromise
 
 2. **Long-term Access**
+
    - **Implicit Grant**: User must re-authenticate frequently
    - **Authorization Code**: Seamless long-term access with refresh tokens
    - **Impact**: User experience and adoption
@@ -256,7 +274,9 @@ export class ImplicitTokenManager {
    - **Impact**: Security incident response
 
 #### Medium-Risk Scenarios
+
 1. **Browser Storage Vulnerabilities**
+
    - **Implicit Grant**: Vulnerable to various browser-based attacks
    - **Authorization Code**: No sensitive data in browser
    - **Impact**: Potential data exposure
@@ -269,6 +289,7 @@ export class ImplicitTokenManager {
 ### Business Risk Analysis
 
 #### User Experience Impact
+
 ```typescript
 // Authorization Code: Seamless experience
 const user = await getAuthenticatedUser(); // Always works if logged in
@@ -284,6 +305,7 @@ const budgets = await ynabClient.getBudgets();
 ```
 
 #### Compliance Considerations
+
 - **GDPR Article 32**: "Appropriate technical measures" for data protection
 - **Authorization Code**: Stronger technical measures (encryption, secure storage)
 - **Implicit Grant**: Minimal technical protection
@@ -293,21 +315,25 @@ const budgets = await ynabClient.getBudgets();
 ### Justification
 
 #### 1. Security Benefits Outweigh Complexity
+
 - **Token theft protection**: Critical for financial data access
 - **Long-term security**: Refresh tokens enable secure long-term access
 - **Compliance alignment**: Better meets regulatory requirements
 
 #### 2. User Experience Advantages
+
 - **Seamless operation**: No frequent re-authentication
 - **Reliable access**: Automatic token refresh prevents interruptions
 - **Professional feel**: Enterprise-grade authentication experience
 
 #### 3. Future-Proofing
+
 - **Scalability**: Database-backed sessions support growth
 - **Feature expansion**: Foundation for advanced features (team access, etc.)
 - **Security evolution**: Easier to enhance security measures
 
 #### 4. Cost-Benefit Analysis
+
 ```
 Additional Cost: ~$30-70/month
 Additional Development: ~40-50 hours
@@ -324,16 +350,19 @@ ROI: Positive within 3-6 months
 ### Implementation Strategy
 
 #### Phase 1: Minimal Viable Implementation (Week 1)
+
 - Basic Authorization Code flow with NextAuth.js
 - Simple database schema for token storage
 - Basic encryption for tokens
 
 #### Phase 2: Production Hardening (Week 2)
+
 - Advanced encryption and key management
 - Session cleanup and monitoring
 - Security testing and validation
 
 #### Phase 3: Optimization (Week 3)
+
 - Performance optimization
 - Advanced session management
 - Monitoring and analytics
@@ -341,6 +370,7 @@ ROI: Positive within 3-6 months
 ## Alternative: Hybrid Approach
 
 ### Consideration: Progressive Enhancement
+
 ```typescript
 // Start with Implicit Grant, upgrade to Authorization Code
 class AuthManager {

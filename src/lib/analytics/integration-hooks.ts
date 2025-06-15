@@ -26,22 +26,31 @@ export function useAuthAnalytics() {
     }
   }, [isAuthenticated, user]);
 
-  const trackOAuthInitiated = useCallback((method: 'button_click' | 'auto_redirect' = 'button_click') => {
-    trackAuth.oauthInitiated(method);
-  }, []);
+  const trackOAuthInitiated = useCallback(
+    (method: 'button_click' | 'auto_redirect' = 'button_click') => {
+      trackAuth.oauthInitiated(method);
+    },
+    []
+  );
 
-  const trackOAuthCompleted = useCallback((duration: number, tokenExpiresIn?: number) => {
-    trackAuth.oauthCompleted(duration, tokenExpiresIn);
-  }, []);
+  const trackOAuthCompleted = useCallback(
+    (duration: number, tokenExpiresIn?: number) => {
+      trackAuth.oauthCompleted(duration, tokenExpiresIn);
+    },
+    []
+  );
 
   const trackOAuthFailed = useCallback((error: string, errorCode?: string) => {
     trackAuth.oauthFailed(error, errorCode);
   }, []);
 
-  const trackLogout = useCallback((method: 'manual' | 'auto' | 'timeout' = 'manual') => {
-    trackAuth.logout(method);
-    analytics.reset(); // Reset user identity
-  }, []);
+  const trackLogout = useCallback(
+    (method: 'manual' | 'auto' | 'timeout' = 'manual') => {
+      trackAuth.logout(method);
+      analytics.reset(); // Reset user identity
+    },
+    []
+  );
 
   return {
     trackOAuthInitiated,
@@ -63,27 +72,41 @@ export function useBudgetAnalytics() {
     trackBudget.budgetSelected(budget.id, budget.name);
   }, []);
 
-  const trackMonthChanged = useCallback((month: string, direction: 'next' | 'previous' | 'direct') => {
-    trackBudget.monthChanged(month, direction);
-  }, []);
+  const trackMonthChanged = useCallback(
+    (month: string, direction: 'next' | 'previous' | 'direct') => {
+      trackBudget.monthChanged(month, direction);
+    },
+    []
+  );
 
-  const trackAnalysisGenerated = useCallback((
-    budgetId: string,
-    month: string,
-    categories: any[],
-    processingTime: number
-  ) => {
-    trackBudget.analysisGenerated(budgetId, month, categories.length, processingTime);
-  }, []);
+  const trackAnalysisGenerated = useCallback(
+    (
+      budgetId: string,
+      month: string,
+      categories: any[],
+      processingTime: number
+    ) => {
+      trackBudget.analysisGenerated(
+        budgetId,
+        month,
+        categories.length,
+        processingTime
+      );
+    },
+    []
+  );
 
   const trackCategoryViewed = useCallback((category: any) => {
     const targetStatus = category.goal_target ? 'has_target' : 'no_target';
     trackBudget.categoryViewed(category.id, category.name, targetStatus);
   }, []);
 
-  const trackFilterApplied = useCallback((filterType: string, filterValue: string) => {
-    trackBudget.filterApplied(filterType, filterValue);
-  }, []);
+  const trackFilterApplied = useCallback(
+    (filterType: string, filterValue: string) => {
+      trackBudget.filterApplied(filterType, filterValue);
+    },
+    []
+  );
 
   return {
     trackBudgetsLoaded,
@@ -99,13 +122,19 @@ export function useBudgetAnalytics() {
  * Hook to track user interactions
  */
 export function useInteractionAnalytics() {
-  const trackButtonClick = useCallback((buttonName: string, location: string) => {
-    trackInteraction.buttonClick(buttonName, location);
-  }, []);
+  const trackButtonClick = useCallback(
+    (buttonName: string, location: string) => {
+      trackInteraction.buttonClick(buttonName, location);
+    },
+    []
+  );
 
-  const trackFormSubmit = useCallback((formName: string, success: boolean, errorMessage?: string) => {
-    trackInteraction.formSubmit(formName, success, errorMessage);
-  }, []);
+  const trackFormSubmit = useCallback(
+    (formName: string, success: boolean, errorMessage?: string) => {
+      trackInteraction.formSubmit(formName, success, errorMessage);
+    },
+    []
+  );
 
   const trackHelpAccessed = useCallback((helpTopic: string, source: string) => {
     trackInteraction.helpAccessed(helpTopic, source);
@@ -127,36 +156,54 @@ export function useInteractionAnalytics() {
  * Hook to track errors with context
  */
 export function useErrorAnalytics() {
-  const trackApiError = useCallback((
-    endpoint: string,
-    method: string,
-    statusCode: number,
-    errorMessage: string,
-    errorType?: string
-  ) => {
-    trackError.apiError(endpoint, method, statusCode, errorMessage, errorType);
-  }, []);
+  const trackApiError = useCallback(
+    (
+      endpoint: string,
+      method: string,
+      statusCode: number,
+      errorMessage: string,
+      errorType?: string
+    ) => {
+      trackError.apiError(
+        endpoint,
+        method,
+        statusCode,
+        errorMessage,
+        errorType
+      );
+    },
+    []
+  );
 
-  const trackAuthenticationError = useCallback((errorType: string, errorMessage: string) => {
-    trackError.authenticationError(errorType, errorMessage);
-  }, []);
+  const trackAuthenticationError = useCallback(
+    (errorType: string, errorMessage: string) => {
+      trackError.authenticationError(errorType, errorMessage);
+    },
+    []
+  );
 
-  const trackValidationError = useCallback((field: string, errorMessage: string, value?: string) => {
-    trackError.validationError(field, errorMessage, value);
-  }, []);
+  const trackValidationError = useCallback(
+    (field: string, errorMessage: string, value?: string) => {
+      trackError.validationError(field, errorMessage, value);
+    },
+    []
+  );
 
   const trackNetworkError = useCallback((url: string, errorMessage: string) => {
     trackError.networkError(url, errorMessage);
   }, []);
 
-  const trackJavaScriptError = useCallback((
-    errorMessage: string,
-    stack?: string,
-    filename?: string,
-    line?: number
-  ) => {
-    trackError.javascriptError(errorMessage, stack, filename, line);
-  }, []);
+  const trackJavaScriptError = useCallback(
+    (
+      errorMessage: string,
+      stack?: string,
+      filename?: string,
+      line?: number
+    ) => {
+      trackError.javascriptError(errorMessage, stack, filename, line);
+    },
+    []
+  );
 
   return {
     trackApiError,
@@ -171,37 +218,49 @@ export function useErrorAnalytics() {
  * Hook to track feature usage and discovery
  */
 export function useFeatureAnalytics() {
-  const trackFeatureUsed = useCallback((featureName: string, context: string) => {
-    analytics.track('feature_used', {
-      feature_name: featureName,
-      context,
-      timestamp: new Date().toISOString(),
-    });
-  }, []);
+  const trackFeatureUsed = useCallback(
+    (featureName: string, context: string) => {
+      analytics.track('feature_used', {
+        feature_name: featureName,
+        context,
+        timestamp: new Date().toISOString(),
+      });
+    },
+    []
+  );
 
-  const trackFeatureDiscovered = useCallback((featureName: string, discoveryMethod: string) => {
-    analytics.track('feature_discovered', {
-      feature_name: featureName,
-      discovery_method: discoveryMethod,
-      timestamp: new Date().toISOString(),
-    });
-  }, []);
+  const trackFeatureDiscovered = useCallback(
+    (featureName: string, discoveryMethod: string) => {
+      analytics.track('feature_discovered', {
+        feature_name: featureName,
+        discovery_method: discoveryMethod,
+        timestamp: new Date().toISOString(),
+      });
+    },
+    []
+  );
 
-  const trackTooltipViewed = useCallback((tooltipContent: string, location: string) => {
-    analytics.track('tooltip_viewed', {
-      tooltip_content: tooltipContent.substring(0, 100), // Truncate for privacy
-      location,
-      timestamp: new Date().toISOString(),
-    });
-  }, []);
+  const trackTooltipViewed = useCallback(
+    (tooltipContent: string, location: string) => {
+      analytics.track('tooltip_viewed', {
+        tooltip_content: tooltipContent.substring(0, 100), // Truncate for privacy
+        location,
+        timestamp: new Date().toISOString(),
+      });
+    },
+    []
+  );
 
-  const trackHelpDocumentAccessed = useCallback((documentName: string, section?: string) => {
-    analytics.track('help_document_accessed', {
-      document_name: documentName,
-      section,
-      timestamp: new Date().toISOString(),
-    });
-  }, []);
+  const trackHelpDocumentAccessed = useCallback(
+    (documentName: string, section?: string) => {
+      analytics.track('help_document_accessed', {
+        document_name: documentName,
+        section,
+        timestamp: new Date().toISOString(),
+      });
+    },
+    []
+  );
 
   return {
     trackFeatureUsed,
@@ -227,12 +286,15 @@ export function useAnalytics() {
   }, []);
 
   // Track custom events
-  const trackCustomEvent = useCallback((eventName: string, properties: Record<string, any> = {}) => {
-    analytics.track(eventName, {
-      ...properties,
-      timestamp: new Date().toISOString(),
-    });
-  }, []);
+  const trackCustomEvent = useCallback(
+    (eventName: string, properties: Record<string, any> = {}) => {
+      analytics.track(eventName, {
+        ...properties,
+        timestamp: new Date().toISOString(),
+      });
+    },
+    []
+  );
 
   // Get consent status
   const getConsentStatus = useCallback(() => {
@@ -242,19 +304,19 @@ export function useAnalytics() {
   return {
     // Auth tracking
     ...authAnalytics,
-    
+
     // Budget tracking
     ...budgetAnalytics,
-    
+
     // Interaction tracking
     ...interactionAnalytics,
-    
+
     // Error tracking
     ...errorAnalytics,
-    
+
     // Feature tracking
     ...featureAnalytics,
-    
+
     // Utility functions
     setUserProperties,
     trackCustomEvent,

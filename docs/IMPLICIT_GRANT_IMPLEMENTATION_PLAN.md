@@ -73,18 +73,18 @@ interface SecurityAssessment {
   dataType: 'Budget analysis (read-only)';
   sensitivity: 'Medium'; // Not payment data, but personal financial info
   riskTolerance: 'Medium'; // Analysis tool, not banking application
-  
+
   acceptableRisks: [
     'Token theft requires successful XSS attack',
     'Read-only access limits damage potential',
     'No payment or account modification capabilities',
-    'User can revoke access via YNAB at any time'
+    'User can revoke access via YNAB at any time',
   ];
-  
+
   unacceptableRisks: [
     'Persistent token storage without encryption',
     'Token transmission over HTTP',
-    'No Content Security Policy protection'
+    'No Content Security Policy protection',
   ];
 }
 ```
@@ -94,6 +94,7 @@ interface SecurityAssessment {
 ### Existing API Architecture Changes
 
 #### Before: Server-Side Authentication
+
 ```typescript
 // Current API endpoint structure
 export async function GET(request: Request) {
@@ -106,6 +107,7 @@ export async function GET(request: Request) {
 ```
 
 #### After: Client-Side Token Forwarding
+
 ```typescript
 // Modified API endpoint structure
 export async function GET(request: Request) {
@@ -114,7 +116,7 @@ export async function GET(request: Request) {
   if (!authHeader?.startsWith('Bearer ')) {
     return Response.json({ error: 'Missing token' }, { status: 401 });
   }
-  
+
   const token = authHeader.substring(7);
   const ynabClient = new YNABClient(token);
   const budgets = await ynabClient.getBudgets();
@@ -125,6 +127,7 @@ export async function GET(request: Request) {
 ### Required API Modifications
 
 #### 1. Authentication Middleware Update
+
 ```typescript
 // src/lib/middleware/auth-middleware.ts
 export class ImplicitGrantAuthMiddleware {
@@ -134,36 +137,36 @@ export class ImplicitGrantAuthMiddleware {
     error?: string;
   } {
     const authHeader = request.headers.get('Authorization');
-    
+
     if (!authHeader) {
       return { valid: false, error: 'Missing Authorization header' };
     }
-    
+
     if (!authHeader.startsWith('Bearer ')) {
       return { valid: false, error: 'Invalid Authorization header format' };
     }
-    
+
     const token = authHeader.substring(7);
-    
+
     // Basic token validation
     if (!this.isValidTokenFormat(token)) {
       return { valid: false, error: 'Invalid token format' };
     }
-    
+
     // Check token expiration
     if (this.isTokenExpired(token)) {
       return { valid: false, error: 'Token expired' };
     }
-    
+
     return { valid: true, token };
   }
-  
+
   private static isValidTokenFormat(token: string): boolean {
     // JWT tokens have 3 parts separated by dots
     const parts = token.split('.');
     return parts.length === 3 && parts.every(part => part.length > 0);
   }
-  
+
   private static isTokenExpired(token: string): boolean {
     try {
       const payload = JSON.parse(atob(token.split('.')[1]));
@@ -176,49 +179,53 @@ export class ImplicitGrantAuthMiddleware {
 ```
 
 #### 2. YNAB Client Service Updates
+
 ```typescript
 // src/lib/ynab/client-implicit.ts
 export class YNABClientImplicit {
   constructor(private accessToken: string) {}
-  
+
   // All methods now require token to be passed from client
   async getBudgets(): Promise<Budget[]> {
     const response = await fetch('https://api.ynab.com/v1/budgets', {
       headers: {
-        'Authorization': `Bearer ${this.accessToken}`,
+        Authorization: `Bearer ${this.accessToken}`,
         'Content-Type': 'application/json',
       },
     });
-    
+
     if (!response.ok) {
       if (response.status === 401) {
         throw new AuthenticationError('Token expired or invalid');
       }
       throw new Error(`YNAB API error: ${response.status}`);
     }
-    
+
     const data = await response.json();
     return data.data.budgets;
   }
-  
-  async getMonthlyBudget(budgetId: string, month: string): Promise<MonthDetail> {
+
+  async getMonthlyBudget(
+    budgetId: string,
+    month: string
+  ): Promise<MonthDetail> {
     const response = await fetch(
       `https://api.ynab.com/v1/budgets/${budgetId}/months/${month}`,
       {
         headers: {
-          'Authorization': `Bearer ${this.accessToken}`,
+          Authorization: `Bearer ${this.accessToken}`,
           'Content-Type': 'application/json',
         },
       }
     );
-    
+
     if (!response.ok) {
       if (response.status === 401) {
         throw new AuthenticationError('Token expired or invalid');
       }
       throw new Error(`YNAB API error: ${response.status}`);
     }
-    
+
     const data = await response.json();
     return data.data.month;
   }
@@ -233,6 +240,7 @@ export class AuthenticationError extends Error {
 ```
 
 #### 3. API Route Updates
+
 ```typescript
 // src/app/api/budgets/route.ts
 import { ImplicitGrantAuthMiddleware } from '@/lib/middleware/auth-middleware';
@@ -243,19 +251,16 @@ export async function GET(request: Request) {
     // Validate authentication
     const auth = ImplicitGrantAuthMiddleware.validateRequest(request);
     if (!auth.valid) {
-      return Response.json(
-        { error: auth.error },
-        { status: 401 }
-      );
+      return Response.json({ error: auth.error }, { status: 401 });
     }
-    
+
     // Use token to fetch data
     const ynabClient = new YNABClientImplicit(auth.token!);
     const budgets = await ynabClient.getBudgets();
-    
+
     return Response.json({
       success: true,
-      data: { budgets }
+      data: { budgets },
     });
   } catch (error) {
     if (error instanceof AuthenticationError) {
@@ -264,12 +269,9 @@ export async function GET(request: Request) {
         { status: 401 }
       );
     }
-    
+
     console.error('Budget fetch error:', error);
-    return Response.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return Response.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 ```
@@ -279,22 +281,23 @@ export async function GET(request: Request) {
 ### Client-Side OAuth Flow Handling
 
 #### OAuth Initiation
+
 ```typescript
 // src/lib/auth/implicit-oauth-client.ts
 export class ImplicitOAuthClient {
   private static readonly CLIENT_ID = process.env.NEXT_PUBLIC_YNAB_CLIENT_ID!;
   private static readonly REDIRECT_URI = `${window.location.origin}/auth/callback`;
   private static readonly SCOPE = 'read-only';
-  
+
   // Initiate OAuth flow
   static initiateAuth(): void {
     const state = this.generateSecureState();
     const nonce = this.generateNonce();
-    
+
     // Store state and nonce for validation
     sessionStorage.setItem('oauth_state', state);
     sessionStorage.setItem('oauth_nonce', nonce);
-    
+
     const authUrl = new URL('https://app.ynab.com/oauth/authorize');
     authUrl.searchParams.set('client_id', this.CLIENT_ID);
     authUrl.searchParams.set('redirect_uri', this.REDIRECT_URI);
@@ -302,11 +305,11 @@ export class ImplicitOAuthClient {
     authUrl.searchParams.set('scope', this.SCOPE);
     authUrl.searchParams.set('state', state);
     authUrl.searchParams.set('nonce', nonce);
-    
+
     // Redirect to YNAB OAuth
     window.location.href = authUrl.toString();
   }
-  
+
   // Extract token from URL fragment after OAuth callback
   static handleCallback(): {
     success: boolean;
@@ -316,52 +319,59 @@ export class ImplicitOAuthClient {
   } {
     const fragment = window.location.hash.substring(1);
     const params = new URLSearchParams(fragment);
-    
+
     // Validate state parameter
     const state = params.get('state');
     const storedState = sessionStorage.getItem('oauth_state');
     if (!state || state !== storedState) {
       return { success: false, error: 'Invalid state parameter' };
     }
-    
+
     // Clean up stored state
     sessionStorage.removeItem('oauth_state');
     sessionStorage.removeItem('oauth_nonce');
-    
+
     // Check for error
     const error = params.get('error');
     if (error) {
-      return { success: false, error: params.get('error_description') || error };
+      return {
+        success: false,
+        error: params.get('error_description') || error,
+      };
     }
-    
+
     // Extract token
     const accessToken = params.get('access_token');
     const expiresIn = parseInt(params.get('expires_in') || '0', 10);
-    
+
     if (!accessToken) {
       return { success: false, error: 'No access token received' };
     }
-    
+
     // Immediately clear URL fragment for security
     window.history.replaceState({}, document.title, window.location.pathname);
-    
+
     return {
       success: true,
       accessToken,
-      expiresIn
+      expiresIn,
     };
   }
-  
+
   private static generateSecureState(): string {
     const array = new Uint8Array(32);
     crypto.getRandomValues(array);
-    return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+    return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join(
+      ''
+    );
   }
-  
+
   private static generateNonce(): string {
     const array = new Uint8Array(16);
     crypto.getRandomValues(array);
-    return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+    return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join(
+      ''
+    );
   }
 }
 ```
@@ -369,6 +379,7 @@ export class ImplicitOAuthClient {
 ### Secure Token Storage Strategy
 
 #### Storage Options Analysis
+
 ```typescript
 interface StorageOption {
   method: string;
@@ -384,86 +395,87 @@ const storageOptions: StorageOption[] = [
     security: 'High',
     persistence: 'Memory',
     xssVulnerable: false,
-    recommendation: 'Most secure, but lost on page refresh'
+    recommendation: 'Most secure, but lost on page refresh',
   },
   {
     method: 'sessionStorage',
     security: 'Medium',
     persistence: 'Session',
     xssVulnerable: true,
-    recommendation: 'Good balance of security and usability'
+    recommendation: 'Good balance of security and usability',
   },
   {
     method: 'localStorage',
     security: 'Low',
     persistence: 'Permanent',
     xssVulnerable: true,
-    recommendation: 'Avoid - persists across browser sessions'
+    recommendation: 'Avoid - persists across browser sessions',
   },
   {
     method: 'httpOnly cookie',
     security: 'High',
     persistence: 'Session',
     xssVulnerable: false,
-    recommendation: 'Not possible with Implicit Grant (requires server)'
-  }
+    recommendation: 'Not possible with Implicit Grant (requires server)',
+  },
 ];
 ```
 
 #### Recommended Storage Implementation
+
 ```typescript
 // src/lib/auth/token-storage.ts
 export class SecureTokenStorage {
   private static token: string | null = null;
   private static expiresAt: number | null = null;
   private static readonly STORAGE_KEY = 'ynab_session';
-  
+
   // Hybrid approach: Memory first, sessionStorage backup
   static storeToken(accessToken: string, expiresIn: number): void {
-    const expiresAt = Date.now() + (expiresIn * 1000);
-    
+    const expiresAt = Date.now() + expiresIn * 1000;
+
     // Store in memory (most secure)
     this.token = accessToken;
     this.expiresAt = expiresAt;
-    
+
     // Backup to sessionStorage (survives page refresh)
     const sessionData = {
       token: this.encryptForStorage(accessToken),
       expiresAt,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
-    
+
     try {
       sessionStorage.setItem(this.STORAGE_KEY, JSON.stringify(sessionData));
     } catch (error) {
       console.warn('Failed to store token in sessionStorage:', error);
     }
   }
-  
+
   static getToken(): string | null {
     // Check memory first
     if (this.token && this.expiresAt && Date.now() < this.expiresAt) {
       return this.token;
     }
-    
+
     // Fallback to sessionStorage
     try {
       const stored = sessionStorage.getItem(this.STORAGE_KEY);
       if (!stored) return null;
-      
+
       const sessionData = JSON.parse(stored);
-      
+
       // Check expiration
       if (Date.now() >= sessionData.expiresAt) {
         this.clearToken();
         return null;
       }
-      
+
       // Decrypt and restore to memory
       const token = this.decryptFromStorage(sessionData.token);
       this.token = token;
       this.expiresAt = sessionData.expiresAt;
-      
+
       return token;
     } catch (error) {
       console.warn('Failed to retrieve token from sessionStorage:', error);
@@ -471,35 +483,35 @@ export class SecureTokenStorage {
       return null;
     }
   }
-  
+
   static isTokenValid(): boolean {
     const token = this.getToken();
     return token !== null;
   }
-  
+
   static getTokenExpiration(): Date | null {
     if (!this.expiresAt) return null;
     return new Date(this.expiresAt);
   }
-  
+
   static clearToken(): void {
     this.token = null;
     this.expiresAt = null;
-    
+
     try {
       sessionStorage.removeItem(this.STORAGE_KEY);
     } catch (error) {
       console.warn('Failed to clear token from sessionStorage:', error);
     }
   }
-  
+
   // Basic encryption for browser storage (not cryptographically secure)
   private static encryptForStorage(token: string): string {
     // Simple obfuscation - not real encryption
     // In a real implementation, consider Web Crypto API
     return btoa(token.split('').reverse().join(''));
   }
-  
+
   private static decryptFromStorage(encrypted: string): string {
     return atob(encrypted).split('').reverse().join('');
   }
@@ -509,67 +521,68 @@ export class SecureTokenStorage {
 ### Token Validation and Expiration Handling
 
 #### Automatic Token Validation
+
 ```typescript
 // src/lib/auth/token-validator.ts
 export class TokenValidator {
   private static readonly CHECK_INTERVAL = 60000; // 1 minute
   private static intervalId: NodeJS.Timeout | null = null;
-  
+
   // Start automatic token validation
   static startValidation(): void {
     if (this.intervalId) return; // Already running
-    
+
     this.intervalId = setInterval(() => {
       this.validateCurrentToken();
     }, this.CHECK_INTERVAL);
-    
+
     // Initial validation
     this.validateCurrentToken();
   }
-  
+
   static stopValidation(): void {
     if (this.intervalId) {
       clearInterval(this.intervalId);
       this.intervalId = null;
     }
   }
-  
+
   private static validateCurrentToken(): void {
     const token = SecureTokenStorage.getToken();
-    
+
     if (!token) {
       this.handleTokenExpired();
       return;
     }
-    
+
     // Check if token expires within 5 minutes
     const expiration = SecureTokenStorage.getTokenExpiration();
     if (expiration && expiration.getTime() - Date.now() < 5 * 60 * 1000) {
       this.handleTokenExpiringSoon();
     }
   }
-  
+
   private static handleTokenExpired(): void {
     console.log('Token expired, redirecting to login');
     SecureTokenStorage.clearToken();
-    
+
     // Redirect to login page
     window.location.href = '/auth/signin';
   }
-  
+
   private static handleTokenExpiringSoon(): void {
     console.log('Token expiring soon, showing re-authentication prompt');
-    
+
     // Show user-friendly re-authentication prompt
     this.showReauthPrompt();
   }
-  
+
   private static showReauthPrompt(): void {
     // Create modal or notification
     const shouldReauth = confirm(
       'Your session will expire soon. Would you like to sign in again to continue?'
     );
-    
+
     if (shouldReauth) {
       ImplicitOAuthClient.initiateAuth();
     } else {
@@ -637,6 +650,7 @@ export { handler as GET, handler as POST };
 ### Custom Authentication Components
 
 #### Sign-In Page
+
 ```typescript
 // src/app/auth/signin/page.tsx
 'use client';
@@ -707,6 +721,7 @@ export default function SignInPage() {
 ```
 
 #### OAuth Callback Handler
+
 ```typescript
 // src/app/auth/callback/page.tsx
 'use client';

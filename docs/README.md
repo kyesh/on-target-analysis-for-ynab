@@ -5,41 +5,50 @@ Welcome to the comprehensive documentation for the On Target Analysis for YNAB a
 ## 📋 Quick Navigation
 
 ### **🚀 Getting Started**
+
 - **[Main README](../README.md)** - Project overview and quick start guide
 - **[Implementation Status](IMPLEMENTATION_STATUS.md)** - Complete implementation overview and decisions
 - **[Deployment Guide](DEPLOYMENT_GUIDE.md)** - Step-by-step Google Cloud Platform deployment
 
 ### **🔐 OAuth 2.0 Implementation**
+
 - **[OAuth Implementation Plan](IMPLICIT_GRANT_IMPLEMENTATION_PLAN.md)** - OAuth 2.0 Implicit Grant Flow details
 - **[Security Checklist](IMPLICIT_GRANT_SECURITY_CHECKLIST.md)** - Security measures implemented
 - **[Architecture Tradeoffs](IMPLICIT_GRANT_TRADEOFFS_MIGRATION.md)** - Decision rationale and trade-offs
 
 ### **🏗️ System Architecture**
+
 - **[System Architecture](SYSTEM_ARCHITECTURE.md)** - Complete system design and component overview
 - **[Overview](OVERVIEW.md)** - Project objectives, features, and technical stack
 - **[Data Architecture](DATA_ARCHITECTURE.md)** - Data flow and processing architecture
 
 ### **🧮 Core Functionality**
+
 - **[Calculation Rules](CALCULATION_RULES.md)** - Complete 7-rule calculation system documentation
 - **[API Reference](API_REFERENCE.md)** - OAuth API endpoints and data structures
 - **[Debugging Guide](DEBUGGING_GUIDE.md)** - How to use the interactive debugging UI
 
 ### **🛠️ Development & Testing**
+
 - **[Development Guide](DEVELOPMENT_GUIDE.md)** - Technical implementation details
 - **[Testing Guide](TESTING_GUIDE.md)** - Testing procedures and integration tests
 - **[Setup Guide](SETUP_GUIDE.md)** - Local development setup instructions
 
 ### **🛡️ Security & Compliance**
+
 - **[Security Plan](SECURITY_PLAN.md)** - Security measures and compliance
 - **[Security Compliance Checklist](SECURITY_COMPLIANCE_CHECKLIST.md)** - Production security requirements
 
 ### **📊 Analytics & Monitoring**
+
 - **[PostHog Analytics Plan](POSTHOG_ANALYTICS_PLAN.md)** - Analytics implementation and privacy compliance
 
 ### **👥 User Documentation**
+
 - **[User Guide](USER_GUIDE.md)** - End-user instructions and features
 
 ### **☁️ GCP Secret Manager Setup**
+
 - **[GCP Secret Manager Guide](GCP_SECRET_MANAGER_GUIDE.md)** - Comprehensive setup guide for all required credentials
 
 ## 🎯 **Current Implementation Status**
@@ -47,23 +56,27 @@ Welcome to the comprehensive documentation for the On Target Analysis for YNAB a
 ### ✅ **PRODUCTION READY FEATURES**
 
 #### **Authentication & Security**
+
 - **OAuth 2.0 Implicit Grant Flow** - Complete implementation with CSRF protection
 - **Secure Token Storage** - Memory-first strategy with integrity checking
 - **XSS Prevention** - Comprehensive input sanitization and secure components
 - **Content Security Policy** - Strict headers preventing script injection
 
 #### **Core Application**
+
 - **Budget Analysis Engine** - 7-rule calculation system for all YNAB goal types
 - **Interactive Debugging UI** - Comprehensive debugging with rule explanations
 - **Monthly Overview** - Income, activity, and variance analysis
 - **Category Analysis** - Detailed breakdown with filtering and sorting
 
 #### **Analytics & Privacy**
+
 - **PostHog Integration** - GDPR/CCPA compliant analytics with consent management
 - **Performance Monitoring** - API response times and page load tracking
 - **Error Tracking** - Comprehensive error reporting and monitoring
 
 #### **Deployment & Infrastructure**
+
 - **Google Cloud Platform** - Automated deployment to Cloud Run
 - **Secret Management** - Google Cloud Secret Manager integration
 - **Health Monitoring** - Comprehensive health checks and monitoring
@@ -82,21 +95,27 @@ See [`archive/README.md`](archive/README.md) for details on archived documentati
 ## 📚 **Documentation Standards**
 
 ### **Accuracy Guarantee**
+
 All documentation in the main `/docs/` directory accurately reflects the **current production implementation**. Any outdated or unimplemented features have been archived or removed.
 
 ### **Implementation-First Approach**
+
 Documentation is updated **after** implementation to ensure 100% accuracy. No speculative or planned features are documented as current capabilities.
 
 ### **User-Focused Content**
+
 Documentation prioritizes practical usage and deployment instructions over theoretical discussions.
 
 ## 🔄 **Documentation Maintenance**
 
 ### **Last Updated**: June 2025
+
 ### **Version**: 2.0 (OAuth Implementation)
+
 ### **Status**: Production Ready
 
 ### **Update Policy**
+
 - Documentation is updated immediately after any implementation changes
 - Outdated content is moved to archive rather than deleted
 - All examples and code snippets are tested and verified
@@ -104,16 +123,19 @@ Documentation prioritizes practical usage and deployment instructions over theor
 ## 🎯 **Key Architectural Decisions**
 
 ### **Chosen: OAuth 2.0 Implicit Grant Flow**
+
 - **Rationale**: Operational simplicity over security complexity
 - **Benefits**: Zero database requirements, reduced costs, faster implementation
 - **Trade-offs**: Shorter session duration, more frequent re-authentication
 
 ### **Chosen: Stateless Client-Side Architecture**
+
 - **Rationale**: No persistent data storage needed for read-only analysis
 - **Benefits**: Zero database costs, simplified deployment, enhanced privacy
 - **Trade-offs**: No server-side session control, limited offline capability
 
 ### **Chosen: Privacy-First Analytics**
+
 - **Rationale**: GDPR/CCPA compliance and user trust
 - **Benefits**: Granular consent controls, data minimization, user control
 - **Trade-offs**: More complex implementation, potential data limitations

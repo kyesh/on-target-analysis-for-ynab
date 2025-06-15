@@ -7,6 +7,7 @@ Comprehensive analytics implementation for user behavior tracking, performance m
 ## Phase 1: PostHog Setup and Configuration
 
 ### 1.1 PostHog Installation
+
 ```bash
 npm install posthog-js
 npm install posthog-node
@@ -14,6 +15,7 @@ npm install @types/posthog-js
 ```
 
 ### 1.2 Environment Configuration
+
 ```env
 # PostHog Configuration
 NEXT_PUBLIC_POSTHOG_KEY=your-posthog-project-key
@@ -27,6 +29,7 @@ ANALYTICS_RETENTION_DAYS=90
 ```
 
 ### 1.3 PostHog Provider Setup
+
 ```typescript
 // src/lib/analytics/posthog-provider.tsx
 'use client'
@@ -88,6 +91,7 @@ export function PHProvider({ children }: { children: React.ReactNode }) {
 ### 2.1 Core User Actions to Track
 
 #### Authentication Events
+
 ```typescript
 // src/lib/analytics/events.ts
 export const AuthEvents = {
@@ -96,17 +100,21 @@ export const AuthEvents = {
   LOGIN_FAILED: 'auth_login_failed',
   LOGOUT: 'auth_logout',
   TOKEN_REFRESH: 'auth_token_refresh',
-} as const
+} as const;
 
-export const trackAuthEvent = (event: keyof typeof AuthEvents, properties?: Record<string, any>) => {
+export const trackAuthEvent = (
+  event: keyof typeof AuthEvents,
+  properties?: Record<string, any>
+) => {
   posthog.capture(AuthEvents[event], {
     timestamp: new Date().toISOString(),
     ...properties,
-  })
-}
+  });
+};
 ```
 
 #### Budget Analysis Events
+
 ```typescript
 export const AnalysisEvents = {
   BUDGET_SELECTED: 'analysis_budget_selected',
@@ -115,20 +123,21 @@ export const AnalysisEvents = {
   ANALYSIS_ERROR: 'analysis_error',
   EXPORT_INITIATED: 'analysis_export_initiated',
   CALCULATION_RULE_APPLIED: 'calculation_rule_applied',
-} as const
+} as const;
 
 export const trackAnalysisEvent = (
-  event: keyof typeof AnalysisEvents, 
+  event: keyof typeof AnalysisEvents,
   properties?: Record<string, any>
 ) => {
   posthog.capture(AnalysisEvents[event], {
     timestamp: new Date().toISOString(),
     ...properties,
-  })
-}
+  });
+};
 ```
 
 #### Debug and UI Events
+
 ```typescript
 export const UIEvents = {
   DEBUG_MODE_TOGGLED: 'ui_debug_mode_toggled',
@@ -136,17 +145,21 @@ export const UIEvents = {
   CATEGORY_EXPANDED: 'ui_category_expanded',
   FILTER_APPLIED: 'ui_filter_applied',
   SORT_CHANGED: 'ui_sort_changed',
-} as const
+} as const;
 
-export const trackUIEvent = (event: keyof typeof UIEvents, properties?: Record<string, any>) => {
+export const trackUIEvent = (
+  event: keyof typeof UIEvents,
+  properties?: Record<string, any>
+) => {
   posthog.capture(UIEvents[event], {
     timestamp: new Date().toISOString(),
     ...properties,
-  })
-}
+  });
+};
 ```
 
 ### 2.2 Performance Tracking
+
 ```typescript
 // src/lib/analytics/performance.ts
 export const PerformanceEvents = {
@@ -154,134 +167,167 @@ export const PerformanceEvents = {
   API_REQUEST_TIME: 'performance_api_request_time',
   CALCULATION_TIME: 'performance_calculation_time',
   RENDER_TIME: 'performance_render_time',
-} as const
+} as const;
 
-export const trackPerformance = (metric: keyof typeof PerformanceEvents, duration: number, metadata?: Record<string, any>) => {
+export const trackPerformance = (
+  metric: keyof typeof PerformanceEvents,
+  duration: number,
+  metadata?: Record<string, any>
+) => {
   posthog.capture(PerformanceEvents[metric], {
     duration_ms: duration,
     timestamp: new Date().toISOString(),
     ...metadata,
-  })
-}
+  });
+};
 
 // Performance monitoring hook
 export const usePerformanceTracking = () => {
   const trackPageLoad = () => {
     if (typeof window !== 'undefined') {
       window.addEventListener('load', () => {
-        const loadTime = performance.timing.loadEventEnd - performance.timing.navigationStart
-        trackPerformance('PAGE_LOAD_TIME', loadTime)
-      })
+        const loadTime =
+          performance.timing.loadEventEnd - performance.timing.navigationStart;
+        trackPerformance('PAGE_LOAD_TIME', loadTime);
+      });
     }
-  }
+  };
 
-  const trackAPICall = async <T>(apiCall: () => Promise<T>, endpoint: string): Promise<T> => {
-    const startTime = performance.now()
+  const trackAPICall = async <T>(
+    apiCall: () => Promise<T>,
+    endpoint: string
+  ): Promise<T> => {
+    const startTime = performance.now();
     try {
-      const result = await apiCall()
-      const duration = performance.now() - startTime
-      trackPerformance('API_REQUEST_TIME', duration, { endpoint, success: true })
-      return result
+      const result = await apiCall();
+      const duration = performance.now() - startTime;
+      trackPerformance('API_REQUEST_TIME', duration, {
+        endpoint,
+        success: true,
+      });
+      return result;
     } catch (error) {
-      const duration = performance.now() - startTime
-      trackPerformance('API_REQUEST_TIME', duration, { endpoint, success: false, error: error.message })
-      throw error
+      const duration = performance.now() - startTime;
+      trackPerformance('API_REQUEST_TIME', duration, {
+        endpoint,
+        success: false,
+        error: error.message,
+      });
+      throw error;
     }
-  }
+  };
 
-  return { trackPageLoad, trackAPICall }
-}
+  return { trackPageLoad, trackAPICall };
+};
 ```
 
 ## Phase 3: Component Integration
 
 ### 3.1 Analytics Hook
+
 ```typescript
 // src/hooks/useAnalytics.ts
-import { usePostHog } from 'posthog-js/react'
-import { useCallback } from 'react'
+import { usePostHog } from 'posthog-js/react';
+import { useCallback } from 'react';
 
 export const useAnalytics = () => {
-  const posthog = usePostHog()
+  const posthog = usePostHog();
 
-  const trackBudgetSelection = useCallback((budgetId: string, budgetName: string) => {
-    posthog.capture('analysis_budget_selected', {
-      budget_id: budgetId,
-      budget_name: budgetName,
-      timestamp: new Date().toISOString(),
-    })
-  }, [posthog])
+  const trackBudgetSelection = useCallback(
+    (budgetId: string, budgetName: string) => {
+      posthog.capture('analysis_budget_selected', {
+        budget_id: budgetId,
+        budget_name: budgetName,
+        timestamp: new Date().toISOString(),
+      });
+    },
+    [posthog]
+  );
 
-  const trackMonthChange = useCallback((month: string, direction?: 'next' | 'previous') => {
-    posthog.capture('analysis_month_changed', {
-      month,
-      direction,
-      timestamp: new Date().toISOString(),
-    })
-  }, [posthog])
+  const trackMonthChange = useCallback(
+    (month: string, direction?: 'next' | 'previous') => {
+      posthog.capture('analysis_month_changed', {
+        month,
+        direction,
+        timestamp: new Date().toISOString(),
+      });
+    },
+    [posthog]
+  );
 
-  const trackDebugToggle = useCallback((enabled: boolean) => {
-    posthog.capture('ui_debug_mode_toggled', {
-      debug_enabled: enabled,
-      timestamp: new Date().toISOString(),
-    })
-  }, [posthog])
+  const trackDebugToggle = useCallback(
+    (enabled: boolean) => {
+      posthog.capture('ui_debug_mode_toggled', {
+        debug_enabled: enabled,
+        timestamp: new Date().toISOString(),
+      });
+    },
+    [posthog]
+  );
 
-  const trackCalculationRule = useCallback((rule: string, categoryId: string, amount: number) => {
-    posthog.capture('calculation_rule_applied', {
-      rule,
-      category_id: categoryId,
-      calculated_amount: amount,
-      timestamp: new Date().toISOString(),
-    })
-  }, [posthog])
+  const trackCalculationRule = useCallback(
+    (rule: string, categoryId: string, amount: number) => {
+      posthog.capture('calculation_rule_applied', {
+        rule,
+        category_id: categoryId,
+        calculated_amount: amount,
+        timestamp: new Date().toISOString(),
+      });
+    },
+    [posthog]
+  );
 
   return {
     trackBudgetSelection,
     trackMonthChange,
     trackDebugToggle,
     trackCalculationRule,
-  }
-}
+  };
+};
 ```
 
 ### 3.2 Component Implementation Examples
+
 ```typescript
 // src/components/AnalysisDashboard.tsx (updated with analytics)
-import { useAnalytics } from '@/hooks/useAnalytics'
+import { useAnalytics } from '@/hooks/useAnalytics';
 
 export function AnalysisDashboard({ budgetId, month }: AnalysisDashboardProps) {
-  const { trackBudgetSelection, trackMonthChange, trackDebugToggle } = useAnalytics()
-  const [debugMode, setDebugMode] = useState(false)
+  const { trackBudgetSelection, trackMonthChange, trackDebugToggle } =
+    useAnalytics();
+  const [debugMode, setDebugMode] = useState(false);
 
   const handleBudgetChange = (newBudgetId: string, budgetName: string) => {
-    trackBudgetSelection(newBudgetId, budgetName)
+    trackBudgetSelection(newBudgetId, budgetName);
     // ... existing logic
-  }
+  };
 
-  const handleMonthChange = (newMonth: string, direction: 'next' | 'previous') => {
-    trackMonthChange(newMonth, direction)
+  const handleMonthChange = (
+    newMonth: string,
+    direction: 'next' | 'previous'
+  ) => {
+    trackMonthChange(newMonth, direction);
     // ... existing logic
-  }
+  };
 
   const handleDebugToggle = (enabled: boolean) => {
-    setDebugMode(enabled)
-    trackDebugToggle(enabled)
-  }
+    setDebugMode(enabled);
+    trackDebugToggle(enabled);
+  };
 
   // ... rest of component
 }
 ```
 
 ### 3.3 Server-Side Analytics
+
 ```typescript
 // src/lib/analytics/server-analytics.ts
-import { PostHog } from 'posthog-node'
+import { PostHog } from 'posthog-node';
 
-const serverPostHog = new PostHog(
-  process.env.POSTHOG_PERSONAL_API_KEY!,
-  { host: process.env.NEXT_PUBLIC_POSTHOG_HOST }
-)
+const serverPostHog = new PostHog(process.env.POSTHOG_PERSONAL_API_KEY!, {
+  host: process.env.NEXT_PUBLIC_POSTHOG_HOST,
+});
 
 export const trackServerEvent = async (
   event: string,
@@ -297,9 +343,9 @@ export const trackServerEvent = async (
         server_side: true,
         ...properties,
       },
-    })
+    });
   }
-}
+};
 
 // API route analytics
 export const trackAPIUsage = async (
@@ -314,13 +360,14 @@ export const trackAPIUsage = async (
     method,
     response_time_ms: responseTime,
     status_code: statusCode,
-  })
-}
+  });
+};
 ```
 
 ## Phase 4: Privacy and Compliance
 
 ### 4.1 Consent Management
+
 ```typescript
 // src/components/ConsentBanner.tsx
 import { useState, useEffect } from 'react'
@@ -384,12 +431,13 @@ export function ConsentBanner() {
 ```
 
 ### 4.2 Data Privacy Configuration
+
 ```typescript
 // src/lib/analytics/privacy.ts
 export const PrivacyConfig = {
   // Data retention (90 days)
   dataRetentionDays: 90,
-  
+
   // PII masking rules
   maskingRules: {
     budgetNames: true,
@@ -397,49 +445,50 @@ export const PrivacyConfig = {
     amounts: false, // Aggregate amounts are OK
     userIds: true,
   },
-  
+
   // Geographic restrictions
   allowedRegions: ['US', 'CA', 'EU'],
-  
+
   // GDPR compliance
   gdprCompliant: true,
   ccpaCompliant: true,
-}
+};
 
 export const sanitizeEventData = (data: Record<string, any>) => {
-  const sanitized = { ...data }
-  
+  const sanitized = { ...data };
+
   // Remove or hash PII
   if (sanitized.budget_name && PrivacyConfig.maskingRules.budgetNames) {
-    sanitized.budget_name = hashString(sanitized.budget_name)
+    sanitized.budget_name = hashString(sanitized.budget_name);
   }
-  
+
   if (sanitized.category_name && PrivacyConfig.maskingRules.categoryNames) {
-    sanitized.category_name = hashString(sanitized.category_name)
+    sanitized.category_name = hashString(sanitized.category_name);
   }
-  
+
   if (sanitized.user_id && PrivacyConfig.maskingRules.userIds) {
-    sanitized.user_id = hashString(sanitized.user_id)
+    sanitized.user_id = hashString(sanitized.user_id);
   }
-  
-  return sanitized
-}
+
+  return sanitized;
+};
 ```
 
 ## Phase 5: Dashboard and Insights
 
 ### 5.1 Custom Analytics Dashboard
+
 ```typescript
 // src/app/admin/analytics/page.tsx
 import { PostHog } from 'posthog-node'
 
 export default async function AnalyticsDashboard() {
   const insights = await getAnalyticsInsights()
-  
+
   return (
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-6">Analytics Dashboard</h1>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <MetricCard
           title="Active Users"
@@ -457,7 +506,7 @@ export default async function AnalyticsDashboard() {
           change={insights.debugUsageChange}
         />
       </div>
-      
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <FeatureUsageChart data={insights.featureUsage} />
         <CalculationRuleChart data={insights.ruleUsage} />
@@ -470,21 +519,25 @@ export default async function AnalyticsDashboard() {
 ## Implementation Timeline
 
 ### Week 1: Setup and Basic Integration
+
 - Install PostHog and configure basic tracking
 - Implement consent management
 - Set up core event tracking
 
 ### Week 2: Advanced Analytics
+
 - Implement performance tracking
 - Add server-side analytics
 - Create custom dashboards
 
 ### Week 3: Privacy and Compliance
+
 - Implement data sanitization
 - Add GDPR/CCPA compliance features
 - Security audit of analytics implementation
 
 ### Week 4: Testing and Optimization
+
 - Test analytics in staging environment
 - Optimize event tracking performance
 - Validate privacy compliance

@@ -7,51 +7,52 @@ This document provides a comprehensive implementation plan for using Google Clou
 ## 1. Firestore Schema Design
 
 ### Collection Structure
+
 ```typescript
 // Primary collection: /sessions/{sessionId}
 interface SessionDocument {
   // Identity fields
-  sessionId: string;                    // Document ID (also stored as field for queries)
-  userId: string;                       // Hashed YNAB user ID
-  
+  sessionId: string; // Document ID (also stored as field for queries)
+  userId: string; // Hashed YNAB user ID
+
   // Encrypted token data
-  encryptedAccessToken: string;         // AES-256 encrypted access token
-  encryptedRefreshToken: string;        // AES-256 encrypted refresh token
-  tokenVersion: number;                 // For key rotation tracking
-  
+  encryptedAccessToken: string; // AES-256 encrypted access token
+  encryptedRefreshToken: string; // AES-256 encrypted refresh token
+  tokenVersion: number; // For key rotation tracking
+
   // Metadata
-  expiresAt: FirebaseFirestore.Timestamp;     // Session expiration
-  createdAt: FirebaseFirestore.Timestamp;     // Creation timestamp
-  lastUsed: FirebaseFirestore.Timestamp;      // Last access timestamp
-  userAgent?: string;                   // Optional: browser fingerprint
-  ipAddress?: string;                   // Optional: IP address (hashed)
-  
+  expiresAt: FirebaseFirestore.Timestamp; // Session expiration
+  createdAt: FirebaseFirestore.Timestamp; // Creation timestamp
+  lastUsed: FirebaseFirestore.Timestamp; // Last access timestamp
+  userAgent?: string; // Optional: browser fingerprint
+  ipAddress?: string; // Optional: IP address (hashed)
+
   // Compliance fields
-  consentVersion: string;               // Privacy consent version
+  consentVersion: string; // Privacy consent version
   dataRetentionDate: FirebaseFirestore.Timestamp; // GDPR retention date
 }
 
 // Audit collection: /audit_logs/{logId}
 interface AuditLogDocument {
-  logId: string;                        // Document ID
-  userId: string;                       // Hashed user ID
+  logId: string; // Document ID
+  userId: string; // Hashed user ID
   action: 'create' | 'read' | 'update' | 'delete' | 'cleanup';
-  sessionId?: string;                   // Related session ID
+  sessionId?: string; // Related session ID
   timestamp: FirebaseFirestore.Timestamp;
   metadata: {
     userAgent?: string;
     ipAddress?: string;
-    reason?: string;                    // For deletions/cleanup
+    reason?: string; // For deletions/cleanup
   };
 }
 
 // User data collection: /user_data/{userId} (for GDPR compliance)
 interface UserDataDocument {
-  userId: string;                       // Hashed user ID
-  originalUserId?: string;              // Original YNAB user ID (encrypted)
+  userId: string; // Hashed user ID
+  originalUserId?: string; // Original YNAB user ID (encrypted)
   createdAt: FirebaseFirestore.Timestamp;
   lastActivity: FirebaseFirestore.Timestamp;
-  sessionCount: number;                 // Active session count
+  sessionCount: number; // Active session count
   dataRetentionDate: FirebaseFirestore.Timestamp;
   consentHistory: Array<{
     version: string;
@@ -62,6 +63,7 @@ interface UserDataDocument {
 ```
 
 ### Document ID Strategy
+
 ```typescript
 // Session document IDs: Use secure random UUIDs
 const sessionId = crypto.randomUUID(); // e.g., "550e8400-e29b-41d4-a716-446655440000"
@@ -74,6 +76,7 @@ const userDataId = crypto.createHash('sha256').update(ynabUserId).digest('hex');
 ```
 
 ### Indexing Strategy
+
 ```typescript
 // Firestore composite indexes (configured via Firebase Console or CLI)
 const indexes = [
@@ -82,53 +85,59 @@ const indexes = [
     collection: 'sessions',
     fields: [
       { field: 'expiresAt', order: 'ASCENDING' },
-      { field: 'createdAt', order: 'ASCENDING' }
-    ]
+      { field: 'createdAt', order: 'ASCENDING' },
+    ],
   },
-  
+
   // For user session queries (GDPR compliance)
   {
     collection: 'sessions',
     fields: [
       { field: 'userId', order: 'ASCENDING' },
-      { field: 'expiresAt', order: 'ASCENDING' }
-    ]
+      { field: 'expiresAt', order: 'ASCENDING' },
+    ],
   },
-  
+
   // For audit log queries
   {
     collection: 'audit_logs',
     fields: [
       { field: 'userId', order: 'ASCENDING' },
-      { field: 'timestamp', order: 'DESCENDING' }
-    ]
+      { field: 'timestamp', order: 'DESCENDING' },
+    ],
   },
-  
+
   // For data retention cleanup
   {
     collection: 'sessions',
     fields: [
       { field: 'dataRetentionDate', order: 'ASCENDING' },
-      { field: 'createdAt', order: 'ASCENDING' }
-    ]
-  }
+      { field: 'createdAt', order: 'ASCENDING' },
+    ],
+  },
 ];
 ```
 
 ## 2. Security Implementation
 
 ### Encryption Service with Google Secret Manager
+
 ```typescript
 // src/lib/security/firestore-encryption.ts
 import { SecretManagerServiceClient } from '@google-cloud/secret-manager';
-import { createCipheriv, createDecipheriv, randomBytes, createHash } from 'crypto';
+import {
+  createCipheriv,
+  createDecipheriv,
+  randomBytes,
+  createHash,
+} from 'crypto';
 
 export class FirestoreTokenEncryption {
   private static readonly ALGORITHM = 'aes-256-gcm';
   private static readonly IV_LENGTH = 16;
   private static readonly TAG_LENGTH = 16;
   private static readonly KEY_VERSION_CACHE = new Map<number, Buffer>();
-  
+
   private static secretClient = new SecretManagerServiceClient();
 
   // Encrypt token with current key version
@@ -138,36 +147,47 @@ export class FirestoreTokenEncryption {
   }> {
     const keyVersion = await this.getCurrentKeyVersion();
     const key = await this.getEncryptionKey(keyVersion);
-    
+
     const iv = randomBytes(this.IV_LENGTH);
     const cipher = createCipheriv(this.ALGORITHM, key, iv);
-    
+
     let encrypted = cipher.update(plaintext, 'utf8', 'hex');
     encrypted += cipher.final('hex');
-    
+
     const tag = cipher.getAuthTag();
-    
+
     // Format: iv(32) + tag(32) + encrypted(variable)
     const encryptedData = iv.toString('hex') + tag.toString('hex') + encrypted;
-    
+
     return { encryptedData, keyVersion };
   }
 
   // Decrypt token with specified key version
-  static async decrypt(encryptedData: string, keyVersion: number): Promise<string> {
+  static async decrypt(
+    encryptedData: string,
+    keyVersion: number
+  ): Promise<string> {
     const key = await this.getEncryptionKey(keyVersion);
-    
+
     // Parse components
     const iv = Buffer.from(encryptedData.slice(0, this.IV_LENGTH * 2), 'hex');
-    const tag = Buffer.from(encryptedData.slice(this.IV_LENGTH * 2, (this.IV_LENGTH + this.TAG_LENGTH) * 2), 'hex');
-    const encrypted = encryptedData.slice((this.IV_LENGTH + this.TAG_LENGTH) * 2);
-    
+    const tag = Buffer.from(
+      encryptedData.slice(
+        this.IV_LENGTH * 2,
+        (this.IV_LENGTH + this.TAG_LENGTH) * 2
+      ),
+      'hex'
+    );
+    const encrypted = encryptedData.slice(
+      (this.IV_LENGTH + this.TAG_LENGTH) * 2
+    );
+
     const decipher = createDecipheriv(this.ALGORITHM, key, iv);
     decipher.setAuthTag(tag);
-    
+
     let decrypted = decipher.update(encrypted, 'hex', 'utf8');
     decrypted += decipher.final('utf8');
-    
+
     return decrypted;
   }
 
@@ -178,22 +198,25 @@ export class FirestoreTokenEncryption {
     }
 
     const secretName = `projects/${process.env.GCP_PROJECT_ID}/secrets/firestore-token-encryption-key/versions/${version}`;
-    
+
     try {
       const [secretVersion] = await this.secretClient.accessSecretVersion({
         name: secretName,
       });
-      
+
       const key = Buffer.from(secretVersion.payload?.data as string, 'base64');
-      
+
       // Cache key for performance (with size limit)
       if (this.KEY_VERSION_CACHE.size < 10) {
         this.KEY_VERSION_CACHE.set(version, key);
       }
-      
+
       return key;
     } catch (error) {
-      console.error(`Failed to retrieve encryption key version ${version}:`, error);
+      console.error(
+        `Failed to retrieve encryption key version ${version}:`,
+        error
+      );
       throw new Error('Encryption key retrieval failed');
     }
   }
@@ -201,7 +224,7 @@ export class FirestoreTokenEncryption {
   // Get current key version from Secret Manager
   private static async getCurrentKeyVersion(): Promise<number> {
     const secretName = `projects/${process.env.GCP_PROJECT_ID}/secrets/firestore-token-encryption-key`;
-    
+
     try {
       const [secret] = await this.secretClient.getSecret({ name: secretName });
       const latestVersion = secret.name?.split('/').pop();
@@ -216,7 +239,7 @@ export class FirestoreTokenEncryption {
   static async rotateEncryptionKey(): Promise<void> {
     // Generate new key
     const newKey = randomBytes(32).toString('base64');
-    
+
     // Add new version to Secret Manager
     const secretName = `projects/${process.env.GCP_PROJECT_ID}/secrets/firestore-token-encryption-key`;
     await this.secretClient.addSecretVersion({
@@ -224,8 +247,10 @@ export class FirestoreTokenEncryption {
       payload: { data: Buffer.from(newKey, 'base64') },
     });
 
-    console.log('New encryption key version created. Background re-encryption will begin.');
-    
+    console.log(
+      'New encryption key version created. Background re-encryption will begin.'
+    );
+
     // Trigger background re-encryption process
     this.scheduleReencryption();
   }
@@ -248,38 +273,45 @@ export class FirestoreTokenEncryption {
     // This is a simplified version - in production, use Cloud Functions
     const { getFirestore } = require('firebase-admin/firestore');
     const db = getFirestore();
-    
+
     // Process sessions in batches
     let lastDoc: any = null;
     const batchSize = 100;
-    
+
     do {
-      let query = db.collection('sessions')
+      let query = db
+        .collection('sessions')
         .where('tokenVersion', '<', newKeyVersion)
         .limit(batchSize);
-      
+
       if (lastDoc) {
         query = query.startAfter(lastDoc);
       }
-      
+
       const snapshot = await query.get();
-      
+
       if (snapshot.empty) break;
-      
+
       const batch = db.batch();
-      
+
       for (const doc of snapshot.docs) {
         try {
           const session = doc.data();
-          
+
           // Decrypt with old key
-          const accessToken = await this.decrypt(session.encryptedAccessToken, session.tokenVersion);
-          const refreshToken = await this.decrypt(session.encryptedRefreshToken, session.tokenVersion);
-          
+          const accessToken = await this.decrypt(
+            session.encryptedAccessToken,
+            session.tokenVersion
+          );
+          const refreshToken = await this.decrypt(
+            session.encryptedRefreshToken,
+            session.tokenVersion
+          );
+
           // Encrypt with new key
           const newEncryptedAccess = await this.encrypt(accessToken);
           const newEncryptedRefresh = await this.encrypt(refreshToken);
-          
+
           // Update document
           batch.update(doc.ref, {
             encryptedAccessToken: newEncryptedAccess.encryptedData,
@@ -292,24 +324,26 @@ export class FirestoreTokenEncryption {
           batch.delete(doc.ref);
         }
       }
-      
+
       await batch.commit();
       lastDoc = snapshot.docs[snapshot.docs.length - 1];
-      
+
       // Small delay to avoid overwhelming Firestore
       await new Promise(resolve => setTimeout(resolve, 100));
-      
     } while (true);
   }
 
   // Hash user ID for privacy
   static hashUserId(userId: string): string {
-    return createHash('sha256').update(userId + process.env.USER_ID_SALT).digest('hex');
+    return createHash('sha256')
+      .update(userId + process.env.USER_ID_SALT)
+      .digest('hex');
   }
 }
 ```
 
 ### Secret Manager Setup
+
 ```bash
 #!/bin/bash
 # scripts/setup-firestore-secrets.sh
@@ -345,7 +379,8 @@ echo "Firestore secrets setup completed!"
 ## 3. CRUD Operations Implementation
 
 ### Core Token Storage Service
-```typescript
+
+````typescript
 // src/lib/storage/firestore-token-storage.ts
 import { getFirestore, Timestamp, FieldValue } from 'firebase-admin/firestore';
 import { FirestoreTokenEncryption } from '../security/firestore-encryption';
@@ -376,16 +411,16 @@ export class FirestoreTokenStorage {
   // CREATE: Store new session with encrypted tokens
   async createSession(sessionData: SessionData): Promise<void> {
     const hashedUserId = FirestoreTokenEncryption.hashUserId(sessionData.userId);
-    
+
     // Encrypt tokens
     const encryptedAccess = await FirestoreTokenEncryption.encrypt(sessionData.accessToken);
     const encryptedRefresh = await FirestoreTokenEncryption.encrypt(sessionData.refreshToken);
-    
+
     const now = Timestamp.now();
     const retentionDate = Timestamp.fromDate(
       new Date(Date.now() + 90 * 24 * 60 * 60 * 1000) // 90 days
     );
-    
+
     const sessionDoc = {
       sessionId: sessionData.sessionId,
       userId: hashedUserId,
@@ -403,11 +438,11 @@ export class FirestoreTokenStorage {
 
     // Use batch to ensure atomicity
     const batch = this.db.batch();
-    
+
     // Create session document
     const sessionRef = this.db.collection(this.COLLECTION_SESSIONS).doc(sessionData.sessionId);
     batch.set(sessionRef, sessionDoc);
-    
+
     // Update user data
     const userRef = this.db.collection(this.COLLECTION_USERS).doc(hashedUserId);
     batch.set(userRef, {
@@ -416,7 +451,7 @@ export class FirestoreTokenStorage {
       sessionCount: FieldValue.increment(1),
       dataRetentionDate: retentionDate,
     }, { merge: true });
-    
+
     // Create audit log
     const auditRef = this.db.collection(this.COLLECTION_AUDIT).doc();
     batch.set(auditRef, {
@@ -430,7 +465,7 @@ export class FirestoreTokenStorage {
         ipAddress: sessionData.ipAddress ? this.hashIP(sessionData.ipAddress) : undefined,
       },
     });
-    
+
     await batch.commit();
   }
 
@@ -438,13 +473,13 @@ export class FirestoreTokenStorage {
   async getSession(sessionId: string): Promise<TokenPair | null> {
     try {
       const sessionDoc = await this.db.collection(this.COLLECTION_SESSIONS).doc(sessionId).get();
-      
+
       if (!sessionDoc.exists) {
         return null;
       }
 
       const session = sessionDoc.data()!;
-      
+
       // Check expiration
       if (session.expiresAt.toDate() < new Date()) {
         // Clean up expired session asynchronously
@@ -464,7 +499,7 @@ export class FirestoreTokenStorage {
 
       // Update last used timestamp asynchronously
       this.updateLastUsedAsync(sessionId);
-      
+
       // Log access
       this.logAuditAsync(session.userId, 'read', sessionId);
 
@@ -488,16 +523,16 @@ export class FirestoreTokenStorage {
     // Encrypt new tokens
     const encryptedAccess = await FirestoreTokenEncryption.encrypt(newTokens.accessToken);
     const encryptedRefresh = await FirestoreTokenEncryption.encrypt(newTokens.refreshToken);
-    
+
     const sessionRef = this.db.collection(this.COLLECTION_SESSIONS).doc(sessionId);
-    
+
     await sessionRef.update({
       encryptedAccessToken: encryptedAccess.encryptedData,
       encryptedRefreshToken: encryptedRefresh.encryptedData,
       tokenVersion: encryptedAccess.keyVersion,
       lastUsed: Timestamp.now(),
     });
-    
+
     // Get session for audit logging
     const sessionDoc = await sessionRef.get();
     if (sessionDoc.exists) {
@@ -510,24 +545,24 @@ export class FirestoreTokenStorage {
   async deleteSession(sessionId: string, reason: string = 'logout'): Promise<void> {
     const sessionRef = this.db.collection(this.COLLECTION_SESSIONS).doc(sessionId);
     const sessionDoc = await sessionRef.get();
-    
+
     if (!sessionDoc.exists) {
       return;
     }
-    
+
     const session = sessionDoc.data()!;
     const batch = this.db.batch();
-    
+
     // Delete session
     batch.delete(sessionRef);
-    
+
     // Update user session count
     const userRef = this.db.collection(this.COLLECTION_USERS).doc(session.userId);
     batch.update(userRef, {
       sessionCount: FieldValue.increment(-1),
       lastActivity: Timestamp.now(),
     });
-    
+
     // Create audit log
     const auditRef = this.db.collection(this.COLLECTION_AUDIT).doc();
     batch.set(auditRef, {
@@ -538,7 +573,7 @@ export class FirestoreTokenStorage {
       timestamp: Timestamp.now(),
       metadata: { reason },
     });
-    
+
     await batch.commit();
   }
 
@@ -806,9 +841,10 @@ process.on('SIGTERM', async () => {
 });
 
 export { FirebaseAdminManager };
-```
+````
 
 ### Service Account Configuration
+
 ```bash
 #!/bin/bash
 # scripts/setup-firestore-service-account.sh
@@ -843,6 +879,7 @@ echo "gcloud secrets create firestore-service-account --data-file=firestore-serv
 ```
 
 ### Environment Variables for Cloud Run
+
 ```yaml
 # cloudbuild.yaml - Cloud Run deployment with Firestore
 steps:
@@ -875,6 +912,7 @@ steps:
 ```
 
 ### Connection Management for Stateless Environment
+
 ```typescript
 // src/lib/storage/firestore-connection-manager.ts
 import { FirebaseAdminManager } from '../firebase/admin-config';
@@ -898,7 +936,10 @@ export class FirestoreConnectionManager {
     const now = Date.now();
 
     // Cache health check results to avoid excessive calls
-    if (now - this.lastHealthCheck < this.HEALTH_CHECK_INTERVAL && this.connectionHealthy) {
+    if (
+      now - this.lastHealthCheck < this.HEALTH_CHECK_INTERVAL &&
+      this.connectionHealthy
+    ) {
       return this.connectionHealthy;
     }
 
@@ -933,7 +974,10 @@ export async function GET() {
   const isHealthy = await FirestoreConnectionManager.healthCheck();
 
   if (isHealthy) {
-    return Response.json({ status: 'healthy', timestamp: new Date().toISOString() });
+    return Response.json({
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+    });
   } else {
     return Response.json(
       { status: 'unhealthy', timestamp: new Date().toISOString() },
@@ -946,14 +990,20 @@ export async function GET() {
 ## 5. Performance Optimization
 
 ### Query Optimization Strategies
+
 ```typescript
 // src/lib/storage/firestore-performance-optimizer.ts
 export class FirestorePerformanceOptimizer {
-  private static queryCache = new Map<string, { data: any; timestamp: number }>();
+  private static queryCache = new Map<
+    string,
+    { data: any; timestamp: number }
+  >();
   private static readonly CACHE_TTL = 60000; // 1 minute
 
   // Optimized session validation with caching
-  static async getSessionOptimized(sessionId: string): Promise<TokenPair | null> {
+  static async getSessionOptimized(
+    sessionId: string
+  ): Promise<TokenPair | null> {
     const cacheKey = `session:${sessionId}`;
     const cached = this.queryCache.get(cacheKey);
 
@@ -978,7 +1028,9 @@ export class FirestorePerformanceOptimizer {
   }
 
   // Batch session validation for multiple requests
-  static async getMultipleSessions(sessionIds: string[]): Promise<Map<string, TokenPair | null>> {
+  static async getMultipleSessions(
+    sessionIds: string[]
+  ): Promise<Map<string, TokenPair | null>> {
     const results = new Map<string, TokenPair | null>();
     const uncachedIds: string[] = [];
 
@@ -1059,7 +1111,8 @@ export class FirestorePerformanceOptimizer {
 ```
 
 ### Cost Management Strategies
-```typescript
+
+````typescript
 // src/lib/storage/firestore-cost-optimizer.ts
 export class FirestoreCostOptimizer {
   private static operationCount = 0;
@@ -1239,9 +1292,10 @@ export class FirestoreSessionStrategy {
     return '127.0.0.1';
   }
 }
-```
+````
 
 ### NextAuth.js Configuration
+
 ```typescript
 // src/app/api/auth/[...nextauth]/route.ts
 import NextAuth from 'next-auth';
@@ -1311,7 +1365,9 @@ const handler = NextAuth({
     async session({ session, token }) {
       if (token.sessionId) {
         // Validate Firestore session
-        const validation = await sessionStrategy.validateSession(token.sessionId as string);
+        const validation = await sessionStrategy.validateSession(
+          token.sessionId as string
+        );
 
         if (validation.valid) {
           session.sessionId = token.sessionId;
@@ -1346,6 +1402,7 @@ export { handler as GET, handler as POST };
 ## 7. Migration Strategy
 
 ### Phase 1: Parallel Implementation
+
 ```typescript
 // src/lib/auth/hybrid-session-manager.ts
 import { FirestoreSessionStrategy } from './firestore-session-strategy';
@@ -1361,7 +1418,8 @@ export class HybridSessionManager {
     // Try OAuth first (Firestore session)
     const sessionId = this.extractSessionId(request);
     if (sessionId) {
-      const validation = await this.firestoreStrategy.validateSession(sessionId);
+      const validation =
+        await this.firestoreStrategy.validateSession(sessionId);
       if (validation.valid) {
         return {
           client: new YNABClient(validation.accessToken),
@@ -1371,7 +1429,10 @@ export class HybridSessionManager {
     }
 
     // Fallback to PAT for development/migration
-    if (process.env.NODE_ENV === 'development' && process.env.YNAB_ACCESS_TOKEN) {
+    if (
+      process.env.NODE_ENV === 'development' &&
+      process.env.YNAB_ACCESS_TOKEN
+    ) {
       return {
         client: new YNABClient(process.env.YNAB_ACCESS_TOKEN),
         authMethod: 'pat',
@@ -1394,14 +1455,18 @@ export class HybridSessionManager {
 ```
 
 ### Phase 2: Data Migration
+
 ```typescript
 // src/lib/migration/session-migrator.ts
 export class SessionMigrator {
   // Migrate existing users to OAuth
-  async migrateUserToOAuth(userId: string, oauthTokens: {
-    accessToken: string;
-    refreshToken: string;
-  }): Promise<void> {
+  async migrateUserToOAuth(
+    userId: string,
+    oauthTokens: {
+      accessToken: string;
+      refreshToken: string;
+    }
+  ): Promise<void> {
     const sessionStrategy = new FirestoreSessionStrategy();
 
     // Create new OAuth session
@@ -1429,6 +1494,7 @@ export class SessionMigrator {
 ```
 
 ### Phase 3: Gradual Rollout
+
 ```typescript
 // src/lib/feature-flags/oauth-rollout.ts
 export class OAuthRollout {
@@ -1443,9 +1509,12 @@ export class OAuthRollout {
     if (userId) {
       const hash = crypto.createHash('md5').update(userId).digest('hex');
       const hashValue = parseInt(hash.substring(0, 8), 16);
-      const rolloutPercentage = parseInt(process.env.OAUTH_ROLLOUT_PERCENTAGE || '0', 10);
+      const rolloutPercentage = parseInt(
+        process.env.OAUTH_ROLLOUT_PERCENTAGE || '0',
+        10
+      );
 
-      return (hashValue % 100) < rolloutPercentage;
+      return hashValue % 100 < rolloutPercentage;
     }
 
     return false;
@@ -1464,14 +1533,17 @@ export class OAuthRollout {
 ### Accepted Limitations
 
 1. **Higher Latency**: 15-50ms vs 2-5ms for PostgreSQL
+
    - **Mitigation**: Caching layer and optimized queries
    - **Impact**: Acceptable for session validation frequency
 
 2. **Limited Transaction Support**: No ACID transactions
+
    - **Mitigation**: Careful batch operation design
    - **Impact**: Requires more complex error handling
 
 3. **Batch Operation Complexity**: 500-operation limit
+
    - **Mitigation**: Pagination and background processing
    - **Impact**: Cleanup operations take longer
 
@@ -1488,5 +1560,7 @@ export class OAuthRollout {
 5. **Backup/Recovery**: Automatic with no configuration
 
 This Firestore implementation provides a production-ready OAuth token storage solution that prioritizes operational simplicity while maintaining security and compliance requirements.
+
 ```
+
 ```

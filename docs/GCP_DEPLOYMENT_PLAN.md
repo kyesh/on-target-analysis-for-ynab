@@ -7,6 +7,7 @@ Comprehensive deployment strategy for the On Target Analysis for YNAB applicatio
 ## Architecture Overview
 
 ### Recommended GCP Services
+
 - **Cloud Run**: Serverless container deployment (RECOMMENDED)
 - **Secret Manager**: Secure credential storage
 - **Cloud Build**: CI/CD pipeline
@@ -16,6 +17,7 @@ Comprehensive deployment strategy for the On Target Analysis for YNAB applicatio
 - **Cloud Logging**: Centralized logging
 
 ### Why Cloud Run Over App Engine
+
 - **Better for Next.js**: Native container support
 - **Cost-effective**: Pay per request, scales to zero
 - **Flexibility**: Full control over runtime environment
@@ -24,6 +26,7 @@ Comprehensive deployment strategy for the On Target Analysis for YNAB applicatio
 ## Phase 1: GCP Project Setup
 
 ### 1.1 Project Initialization
+
 ```bash
 # Create new GCP project
 gcloud projects create ynab-analysis-prod --name="YNAB Analysis Production"
@@ -42,6 +45,7 @@ gcloud services enable \
 ```
 
 ### 1.2 IAM and Service Accounts
+
 ```bash
 # Create service account for Cloud Run
 gcloud iam service-accounts create ynab-analysis-runner \
@@ -64,6 +68,7 @@ gcloud projects add-iam-policy-binding ynab-analysis-prod \
 ## Phase 2: Secret Management
 
 ### 2.1 Create Secrets in Secret Manager
+
 ```bash
 # YNAB OAuth secrets
 gcloud secrets create ynab-client-id --data-file=- <<< "your-ynab-client-id"
@@ -83,15 +88,16 @@ gcloud secrets create token-encryption-key --data-file=- <<< "$(openssl rand -ba
 ```
 
 ### 2.2 Secret Access Configuration
+
 ```yaml
 # cloudbuild.yaml - Secret access configuration
 steps:
   - name: 'gcr.io/cloud-builders/docker'
     args: ['build', '-t', 'gcr.io/$PROJECT_ID/ynab-analysis:$BUILD_ID', '.']
-    
+
   - name: 'gcr.io/cloud-builders/docker'
     args: ['push', 'gcr.io/$PROJECT_ID/ynab-analysis:$BUILD_ID']
-    
+
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: 'gcloud'
     args:
@@ -117,6 +123,7 @@ steps:
 ## Phase 3: Containerization
 
 ### 3.1 Production Dockerfile
+
 ```dockerfile
 # Dockerfile.production
 FROM node:18-alpine AS base
@@ -171,18 +178,19 @@ CMD ["node", "server.js"]
 ```
 
 ### 3.2 Next.js Configuration for Cloud Run
+
 ```javascript
 // next.config.js (updated for production)
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Enable standalone output for Cloud Run
   output: 'standalone',
-  
+
   // Optimize for production
   experimental: {
     optimizePackageImports: ['recharts', 'lodash', 'date-fns'],
   },
-  
+
   // Security headers
   async headers() {
     return [
@@ -200,46 +208,46 @@ const nextConfig = {
               "connect-src 'self' https://api.ynab.com https://app.posthog.com",
               "frame-ancestors 'none'",
               "base-uri 'self'",
-              "form-action 'self'"
-            ].join('; ')
+              "form-action 'self'",
+            ].join('; '),
           },
           {
             key: 'X-Frame-Options',
-            value: 'DENY'
+            value: 'DENY',
           },
           {
             key: 'X-Content-Type-Options',
-            value: 'nosniff'
+            value: 'nosniff',
           },
           {
             key: 'Referrer-Policy',
-            value: 'strict-origin-when-cross-origin'
+            value: 'strict-origin-when-cross-origin',
           },
           {
             key: 'Permissions-Policy',
-            value: 'camera=(), microphone=(), geolocation=()'
-          }
-        ]
-      }
+            value: 'camera=(), microphone=(), geolocation=()',
+          },
+        ],
+      },
     ];
   },
-  
+
   // Environment variables validation
   env: {
     NODE_ENV: process.env.NODE_ENV,
   },
-  
+
   // Production optimizations
   poweredByHeader: false,
   compress: true,
-  
+
   // TypeScript and ESLint configuration
   typescript: {
     ignoreBuildErrors: false,
   },
   eslint: {
     ignoreDuringBuilds: false,
-  }
+  },
 };
 
 module.exports = nextConfig;
@@ -248,6 +256,7 @@ module.exports = nextConfig;
 ## Phase 4: CI/CD Pipeline
 
 ### 4.1 GitHub Actions Workflow
+
 ```yaml
 # .github/workflows/deploy-production.yml
 name: Deploy to Production
@@ -267,22 +276,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '18'
           cache: 'npm'
-      
+
       - name: Install dependencies
         run: npm ci
-      
+
       - name: Run tests
         run: npm test
-      
+
       - name: Run type check
         run: npm run type-check
-      
+
       - name: Run linting
         run: npm run lint
 
@@ -291,21 +300,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Google Cloud CLI
         uses: google-github-actions/setup-gcloud@v1
         with:
           service_account_key: ${{ secrets.GCP_SA_KEY }}
           project_id: ${{ env.PROJECT_ID }}
-      
+
       - name: Configure Docker to use gcloud as a credential helper
         run: gcloud auth configure-docker
-      
+
       - name: Build and push Docker image
         run: |
           docker build -f Dockerfile.production -t gcr.io/$PROJECT_ID/$SERVICE_NAME:$GITHUB_SHA .
           docker push gcr.io/$PROJECT_ID/$SERVICE_NAME:$GITHUB_SHA
-      
+
       - name: Deploy to Cloud Run
         run: |
           gcloud run deploy $SERVICE_NAME \
@@ -327,7 +336,7 @@ jobs:
             --set-secrets POSTHOG_PERSONAL_API_KEY=posthog-personal-api-key:latest \
             --set-secrets SESSION_ENCRYPTION_KEY=session-encryption-key:latest \
             --set-secrets TOKEN_ENCRYPTION_KEY=token-encryption-key:latest
-      
+
       - name: Update traffic to new revision
         run: |
           gcloud run services update-traffic $SERVICE_NAME \
@@ -336,6 +345,7 @@ jobs:
 ```
 
 ### 4.2 Automated Deployment Script
+
 ```bash
 #!/bin/bash
 # scripts/deploy-production.sh
@@ -390,6 +400,7 @@ echo "📊 Monitor at: https://console.cloud.google.com/run/detail/$REGION/$SERV
 ## Phase 5: Domain and SSL Configuration
 
 ### 5.1 Custom Domain Setup
+
 ```bash
 # Map custom domain to Cloud Run service
 gcloud run domain-mappings create \
@@ -402,6 +413,7 @@ gcloud run domain-mappings create \
 ```
 
 ### 5.2 DNS Configuration
+
 ```bash
 # Create DNS zone
 gcloud dns managed-zones create ynab-analysis-zone \
@@ -422,18 +434,19 @@ gcloud dns record-sets transaction execute --zone=ynab-analysis-zone
 ## Phase 6: Monitoring and Logging
 
 ### 6.1 Cloud Monitoring Setup
+
 ```yaml
 # monitoring/alerts.yaml
-displayName: "YNAB Analysis Monitoring"
+displayName: 'YNAB Analysis Monitoring'
 conditions:
-  - displayName: "High Error Rate"
+  - displayName: 'High Error Rate'
     conditionThreshold:
       filter: 'resource.type="cloud_run_revision" resource.label.service_name="ynab-analysis"'
       comparison: COMPARISON_GREATER_THAN
       thresholdValue: 0.05
       duration: 300s
-  
-  - displayName: "High Response Time"
+
+  - displayName: 'High Response Time'
     conditionThreshold:
       filter: 'resource.type="cloud_run_revision" resource.label.service_name="ynab-analysis"'
       comparison: COMPARISON_GREATER_THAN
@@ -445,62 +458,76 @@ notificationChannels:
 ```
 
 ### 6.2 Application Logging
+
 ```typescript
 // src/lib/logging/cloud-logger.ts
-import { Logging } from '@google-cloud/logging'
+import { Logging } from '@google-cloud/logging';
 
-const logging = new Logging()
-const log = logging.log('ynab-analysis')
+const logging = new Logging();
+const log = logging.log('ynab-analysis');
 
 export const logger = {
   info: (message: string, metadata?: any) => {
-    const entry = log.entry({
-      severity: 'INFO',
-      timestamp: new Date(),
-    }, { message, ...metadata })
-    log.write(entry)
+    const entry = log.entry(
+      {
+        severity: 'INFO',
+        timestamp: new Date(),
+      },
+      { message, ...metadata }
+    );
+    log.write(entry);
   },
-  
+
   error: (message: string, error?: Error, metadata?: any) => {
-    const entry = log.entry({
-      severity: 'ERROR',
-      timestamp: new Date(),
-    }, { 
-      message, 
-      error: error?.stack,
-      ...metadata 
-    })
-    log.write(entry)
+    const entry = log.entry(
+      {
+        severity: 'ERROR',
+        timestamp: new Date(),
+      },
+      {
+        message,
+        error: error?.stack,
+        ...metadata,
+      }
+    );
+    log.write(entry);
   },
-  
+
   warn: (message: string, metadata?: any) => {
-    const entry = log.entry({
-      severity: 'WARNING',
-      timestamp: new Date(),
-    }, { message, ...metadata })
-    log.write(entry)
-  }
-}
+    const entry = log.entry(
+      {
+        severity: 'WARNING',
+        timestamp: new Date(),
+      },
+      { message, ...metadata }
+    );
+    log.write(entry);
+  },
+};
 ```
 
 ## Implementation Timeline
 
 ### Week 1: Infrastructure Setup
+
 - Create GCP project and enable services
 - Set up IAM and service accounts
 - Configure Secret Manager
 
 ### Week 2: Containerization and CI/CD
+
 - Create production Dockerfile
 - Set up GitHub Actions workflow
 - Test deployment pipeline
 
 ### Week 3: Domain and Security
+
 - Configure custom domain and SSL
 - Set up monitoring and alerting
 - Security audit and testing
 
 ### Week 4: Production Deployment
+
 - Deploy to production environment
 - Monitor performance and stability
 - Optimize based on real-world usage
@@ -508,6 +535,7 @@ export const logger = {
 ## Cost Optimization
 
 ### Expected Monthly Costs (estimated)
+
 - **Cloud Run**: $20-50 (based on usage)
 - **Secret Manager**: $1-5
 - **Cloud Build**: $10-20
@@ -516,6 +544,7 @@ export const logger = {
 - **Total**: ~$40-90/month
 
 ### Cost Optimization Strategies
+
 - Use Cloud Run's pay-per-request model
 - Implement efficient caching
 - Optimize container image size

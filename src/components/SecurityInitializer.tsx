@@ -20,14 +20,16 @@ export function SecurityInitializer() {
         Notification.requestPermission().catch(console.warn);
         document.removeEventListener('click', requestPermission);
       };
-      
+
       document.addEventListener('click', requestPermission, { once: true });
     }
 
     // Enforce HTTPS in production
-    if (process.env.NODE_ENV === 'production' && 
-        typeof window !== 'undefined' && 
-        window.location.protocol !== 'https:') {
+    if (
+      process.env.NODE_ENV === 'production' &&
+      typeof window !== 'undefined' &&
+      window.location.protocol !== 'https:'
+    ) {
       window.location.href = window.location.href.replace('http:', 'https:');
     }
 

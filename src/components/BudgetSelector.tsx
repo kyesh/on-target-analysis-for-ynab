@@ -8,7 +8,10 @@ interface BudgetSelectorProps {
   selectedBudgetId?: string;
 }
 
-export default function BudgetSelector({ onBudgetSelect, selectedBudgetId }: BudgetSelectorProps) {
+export default function BudgetSelector({
+  onBudgetSelect,
+  selectedBudgetId,
+}: BudgetSelectorProps) {
   const [budgets, setBudgets] = useState<SafeBudget[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -22,11 +25,13 @@ export default function BudgetSelector({ onBudgetSelect, selectedBudgetId }: Bud
       setLoading(true);
       const response = await fetch('/api/budgets');
       const data = await response.json();
-      
+
       if (data.success) {
         // Sort budgets by lastModified in descending order (most recent first)
-        const sortedBudgets = data.data.budgets.sort((a: SafeBudget, b: SafeBudget) =>
-          new Date(b.lastModified).getTime() - new Date(a.lastModified).getTime()
+        const sortedBudgets = data.data.budgets.sort(
+          (a: SafeBudget, b: SafeBudget) =>
+            new Date(b.lastModified).getTime() -
+            new Date(a.lastModified).getTime()
         );
         setBudgets(sortedBudgets);
 
@@ -48,18 +53,18 @@ export default function BudgetSelector({ onBudgetSelect, selectedBudgetId }: Bud
   if (loading) {
     return (
       <div className="animate-pulse">
-        <div className="h-10 bg-gray-200 rounded-md"></div>
+        <div className="h-10 rounded-md bg-gray-200"></div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="text-red-600 text-sm">
+      <div className="text-sm text-red-600">
         Error: {error}
-        <button 
+        <button
           onClick={fetchBudgets}
-          className="ml-2 text-blue-600 hover:text-blue-800 underline"
+          className="ml-2 text-blue-600 underline hover:text-blue-800"
         >
           Retry
         </button>
@@ -69,17 +74,20 @@ export default function BudgetSelector({ onBudgetSelect, selectedBudgetId }: Bud
 
   return (
     <div className="space-y-2">
-      <label htmlFor="budget-select" className="block text-sm font-medium text-gray-700">
+      <label
+        htmlFor="budget-select"
+        className="block text-sm font-medium text-gray-700"
+      >
         Select Budget
       </label>
       <select
         id="budget-select"
         value={selectedBudgetId || ''}
-        onChange={(e) => onBudgetSelect(e.target.value)}
-        className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+        onChange={e => onBudgetSelect(e.target.value)}
+        className="block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
       >
         <option value="">Choose a budget...</option>
-        {budgets.map((budget) => (
+        {budgets.map(budget => (
           <option key={budget.id} value={budget.id}>
             {budget.name}
           </option>

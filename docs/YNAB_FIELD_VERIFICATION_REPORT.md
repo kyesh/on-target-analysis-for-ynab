@@ -1,4 +1,5 @@
 # YNAB API Field Verification Report
+
 ## "Needed This Month" Field Investigation
 
 **Date**: December 2024  
@@ -22,6 +23,7 @@ Our enhanced target extraction logic using `goal_under_funded` for TB/TBD/DEBT g
 **Field**: `goal_under_funded` (integer, milliunits)
 
 **Official Definition**:
+
 > "The amount of funding still needed in the current month to stay on track towards completing the goal within the current goal period. This amount will generally correspond to the 'Underfunded' amount in the web and mobile clients except when viewing a category with a Needed for Spending Goal in a future month. The web and mobile clients will ignore any funding from a prior goal period when viewing category with a Needed for Spending Goal in a future month."
 
 **Source**: [Microsoft Learn - YNAB API Connector Documentation](https://learn.microsoft.com/en-us/connectors/youneedabudgetip/)
@@ -46,14 +48,17 @@ Our enhanced target extraction logic using `goal_under_funded` for TB/TBD/DEBT g
 ### Specific Examples:
 
 **Books and Art Supplies (MF Goal)**:
+
 - November 2024: `budgeted=43660`, `goal_target=15000`, `goal_under_funded=0` (over-funded)
 - December 2024: `budgeted=4990`, `goal_target=15000`, `goal_under_funded=10010` (needs $10.01)
 
 **Vehicle Registration (MF Goal)**:
+
 - October 2024: `budgeted=0`, `goal_target=25000`, `goal_under_funded=25000` (completely unfunded)
 - December 2024: `budgeted=0`, `goal_target=25000`, `goal_under_funded=25000` (consistently unfunded)
 
 **DTE/Consumer (Goal)**:
+
 - November 2024: `budgeted=198810`, `goal_target=400000`, `goal_under_funded=201190` (partially funded)
 - December 2024: `budgeted=0`, `goal_target=400000`, `goal_under_funded=400000` (completely unfunded)
 
@@ -69,14 +74,16 @@ Our implementation correctly uses `goal_under_funded` for monthly-specific calcu
 switch (category.goal_type) {
   case 'MF': // Monthly Funding
     return overallTarget || null; // Use goal_target for monthly amount
-  
-  case 'TB': case 'TBD': case 'DEBT': // Balance/Date/Debt goals
+
+  case 'TB':
+  case 'TBD':
+  case 'DEBT': // Balance/Date/Debt goals
     // Use goal_under_funded (VERIFIED as "Needed This Month")
     if (monthlyNeeded !== null && monthlyNeeded !== undefined) {
       return monthlyNeeded;
     }
     return overallTarget || null; // Fallback
-  
+
   case 'NEED': // Plan Your Spending
     return overallTarget || null; // Use goal_target for spending target
 }
@@ -84,13 +91,13 @@ switch (category.goal_type) {
 
 ### Goal Type Handling Verification
 
-| Goal Type | Field Used | Rationale | Verification Status |
-|---|---|---|---|
-| **MF (Monthly Funding)** | `goal_target` | Represents monthly funding amount | ✅ Correct |
-| **TB (Target Balance)** | `goal_under_funded` → `goal_target` | "Needed This Month" for balance goals | ✅ Verified |
-| **TBD (Target by Date)** | `goal_under_funded` → `goal_target` | Monthly progress toward date target | ✅ Verified |
-| **NEED (Plan Spending)** | `goal_target` | Monthly spending target amount | ✅ Correct |
-| **DEBT (Debt Payoff)** | `goal_under_funded` → `goal_target` | Monthly payment needed | ✅ Verified |
+| Goal Type                | Field Used                          | Rationale                             | Verification Status |
+| ------------------------ | ----------------------------------- | ------------------------------------- | ------------------- |
+| **MF (Monthly Funding)** | `goal_target`                       | Represents monthly funding amount     | ✅ Correct          |
+| **TB (Target Balance)**  | `goal_under_funded` → `goal_target` | "Needed This Month" for balance goals | ✅ Verified         |
+| **TBD (Target by Date)** | `goal_under_funded` → `goal_target` | Monthly progress toward date target   | ✅ Verified         |
+| **NEED (Plan Spending)** | `goal_target`                       | Monthly spending target amount        | ✅ Correct          |
+| **DEBT (Debt Payoff)**   | `goal_under_funded` → `goal_target` | Monthly payment needed                | ✅ Verified         |
 
 ---
 

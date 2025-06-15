@@ -9,9 +9,15 @@ import { YNABBudget } from '@/types/ynab';
 /**
  * Validates that a month is within the budget's valid date range
  */
-function validateMonthInBudgetRange(month: string, budget: YNABBudget): { isValid: boolean; error?: string } {
+function validateMonthInBudgetRange(
+  month: string,
+  budget: YNABBudget
+): { isValid: boolean; error?: string } {
   if (!validateMonthFormat(month)) {
-    return { isValid: false, error: `Invalid month format: ${month}. Expected YYYY-MM-DD format.` };
+    return {
+      isValid: false,
+      error: `Invalid month format: ${month}. Expected YYYY-MM-DD format.`,
+    };
   }
 
   // Handle both camelCase and snake_case property names
@@ -22,7 +28,7 @@ function validateMonthInBudgetRange(month: string, budget: YNABBudget): { isVali
   if (!firstMonth || !lastMonth) {
     return {
       isValid: false,
-      error: `Budget ${budget.name} is missing date range information. Cannot validate month ${month}.`
+      error: `Budget ${budget.name} is missing date range information. Cannot validate month ${month}.`,
     };
   }
 
@@ -34,21 +40,21 @@ function validateMonthInBudgetRange(month: string, budget: YNABBudget): { isVali
   if (isNaN(budgetFirstDate.getTime()) || isNaN(budgetLastDate.getTime())) {
     return {
       isValid: false,
-      error: `Budget ${budget.name} has invalid date range: firstMonth=${firstMonth}, lastMonth=${lastMonth}`
+      error: `Budget ${budget.name} has invalid date range: firstMonth=${firstMonth}, lastMonth=${lastMonth}`,
     };
   }
 
   if (requestedDate < budgetFirstDate) {
     return {
       isValid: false,
-      error: `Month ${month} is before budget start date ${firstMonth}`
+      error: `Month ${month} is before budget start date ${firstMonth}`,
     };
   }
 
   if (requestedDate > budgetLastDate) {
     return {
       isValid: false,
-      error: `Month ${month} is after budget end date ${lastMonth}`
+      error: `Month ${month} is after budget end date ${lastMonth}`,
     };
   }
 
@@ -65,7 +71,9 @@ function getSafeDefaultMonth(budget: YNABBudget): string {
 
   // Validate budget has required date properties
   if (!firstMonth || !lastMonth) {
-    throw new Error(`Budget ${budget.name} (${budget.id}) is missing date range: firstMonth=${firstMonth}, lastMonth=${lastMonth}`);
+    throw new Error(
+      `Budget ${budget.name} (${budget.id}) is missing date range: firstMonth=${firstMonth}, lastMonth=${lastMonth}`
+    );
   }
 
   const currentMonth = getFirstDayOfMonth();
@@ -75,7 +83,9 @@ function getSafeDefaultMonth(budget: YNABBudget): string {
 
   // Validate dates are valid
   if (isNaN(budgetFirstDate.getTime()) || isNaN(budgetLastDate.getTime())) {
-    throw new Error(`Budget ${budget.name} has invalid date range: firstMonth=${firstMonth}, lastMonth=${lastMonth}`);
+    throw new Error(
+      `Budget ${budget.name} has invalid date range: firstMonth=${firstMonth}, lastMonth=${lastMonth}`
+    );
   }
 
   // If current month is within budget range, use it
@@ -131,14 +141,17 @@ export async function GET(request: NextRequest) {
     // Validate authentication
     const auth = AuthMiddleware.validateRequest(request);
     if (!auth.valid) {
-      return NextResponse.json({
-        success: false,
-        error: {
-          type: 'AUTHENTICATION_ERROR',
-          message: auth.error || 'Authentication failed',
-          statusCode: auth.statusCode || 401,
-        }
-      }, { status: auth.statusCode || 401 });
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            type: 'AUTHENTICATION_ERROR',
+            message: auth.error || 'Authentication failed',
+            statusCode: auth.statusCode || 401,
+          },
+        },
+        { status: auth.statusCode || 401 }
+      );
     }
 
     // Create YNAB client with OAuth token
@@ -155,29 +168,37 @@ export async function GET(request: NextRequest) {
     let budget: YNABBudget;
     if (budgetId) {
       const budgetsResponse = await ynabClient.getBudgets();
-      const foundBudget = budgetsResponse.data.budgets.find(b => b.id === budgetId);
+      const foundBudget = budgetsResponse.data.budgets.find(
+        b => b.id === budgetId
+      );
       if (!foundBudget) {
-        return NextResponse.json({
-          success: false,
-          error: {
-            type: 'NOT_FOUND',
-            message: `Budget not found: ${budgetId}`,
-            statusCode: 404,
-          }
-        }, { status: 404 });
+        return NextResponse.json(
+          {
+            success: false,
+            error: {
+              type: 'NOT_FOUND',
+              message: `Budget not found: ${budgetId}`,
+              statusCode: 404,
+            },
+          },
+          { status: 404 }
+        );
       }
       budget = foundBudget;
     } else {
       const budgetsResponse = await ynabClient.getBudgets();
       if (budgetsResponse.data.budgets.length === 0) {
-        return NextResponse.json({
-          success: false,
-          error: {
-            type: 'NOT_FOUND',
-            message: 'No budgets found',
-            statusCode: 404,
-          }
-        }, { status: 404 });
+        return NextResponse.json(
+          {
+            success: false,
+            error: {
+              type: 'NOT_FOUND',
+              message: 'No budgets found',
+              statusCode: 404,
+            },
+          },
+          { status: 404 }
+        );
       }
       budget = budgetsResponse.data.budgets[0]!;
     }
@@ -189,19 +210,26 @@ export async function GET(request: NextRequest) {
       // Validate provided month is within budget range
       const validation = validateMonthInBudgetRange(month, budget);
       if (!validation.isValid) {
-        logAPIError('MONTH_VALIDATION', new Error(validation.error!), requestInfo);
-        return NextResponse.json({
-          success: false,
-          error: {
-            type: 'invalid_month',
-            message: validation.error,
-            statusCode: 400,
-            availableRange: {
-              firstMonth: budget.first_month,
-              lastMonth: budget.last_month,
-            }
-          }
-        }, { status: 400 });
+        logAPIError(
+          'MONTH_VALIDATION',
+          new Error(validation.error!),
+          requestInfo
+        );
+        return NextResponse.json(
+          {
+            success: false,
+            error: {
+              type: 'invalid_month',
+              message: validation.error,
+              statusCode: 400,
+              availableRange: {
+                firstMonth: budget.first_month,
+                lastMonth: budget.last_month,
+              },
+            },
+          },
+          { status: 400 }
+        );
       }
       analysisMonth = month;
     } else {
@@ -210,7 +238,9 @@ export async function GET(request: NextRequest) {
     }
 
     // Log successful request info
-    console.log(`[MONTHLY_ANALYSIS] Processing request: Budget=${budget.name} (${budget.id}), Month=${analysisMonth}`);
+    console.log(
+      `[MONTHLY_ANALYSIS] Processing request: Budget=${budget.name} (${budget.id}), Month=${analysisMonth}`
+    );
 
     // Fetch month data
     const monthResponse = await ynabClient.getMonth(budget.id, analysisMonth);
@@ -236,22 +266,27 @@ export async function GET(request: NextRequest) {
         },
         generatedAt: new Date().toISOString(),
         rateLimitStatus: ynabClient.getRateLimitStatus(),
-      }
+      },
     });
-
   } catch (error) {
     logAPIError('MONTHLY_ANALYSIS', error, requestInfo);
 
-    const appError = SecureErrorHandler.handleAPIError(error, 'MONTHLY_ANALYSIS');
+    const appError = SecureErrorHandler.handleAPIError(
+      error,
+      'MONTHLY_ANALYSIS'
+    );
 
-    return NextResponse.json({
-      success: false,
-      error: {
-        type: appError.type,
-        message: appError.userMessage,
-        statusCode: appError.statusCode,
-      }
-    }, { status: appError.statusCode });
+    return NextResponse.json(
+      {
+        success: false,
+        error: {
+          type: appError.type,
+          message: appError.userMessage,
+          statusCode: appError.statusCode,
+        },
+      },
+      { status: appError.statusCode }
+    );
   }
 }
 
@@ -271,14 +306,17 @@ export async function POST(request: NextRequest) {
     // Validate authentication
     const auth = AuthMiddleware.validateRequest(request);
     if (!auth.valid) {
-      return NextResponse.json({
-        success: false,
-        error: {
-          type: 'AUTHENTICATION_ERROR',
-          message: auth.error || 'Authentication failed',
-          statusCode: auth.statusCode || 401,
-        }
-      }, { status: auth.statusCode || 401 });
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            type: 'AUTHENTICATION_ERROR',
+            message: auth.error || 'Authentication failed',
+            statusCode: auth.statusCode || 401,
+          },
+        },
+        { status: auth.statusCode || 401 }
+      );
     }
 
     // Create YNAB client with OAuth token
@@ -294,29 +332,37 @@ export async function POST(request: NextRequest) {
     let budget: YNABBudget;
     if (budgetId) {
       const budgetsResponse = await ynabClient.getBudgets();
-      const foundBudget = budgetsResponse.data.budgets.find(b => b.id === budgetId);
+      const foundBudget = budgetsResponse.data.budgets.find(
+        b => b.id === budgetId
+      );
       if (!foundBudget) {
-        return NextResponse.json({
-          success: false,
-          error: {
-            type: 'NOT_FOUND',
-            message: `Budget not found: ${budgetId}`,
-            statusCode: 404,
-          }
-        }, { status: 404 });
+        return NextResponse.json(
+          {
+            success: false,
+            error: {
+              type: 'NOT_FOUND',
+              message: `Budget not found: ${budgetId}`,
+              statusCode: 404,
+            },
+          },
+          { status: 404 }
+        );
       }
       budget = foundBudget;
     } else {
       const budgetsResponse = await ynabClient.getBudgets();
       if (budgetsResponse.data.budgets.length === 0) {
-        return NextResponse.json({
-          success: false,
-          error: {
-            type: 'NOT_FOUND',
-            message: 'No budgets found',
-            statusCode: 404,
-          }
-        }, { status: 404 });
+        return NextResponse.json(
+          {
+            success: false,
+            error: {
+              type: 'NOT_FOUND',
+              message: 'No budgets found',
+              statusCode: 404,
+            },
+          },
+          { status: 404 }
+        );
       }
       budget = budgetsResponse.data.budgets[0]!;
     }
@@ -328,19 +374,26 @@ export async function POST(request: NextRequest) {
       // Validate provided month is within budget range
       const validation = validateMonthInBudgetRange(month, budget);
       if (!validation.isValid) {
-        logAPIError('MONTH_VALIDATION_POST', new Error(validation.error!), requestInfo);
-        return NextResponse.json({
-          success: false,
-          error: {
-            type: 'invalid_month',
-            message: validation.error,
-            statusCode: 400,
-            availableRange: {
-              firstMonth: budget.first_month,
-              lastMonth: budget.last_month,
-            }
-          }
-        }, { status: 400 });
+        logAPIError(
+          'MONTH_VALIDATION_POST',
+          new Error(validation.error!),
+          requestInfo
+        );
+        return NextResponse.json(
+          {
+            success: false,
+            error: {
+              type: 'invalid_month',
+              message: validation.error,
+              statusCode: 400,
+              availableRange: {
+                firstMonth: budget.first_month,
+                lastMonth: budget.last_month,
+              },
+            },
+          },
+          { status: 400 }
+        );
       }
       analysisMonth = month;
     } else {
@@ -349,7 +402,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Log successful request info
-    console.log(`[MONTHLY_ANALYSIS_POST] Processing request: Budget=${budget.name} (${budget.id}), Month=${analysisMonth}`);
+    console.log(
+      `[MONTHLY_ANALYSIS_POST] Processing request: Budget=${budget.name} (${budget.id}), Month=${analysisMonth}`
+    );
 
     // Fetch month data
     const monthResponse = await ynabClient.getMonth(budget.id, analysisMonth);
@@ -376,21 +431,26 @@ export async function POST(request: NextRequest) {
         },
         config,
         generatedAt: new Date().toISOString(),
-      }
+      },
     });
-
   } catch (error) {
     logAPIError('MONTHLY_ANALYSIS_POST', error, requestInfo);
 
-    const appError = SecureErrorHandler.handleAPIError(error, 'MONTHLY_ANALYSIS_POST');
+    const appError = SecureErrorHandler.handleAPIError(
+      error,
+      'MONTHLY_ANALYSIS_POST'
+    );
 
-    return NextResponse.json({
-      success: false,
-      error: {
-        type: appError.type,
-        message: appError.userMessage,
-        statusCode: appError.statusCode,
-      }
-    }, { status: appError.statusCode });
+    return NextResponse.json(
+      {
+        success: false,
+        error: {
+          type: appError.type,
+          message: appError.userMessage,
+          statusCode: appError.statusCode,
+        },
+      },
+      { status: appError.statusCode }
+    );
   }
 }

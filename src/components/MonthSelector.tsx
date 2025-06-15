@@ -1,7 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getFirstDayOfMonth, getPreviousMonth, getNextMonth } from '@/lib/data-processing';
+import {
+  getFirstDayOfMonth,
+  getPreviousMonth,
+  getNextMonth,
+} from '@/lib/data-processing';
 
 interface MonthSelectorProps {
   onMonthSelect: (month: string) => void;
@@ -10,11 +14,11 @@ interface MonthSelectorProps {
   budgetLastMonth?: string;
 }
 
-export default function MonthSelector({ 
-  onMonthSelect, 
-  selectedMonth, 
-  budgetFirstMonth, 
-  budgetLastMonth 
+export default function MonthSelector({
+  onMonthSelect,
+  selectedMonth,
+  budgetFirstMonth,
+  budgetLastMonth,
 }: MonthSelectorProps) {
   const [currentMonth, setCurrentMonth] = useState<string>('');
 
@@ -59,7 +63,13 @@ export default function MonthSelector({
     }
     // Return undefined for cases where no cleanup is needed
     return undefined;
-  }, [currentMonth, selectedMonth, budgetFirstMonth, budgetLastMonth, onMonthSelect]);
+  }, [
+    currentMonth,
+    selectedMonth,
+    budgetFirstMonth,
+    budgetLastMonth,
+    onMonthSelect,
+  ]);
 
   const formatMonthDisplay = (monthStr: string): string => {
     // Parse as UTC to avoid timezone issues
@@ -67,14 +77,17 @@ export default function MonthSelector({
     return date.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',
-      timeZone: 'UTC'
+      timeZone: 'UTC',
     });
   };
 
   const canGoPrevious = (): boolean => {
     if (!selectedMonth || !budgetFirstMonth) return false;
     try {
-      return new Date(selectedMonth + 'T00:00:00.000Z') > new Date(budgetFirstMonth + 'T00:00:00.000Z');
+      return (
+        new Date(selectedMonth + 'T00:00:00.000Z') >
+        new Date(budgetFirstMonth + 'T00:00:00.000Z')
+      );
     } catch (error) {
       console.error('Error checking previous month availability:', error);
       return false;
@@ -84,7 +97,10 @@ export default function MonthSelector({
   const canGoNext = (): boolean => {
     if (!selectedMonth || !budgetLastMonth) return false;
     try {
-      return new Date(selectedMonth + 'T00:00:00.000Z') < new Date(budgetLastMonth + 'T00:00:00.000Z');
+      return (
+        new Date(selectedMonth + 'T00:00:00.000Z') <
+        new Date(budgetLastMonth + 'T00:00:00.000Z')
+      );
     } catch (error) {
       console.error('Error checking next month availability:', error);
       return false;
@@ -119,7 +135,10 @@ export default function MonthSelector({
 
       const budgetLastDate = new Date(budgetLastMonth + 'T00:00:00.000Z');
 
-      while (new Date(current + 'T00:00:00.000Z') <= budgetLastDate && iterations < maxIterations) {
+      while (
+        new Date(current + 'T00:00:00.000Z') <= budgetLastDate &&
+        iterations < maxIterations
+      ) {
         if (!monthsSet.has(current)) {
           months.push(current);
           monthsSet.add(current);
@@ -143,25 +162,28 @@ export default function MonthSelector({
 
   return (
     <div className="space-y-2">
-      <label htmlFor="month-select" className="block text-sm font-medium text-gray-700">
+      <label
+        htmlFor="month-select"
+        className="block text-sm font-medium text-gray-700"
+      >
         Analysis Month
       </label>
-      
+
       {/* Month Navigation */}
       <div className="flex items-center space-x-2">
         <button
           onClick={handlePrevious}
           disabled={!canGoPrevious()}
-          className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="rounded-md border border-gray-300 px-3 py-1 text-sm hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
         >
           ← Previous
         </button>
-        
+
         <select
           id="month-select"
           value={selectedMonth || ''}
-          onChange={(e) => onMonthSelect(e.target.value)}
-          className="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+          onChange={e => onMonthSelect(e.target.value)}
+          className="flex-1 rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
         >
           <option value="">Select month...</option>
           {generateMonthOptions().map((month, index) => (
@@ -170,16 +192,16 @@ export default function MonthSelector({
             </option>
           ))}
         </select>
-        
+
         <button
           onClick={handleNext}
           disabled={!canGoNext()}
-          className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="rounded-md border border-gray-300 px-3 py-1 text-sm hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
         >
           Next →
         </button>
       </div>
-      
+
       {selectedMonth && (
         <p className="text-xs text-gray-500">
           Analyzing {formatMonthDisplay(selectedMonth)}

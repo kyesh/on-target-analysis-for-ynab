@@ -10,7 +10,8 @@ const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: 'YNAB Off-Target Assignment Analysis',
-  description: 'Analyze your YNAB budget target alignment and identify over-target spending patterns',
+  description:
+    'Analyze your YNAB budget target alignment and identify over-target spending patterns',
   keywords: ['YNAB', 'budget', 'target', 'analysis', 'financial', 'planning'],
   authors: [{ name: 'Ken Yesh' }],
   robots: 'noindex, nofollow', // Local app, no indexing needed
@@ -32,9 +33,7 @@ export default function RootLayout({
         <SecurityInitializer />
         <AnalyticsInitializer />
         <AuthProvider enableNotifications={true} autoRefreshThreshold={5}>
-          <div className="min-h-full">
-            {children}
-          </div>
+          <div className="min-h-full">{children}</div>
           <ConsentBanner />
         </AuthProvider>
       </body>

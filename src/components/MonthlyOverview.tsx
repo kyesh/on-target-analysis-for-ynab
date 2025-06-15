@@ -55,25 +55,29 @@ export function MonthlyOverview({ analysis }: MonthlyOverviewProps) {
   ];
 
   return (
-    <div className="bg-white shadow rounded-lg">
+    <div className="rounded-lg bg-white shadow">
       <div className="px-4 py-5 sm:p-6">
-        <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
+        <h3 className="mb-4 text-lg font-medium leading-6 text-gray-900">
           Monthly Overview - {analysis.selectedMonth}
         </h3>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {overviewCards.map((card) => (
+
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {overviewCards.map(card => (
             <div
               key={card.title}
-              className={`${card.bgColor} ${card.borderColor} border rounded-lg p-4`}
+              className={`${card.bgColor} ${card.borderColor} rounded-lg border p-4`}
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">{card.title}</p>
+                  <p className="text-sm font-medium text-gray-600">
+                    {card.title}
+                  </p>
                   <p className={`text-2xl font-bold ${card.color}`}>
                     {formatCurrency(card.value)}
                   </p>
-                  <p className="text-xs text-gray-500 mt-1">{card.description}</p>
+                  <p className="mt-1 text-xs text-gray-500">
+                    {card.description}
+                  </p>
                 </div>
               </div>
             </div>
@@ -81,35 +85,48 @@ export function MonthlyOverview({ analysis }: MonthlyOverviewProps) {
         </div>
 
         {/* Additional Insights */}
-        <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-          <div className="bg-gray-50 rounded p-3">
+        <div className="mt-4 grid grid-cols-1 gap-4 text-sm md:grid-cols-3">
+          <div className="rounded bg-gray-50 p-3">
             <span className="font-medium text-gray-700">Budget vs Needed:</span>
-            <div className={`font-semibold ${
-              monthData.totalAssigned >= totalNeededThisMonth 
-                ? 'text-green-600' 
-                : 'text-red-600'
-            }`}>
+            <div
+              className={`font-semibold ${
+                monthData.totalAssigned >= totalNeededThisMonth
+                  ? 'text-green-600'
+                  : 'text-red-600'
+              }`}
+            >
               {formatCurrency(monthData.totalAssigned - totalNeededThisMonth)}
-              {monthData.totalAssigned >= totalNeededThisMonth ? ' surplus' : ' shortfall'}
+              {monthData.totalAssigned >= totalNeededThisMonth
+                ? ' surplus'
+                : ' shortfall'}
             </div>
           </div>
-          
-          <div className="bg-gray-50 rounded p-3">
-            <span className="font-medium text-gray-700">Income vs Activity:</span>
-            <div className={`font-semibold ${
-              monthData.totalIncome >= Math.abs(monthData.totalActivity)
-                ? 'text-green-600' 
-                : 'text-red-600'
-            }`}>
+
+          <div className="rounded bg-gray-50 p-3">
+            <span className="font-medium text-gray-700">
+              Income vs Activity:
+            </span>
+            <div
+              className={`font-semibold ${
+                monthData.totalIncome >= Math.abs(monthData.totalActivity)
+                  ? 'text-green-600'
+                  : 'text-red-600'
+              }`}
+            >
               {formatCurrency(monthData.totalIncome + monthData.totalActivity)}
-              {monthData.totalIncome >= Math.abs(monthData.totalActivity) ? ' positive' : ' negative'}
+              {monthData.totalIncome >= Math.abs(monthData.totalActivity)
+                ? ' positive'
+                : ' negative'}
             </div>
           </div>
-          
-          <div className="bg-gray-50 rounded p-3">
-            <span className="font-medium text-gray-700">Categories with Targets:</span>
+
+          <div className="rounded bg-gray-50 p-3">
+            <span className="font-medium text-gray-700">
+              Categories with Targets:
+            </span>
             <div className="font-semibold text-blue-600">
-              {analysis.categories.filter(c => c.hasTarget).length} of {analysis.categories.length}
+              {analysis.categories.filter(c => c.hasTarget).length} of{' '}
+              {analysis.categories.length}
             </div>
           </div>
         </div>

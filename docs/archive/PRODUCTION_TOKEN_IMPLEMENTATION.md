@@ -29,14 +29,16 @@ export class ScalableSessionManager {
   }
 
   // Connection pooling for database efficiency
-  private static async validateSessionInDatabase(sessionId: string): Promise<boolean> {
+  private static async validateSessionInDatabase(
+    sessionId: string
+  ): Promise<boolean> {
     // Use connection pooling to handle multiple Cloud Run instances
     const result = await db.userSessions.findUnique({
-      where: { 
+      where: {
         sessionId,
-        expiresAt: { gt: new Date() }
+        expiresAt: { gt: new Date() },
       },
-      select: { id: true } // Minimal data transfer
+      select: { id: true }, // Minimal data transfer
     });
 
     return !!result;
@@ -53,7 +55,7 @@ export class ContainerResilientAuth {
   static async handleContainerRestart(): Promise<void> {
     // On container startup, no session cleanup needed
     // All session state is in Cloud SQL database
-    
+
     // Optional: Warm up database connections
     await this.warmUpConnections();
   }
@@ -61,7 +63,7 @@ export class ContainerResilientAuth {
   private static async warmUpConnections(): Promise<void> {
     // Pre-establish database connection pool
     await db.$connect();
-    
+
     // Test connection with lightweight query
     await db.$queryRaw`SELECT 1`;
   }
@@ -82,10 +84,10 @@ resource "google_sql_database_instance" "ynab_analysis_db" {
 
   settings {
     tier = "db-g1-small"  # Production tier
-    
+
     # High availability configuration
     availability_type = "REGIONAL"
-    
+
     # Backup configuration
     backup_configuration {
       enabled                        = true
@@ -146,7 +148,10 @@ class DatabaseManager {
             url: this.buildConnectionString(),
           },
         },
-        log: process.env.NODE_ENV === 'development' ? ['query', 'error'] : ['error'],
+        log:
+          process.env.NODE_ENV === 'development'
+            ? ['query', 'error']
+            : ['error'],
       });
 
       // Connection lifecycle management
@@ -165,7 +170,7 @@ class DatabaseManager {
       DB_NAME,
       DB_USER,
       DB_PASSWORD,
-      INSTANCE_CONNECTION_NAME
+      INSTANCE_CONNECTION_NAME,
     } = process.env;
 
     // Cloud SQL Proxy connection for Cloud Run
@@ -193,7 +198,7 @@ export class SessionBackupManager {
     try {
       // Test backup restoration capability
       const testSessionId = 'backup-test-' + Date.now();
-      
+
       // Create test session
       await db.userSessions.create({
         data: {
@@ -266,7 +271,7 @@ export class DataRightsManager {
   // GDPR Article 15: Right of access
   static async exportUserData(userId: string): Promise<UserDataExport> {
     const hashedUserId = this.hashUserId(userId);
-    
+
     const sessions = await db.userSessions.findMany({
       where: { userId: hashedUserId },
       select: {
@@ -293,7 +298,7 @@ export class DataRightsManager {
   // GDPR Article 17: Right to erasure
   static async deleteUserData(userId: string): Promise<void> {
     const hashedUserId = this.hashUserId(userId);
-    
+
     // Delete all user sessions
     const result = await db.userSessions.deleteMany({
       where: { userId: hashedUserId },
@@ -301,16 +306,19 @@ export class DataRightsManager {
 
     // Log deletion for compliance audit
     console.log(`Deleted ${result.count} sessions for user ${hashedUserId}`);
-    
+
     // Note: YNAB data is not stored, so no additional deletion needed
   }
 
   // GDPR Article 16: Right to rectification
-  static async rectifyUserData(userId: string, corrections: any): Promise<void> {
+  static async rectifyUserData(
+    userId: string,
+    corrections: any
+  ): Promise<void> {
     // For this application, user data is minimal (just sessions)
     // Most "rectification" would be handled by re-authentication
     const hashedUserId = this.hashUserId(userId);
-    
+
     // Force re-authentication by invalidating sessions
     await db.userSessions.deleteMany({
       where: { userId: hashedUserId },
@@ -320,7 +328,7 @@ export class DataRightsManager {
   // CCPA: Right to know
   static async getCCPADataReport(userId: string): Promise<CCPADataReport> {
     const userData = await this.exportUserData(userId);
-    
+
     return {
       personalInformation: {
         categories: ['Authentication identifiers'],
@@ -370,13 +378,16 @@ export class DataRetentionManager {
   // Schedule retention cleanup
   static scheduleRetentionCleanup(): void {
     // Run daily at 2 AM
-    setInterval(async () => {
-      try {
-        await this.enforceRetentionPolicies();
-      } catch (error) {
-        console.error('Retention cleanup failed:', error);
-      }
-    }, 24 * 60 * 60 * 1000);
+    setInterval(
+      async () => {
+        try {
+          await this.enforceRetentionPolicies();
+        } catch (error) {
+          console.error('Retention cleanup failed:', error);
+        }
+      },
+      24 * 60 * 60 * 1000
+    );
   }
 }
 ```
@@ -396,23 +407,23 @@ export class SessionMonitoring {
       totalActiveSessions,
       newSessionsToday,
       expiredSessionsToday,
-      averageSessionDuration
+      averageSessionDuration,
     ] = await Promise.all([
       db.userSessions.count({
-        where: { expiresAt: { gt: now } }
+        where: { expiresAt: { gt: now } },
       }),
       db.userSessions.count({
-        where: { createdAt: { gte: oneDayAgo } }
+        where: { createdAt: { gte: oneDayAgo } },
       }),
       db.userSessions.count({
-        where: { 
-          expiresAt: { 
+        where: {
+          expiresAt: {
             gte: oneDayAgo,
-            lt: now 
-          }
-        }
+            lt: now,
+          },
+        },
       }),
-      this.calculateAverageSessionDuration()
+      this.calculateAverageSessionDuration(),
     ]);
 
     return {
@@ -427,7 +438,7 @@ export class SessionMonitoring {
   // Alert on suspicious activity
   static async checkForAnomalies(): Promise<void> {
     const metrics = await this.getSessionMetrics();
-    
+
     // Alert if too many new sessions (potential attack)
     if (metrics.newSessionsToday > 1000) {
       await this.sendAlert('High session creation rate detected');
@@ -468,9 +479,9 @@ export class SessionOptimization {
       // 2. Single optimized database query
       const session = await db.userSessions.findUnique({
         where: { sessionId: sessionData.sessionId },
-        select: { 
+        select: {
           expiresAt: true,
-          lastUsed: true 
+          lastUsed: true,
         }, // Minimal data transfer
       });
 

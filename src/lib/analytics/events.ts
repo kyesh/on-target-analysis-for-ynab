@@ -67,7 +67,9 @@ export const ErrorEvents = {
  * Authentication event tracking
  */
 export const trackAuth = {
-  oauthInitiated: (method: 'button_click' | 'auto_redirect' = 'button_click') => {
+  oauthInitiated: (
+    method: 'button_click' | 'auto_redirect' = 'button_click'
+  ) => {
     analytics.track(AuthEvents.OAUTH_INITIATED, {
       category: EventCategory.AUTHENTICATION,
       method,
@@ -157,7 +159,11 @@ export const trackBudget = {
     });
   },
 
-  categoryViewed: (categoryId: string, categoryName: string, targetStatus: string) => {
+  categoryViewed: (
+    categoryId: string,
+    categoryName: string,
+    targetStatus: string
+  ) => {
     analytics.track(BudgetEvents.CATEGORY_VIEWED, {
       category: EventCategory.BUDGET_ANALYSIS,
       category_id: categoryId,
@@ -312,7 +318,12 @@ export const trackError = {
     });
   },
 
-  javascriptError: (errorMessage: string, stack?: string, filename?: string, line?: number) => {
+  javascriptError: (
+    errorMessage: string,
+    stack?: string,
+    filename?: string,
+    line?: number
+  ) => {
     analytics.track(ErrorEvents.JAVASCRIPT_ERROR, {
       category: EventCategory.ERROR,
       error_message: errorMessage,

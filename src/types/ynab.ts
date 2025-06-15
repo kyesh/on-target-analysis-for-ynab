@@ -18,7 +18,7 @@ export interface YNABCategory {
   budgeted: number; // milliunits - amount assigned in current month
   activity: number; // milliunits - amount spent in current month
   balance: number; // milliunits - current balance
-  
+
   // TARGET/GOAL FIELDS - ALL CONFIRMED AVAILABLE
   goal_type?: GoalType;
   goal_target?: number | null; // milliunits - target amount
@@ -33,7 +33,7 @@ export interface YNABCategory {
   goal_day?: number | null; // day offset for goal due date
   goal_cadence?: number | null; // goal cadence (0-14)
   goal_cadence_frequency?: number | null; // cadence frequency
-  
+
   deleted: boolean;
 }
 

@@ -28,7 +28,8 @@ export interface ApiRequestOptions extends RequestInit {
 
 export class ApiClient {
   private static readonly DEFAULT_TIMEOUT = 30000; // 30 seconds
-  private static readonly BASE_URL = typeof window !== 'undefined' ? window.location.origin : '';
+  private static readonly BASE_URL =
+    typeof window !== 'undefined' ? window.location.origin : '';
 
   /**
    * Make an authenticated API request
@@ -96,7 +97,8 @@ export class ApiClient {
         throw new AppError(
           responseData.error?.type || ErrorType.API_ERROR,
           responseData.error?.message || 'API request failed',
-          responseData.error?.message || `Request failed with status ${response.status}`,
+          responseData.error?.message ||
+            `Request failed with status ${response.status}`,
           response.status
         );
       }
@@ -253,18 +255,21 @@ export class ApiClient {
 // Convenience functions for common API calls
 export const budgetApi = {
   getBudgets: () => ApiClient.get('/api/budgets'),
-  
+
   getMonthlyAnalysis: (budgetId?: string, month?: string) => {
     const params = new URLSearchParams();
     if (budgetId) params.set('budgetId', budgetId);
     if (month) params.set('month', month);
-    
+
     const query = params.toString();
     return ApiClient.get(`/api/analysis/monthly${query ? `?${query}` : ''}`);
   },
-  
-  postMonthlyAnalysis: (data: { budgetId?: string; month?: string; config?: any }) =>
-    ApiClient.post('/api/analysis/monthly', data),
+
+  postMonthlyAnalysis: (data: {
+    budgetId?: string;
+    month?: string;
+    config?: any;
+  }) => ApiClient.post('/api/analysis/monthly', data),
 };
 
 // Error handling utilities
@@ -272,14 +277,16 @@ export const handleApiError = (error: unknown): string => {
   if (error instanceof AppError) {
     return error.userMessage;
   }
-  
+
   if (error instanceof Error) {
     return error.message;
   }
-  
+
   return 'An unexpected error occurred';
 };
 
 export const isAuthenticationError = (error: unknown): boolean => {
-  return error instanceof AppError && error.type === ErrorType.AUTHENTICATION_ERROR;
+  return (
+    error instanceof AppError && error.type === ErrorType.AUTHENTICATION_ERROR
+  );
 };

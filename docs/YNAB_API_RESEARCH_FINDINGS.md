@@ -9,12 +9,14 @@ After thorough research of the official YNAB API v1 documentation, including the
 ## Research Methodology
 
 ### Sources Analyzed
+
 1. **Official YNAB SDK TypeScript Definitions** - Direct from GitHub repository
 2. **YNAB API OpenAPI Specification** - Complete API schema
 3. **Microsoft Power Platform Connector Documentation** - Third-party validation
 4. **Community Examples and Implementations** - Real-world usage patterns
 
 ### Research Scope
+
 - Complete category object structure analysis
 - Goal/target field availability verification
 - API endpoint capability assessment
@@ -26,23 +28,24 @@ After thorough research of the official YNAB API v1 documentation, including the
 
 #### Complete Goal/Target Fields in Category Objects:
 
-| Field Name | Data Type | Description | Availability |
-|------------|-----------|-------------|--------------|
-| `goal_type` | string enum | Goal type: TB, TBD, MF, NEED, DEBT | ✅ Available |
-| `goal_target` | number (milliunits) | Target amount | ✅ Available |
-| `goal_target_month` | string (date) | Target completion month | ✅ Available |
-| `goal_creation_month` | string (date) | Goal creation month | ✅ Available |
-| `goal_percentage_complete` | number | Completion percentage | ✅ Available |
-| `goal_months_to_budget` | number | Months left in goal period | ✅ Available |
-| `goal_under_funded` | number (milliunits) | Amount needed this month | ✅ Available |
-| `goal_overall_funded` | number (milliunits) | Total funded toward goal | ✅ Available |
-| `goal_overall_left` | number (milliunits) | Amount still needed | ✅ Available |
-| `goal_needs_whole_amount` | boolean | Rollover behavior | ✅ Available |
-| `goal_day` | number | Day offset for due date | ✅ Available |
-| `goal_cadence` | number | Goal cadence (0-14) | ✅ Available |
-| `goal_cadence_frequency` | number | Cadence frequency | ✅ Available |
+| Field Name                 | Data Type           | Description                        | Availability |
+| -------------------------- | ------------------- | ---------------------------------- | ------------ |
+| `goal_type`                | string enum         | Goal type: TB, TBD, MF, NEED, DEBT | ✅ Available |
+| `goal_target`              | number (milliunits) | Target amount                      | ✅ Available |
+| `goal_target_month`        | string (date)       | Target completion month            | ✅ Available |
+| `goal_creation_month`      | string (date)       | Goal creation month                | ✅ Available |
+| `goal_percentage_complete` | number              | Completion percentage              | ✅ Available |
+| `goal_months_to_budget`    | number              | Months left in goal period         | ✅ Available |
+| `goal_under_funded`        | number (milliunits) | Amount needed this month           | ✅ Available |
+| `goal_overall_funded`      | number (milliunits) | Total funded toward goal           | ✅ Available |
+| `goal_overall_left`        | number (milliunits) | Amount still needed                | ✅ Available |
+| `goal_needs_whole_amount`  | boolean             | Rollover behavior                  | ✅ Available |
+| `goal_day`                 | number              | Day offset for due date            | ✅ Available |
+| `goal_cadence`             | number              | Goal cadence (0-14)                | ✅ Available |
+| `goal_cadence_frequency`   | number              | Cadence frequency                  | ✅ Available |
 
 #### Goal Types Supported:
+
 - **TB** = "Target Category Balance" - Save a specific amount
 - **TBD** = "Target Category Balance by Date" - Save amount by specific date
 - **MF** = "Monthly Funding" - Regular monthly funding amount
@@ -55,12 +58,14 @@ After thorough research of the official YNAB API v1 documentation, including the
 #### Primary Endpoints for Target Data:
 
 1. **`GET /budgets/{budget_id}/categories`**
+
    - **Status**: ✅ Confirmed available
    - **Target Data**: All goal fields included
    - **Use Case**: Current month analysis
    - **Response**: Complete category objects with all goal fields
 
 2. **`GET /budgets/{budget_id}/months/{month}`**
+
    - **Status**: ✅ Confirmed available
    - **Target Data**: All goal fields for specific month
    - **Use Case**: Historical analysis, month selection
@@ -75,6 +80,7 @@ After thorough research of the official YNAB API v1 documentation, including the
 ### 3. Data Structure Verification - ✅ CONFIRMED ACCURATE
 
 #### Official TypeScript Interface (from YNAB SDK):
+
 ```typescript
 interface Category {
   id: string;
@@ -90,6 +96,7 @@ interface Category {
 ```
 
 #### Example API Response:
+
 ```json
 {
   "data": {
@@ -98,10 +105,10 @@ interface Category {
         "id": "13419c12-78d3-4818-a5dc-601b2b8a6064",
         "category_group_id": "13419c12-78d3-4818-a5dc-601b2b8a6065",
         "name": "Groceries",
-        "budgeted": 50000,  // $50.00 assigned
+        "budgeted": 50000, // $50.00 assigned
         "activity": -45230, // $45.23 spent
-        "balance": 4770,    // $4.77 remaining
-        "goal_type": "MF",  // Monthly Funding
+        "balance": 4770, // $4.77 remaining
+        "goal_type": "MF", // Monthly Funding
         "goal_target": 45000, // $45.00 target
         "goal_percentage_complete": 100,
         "goal_under_funded": 0,
@@ -116,6 +123,7 @@ interface Category {
 ### 4. Core Application Functionality Assessment - ✅ 100% FEASIBLE
 
 #### Monthly Budget Analysis Dashboard:
+
 - **Total Assigned**: ✅ Sum of `budgeted` fields
 - **Target Alignment**: ✅ Compare `budgeted` vs `goal_target`
 - **On-Target Percentage**: ✅ Calculate from available data
@@ -123,12 +131,14 @@ interface Category {
 - **No-Target Amount**: ✅ Sum where `goal_type` is null
 
 #### Detailed Category Analysis:
+
 - **Over-Target Categories**: ✅ Filter where `budgeted > goal_target`
 - **Variance Calculations**: ✅ Calculate `budgeted - goal_target`
 - **No-Target Categories**: ✅ Filter where `goal_type` is null
 - **Target Type Display**: ✅ Use `goal_type` with human-readable names
 
 #### Historical Analysis:
+
 - **Month-by-Month**: ✅ Use `/months/{month}` endpoint
 - **Trend Analysis**: ✅ Compare across multiple months
 - **Goal Progress**: ✅ Use `goal_percentage_complete` and related fields
@@ -136,18 +146,21 @@ interface Category {
 ## Implementation Implications
 
 ### 1. Data Processing Strategy
+
 - **Direct API Integration**: No workarounds needed
 - **Real-Time Analysis**: All calculations possible with live data
 - **Historical Analysis**: Full month-by-month comparison available
 - **Comprehensive Metrics**: All planned KPIs are calculable
 
 ### 2. Performance Considerations
+
 - **API Efficiency**: Single endpoint call gets all needed data
 - **Rate Limiting**: 200 requests/hour easily accommodates our needs
 - **Caching Strategy**: Can cache monthly data effectively
 - **Delta Requests**: Supported for efficient updates
 
 ### 3. Security and Reliability
+
 - **Official API**: Using documented, supported endpoints
 - **Stable Data Structure**: Based on official TypeScript definitions
 - **Error Handling**: Standard HTTP responses with clear error codes
@@ -156,11 +169,13 @@ interface Category {
 ## Updated Project Confidence Level
 
 ### Before Research: 70% Confidence
+
 - Uncertainty about target data availability
 - Assumptions about API capabilities
 - Potential need for workarounds or reduced scope
 
 ### After Research: 100% Confidence
+
 - ✅ All target data confirmed available
 - ✅ All required endpoints confirmed functional
 - ✅ All planned features are implementable
@@ -170,16 +185,19 @@ interface Category {
 ## Recommendations
 
 ### 1. Proceed with Full Implementation
+
 - All planned features are achievable
 - No architectural changes needed
 - Original timeline remains valid
 
 ### 2. Leverage Additional Goal Data
+
 - Consider using `goal_percentage_complete` for enhanced insights
 - Utilize `goal_under_funded` for funding recommendations
 - Display `goal_type` descriptions for better user understanding
 
 ### 3. Optimize for API Efficiency
+
 - Use monthly endpoints for historical analysis
 - Implement smart caching based on goal data stability
 - Consider delta requests for large budgets

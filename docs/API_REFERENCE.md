@@ -19,6 +19,7 @@ Authorization: Bearer <oauth-access-token>
 ```
 
 ### Authentication Flow
+
 1. User authenticates via OAuth 2.0 Implicit Grant Flow
 2. Client receives access token from YNAB
 3. Token is included in API requests via Authorization header
@@ -33,6 +34,7 @@ Authorization: Bearer <oauth-access-token>
 Check application configuration status and YNAB API connectivity.
 
 **Response:**
+
 ```json
 {
   "valid": true,
@@ -41,6 +43,7 @@ Check application configuration status and YNAB API connectivity.
 ```
 
 **Status Codes:**
+
 - `200`: Configuration valid
 - `500`: Configuration error
 
@@ -53,6 +56,7 @@ Check application configuration status and YNAB API connectivity.
 Retrieve all available YNAB budgets for the authenticated user.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -81,6 +85,7 @@ Retrieve all available YNAB budgets for the authenticated user.
 ```
 
 **Status Codes:**
+
 - `200`: Success
 - `401`: Invalid YNAB token
 - `500`: Server error
@@ -94,15 +99,18 @@ Retrieve all available YNAB budgets for the authenticated user.
 Generate comprehensive monthly budget analysis with target alignment calculations.
 
 **Query Parameters:**
+
 - `budgetId` (required): YNAB budget UUID
 - `month` (required): Analysis month in YYYY-MM-DD format
 
 **Example Request:**
+
 ```
 GET /api/analysis/monthly?budgetId=budget-uuid&month=2024-12-01
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -202,6 +210,7 @@ GET /api/analysis/monthly?budgetId=budget-uuid&month=2024-12-01
 ```
 
 **Status Codes:**
+
 - `200`: Success
 - `400`: Missing or invalid parameters
 - `404`: Budget or month not found
@@ -216,10 +225,12 @@ GET /api/analysis/monthly?budgetId=budget-uuid&month=2024-12-01
 Retrieve raw YNAB API data for debugging purposes.
 
 **Query Parameters:**
+
 - `budgetId` (required): YNAB budget UUID
 - `month` (required): Month in YYYY-MM-DD format
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -254,6 +265,7 @@ Retrieve raw YNAB API data for debugging purposes.
 ### Currency Values
 
 All currency values are returned in **milliunits** (1/1000 of the currency unit):
+
 - `$45.67` = `45670` milliunits
 - To convert to dollars: `milliunits / 1000`
 
@@ -265,6 +277,7 @@ All currency values are returned in **milliunits** (1/1000 of the currency unit)
 ### Alignment Status
 
 Categories are classified into alignment statuses:
+
 - `"on-target"`: Within tolerance of target amount
 - `"over-target"`: Assigned more than target
 - `"under-target"`: Assigned less than target
@@ -300,6 +313,7 @@ Categories are classified into alignment statuses:
 ### Rate Limiting
 
 The application respects YNAB API rate limits:
+
 - **Limit**: 200 requests per hour
 - **Caching**: 5-minute cache for API responses
 - **Headers**: Rate limit information included in responses
@@ -309,12 +323,20 @@ The application respects YNAB API rate limits:
 ### Basic Monthly Analysis
 
 ```javascript
-const response = await fetch('/api/analysis/monthly?budgetId=budget-uuid&month=2024-12-01');
+const response = await fetch(
+  '/api/analysis/monthly?budgetId=budget-uuid&month=2024-12-01'
+);
 const data = await response.json();
 
 if (data.success) {
-  console.log('Total assigned:', data.data.monthlyAnalysis.totalAssigned / 1000);
-  console.log('Target alignment score:', data.data.keyMetrics.targetAlignmentScore);
+  console.log(
+    'Total assigned:',
+    data.data.monthlyAnalysis.totalAssigned / 1000
+  );
+  console.log(
+    'Target alignment score:',
+    data.data.keyMetrics.targetAlignmentScore
+  );
 }
 ```
 

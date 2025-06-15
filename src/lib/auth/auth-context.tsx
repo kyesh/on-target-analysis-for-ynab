@@ -5,7 +5,13 @@
 
 'use client';
 
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+} from 'react';
 import { SecureTokenStorage } from './secure-token-storage';
 import { TokenValidator } from './token-validator';
 import { ImplicitOAuthClient } from './implicit-oauth-client';
@@ -36,10 +42,10 @@ export interface AuthProviderProps {
   autoRefreshThreshold?: number; // minutes before expiry to show refresh prompt
 }
 
-export function AuthProvider({ 
-  children, 
+export function AuthProvider({
+  children,
   enableNotifications = true,
-  autoRefreshThreshold = 5 
+  autoRefreshThreshold = 5,
 }: AuthProviderProps) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -49,23 +55,23 @@ export function AuthProvider({
   const updateAuthState = useCallback(() => {
     const currentToken = SecureTokenStorage.getToken();
     const isValid = SecureTokenStorage.isTokenValid();
-    
+
     if (currentToken && isValid) {
       const expiration = SecureTokenStorage.getTokenExpiration();
       const timeUntilExpiry = SecureTokenStorage.getTimeUntilExpiration();
-      
+
       setToken(currentToken);
       setUser({
         id: 'ynab-user', // We don't have user ID from implicit grant
         isAuthenticated: true,
         tokenExpiration: expiration,
-        timeUntilExpiry
+        timeUntilExpiry,
       });
     } else {
       setToken(null);
       setUser(null);
     }
-    
+
     setIsLoading(false);
   }, []);
 
@@ -80,7 +86,7 @@ export function AuthProvider({
         checkInterval: 60000, // 1 minute
         warningThreshold: autoRefreshThreshold * 60 * 1000,
         autoRedirectThreshold: 1 * 60 * 1000, // 1 minute
-        enableNotifications
+        enableNotifications,
       });
     }
 
@@ -144,7 +150,7 @@ export function AuthProvider({
     TokenValidator.stopValidation();
     setToken(null);
     setUser(null);
-    
+
     // Redirect to sign-in page
     window.location.href = '/auth/signin';
   }, []);
@@ -159,7 +165,7 @@ export function AuthProvider({
     const currentToken = SecureTokenStorage.getToken();
     if (currentToken && SecureTokenStorage.isTokenValid()) {
       return {
-        Authorization: `Bearer ${currentToken}`
+        Authorization: `Bearer ${currentToken}`,
       };
     }
     return {};
@@ -176,13 +182,11 @@ export function AuthProvider({
     login,
     logout,
     refreshAuth,
-    getAuthHeaders
+    getAuthHeaders,
   };
 
   return (
-    <AuthContext.Provider value={contextValue}>
-      {children}
-    </AuthContext.Provider>
+    <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>
   );
 }
 
@@ -210,9 +214,9 @@ export function withAuth<P extends object>(
 
     if (isLoading) {
       return (
-        <div className="min-h-screen flex items-center justify-center">
+        <div className="flex min-h-screen items-center justify-center">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-blue-600"></div>
             <p className="mt-4 text-gray-600">Loading...</p>
           </div>
         </div>
@@ -221,13 +225,17 @@ export function withAuth<P extends object>(
 
     if (!isAuthenticated) {
       return (
-        <div className="min-h-screen flex items-center justify-center">
+        <div className="flex min-h-screen items-center justify-center">
           <div className="text-center">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Authentication Required</h2>
-            <p className="text-gray-600 mb-4">Please sign in to access this page.</p>
+            <h2 className="mb-4 text-2xl font-bold text-gray-900">
+              Authentication Required
+            </h2>
+            <p className="mb-4 text-gray-600">
+              Please sign in to access this page.
+            </p>
             <button
               onClick={login}
-              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+              className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
             >
               Sign In
             </button>
@@ -258,7 +266,7 @@ export function useTokenExpiration(thresholdMinutes: number = 5) {
   return {
     isExpiringSoon,
     timeUntilExpiry: user?.timeUntilExpiry,
-    tokenExpiration: user?.tokenExpiration
+    tokenExpiration: user?.tokenExpiration,
   };
 }
 
@@ -266,26 +274,26 @@ export function useTokenExpiration(thresholdMinutes: number = 5) {
 export function useAuthenticatedFetch() {
   const { getAuthHeaders, isAuthenticated } = useAuth();
 
-  const authenticatedFetch = useCallback(async (
-    url: string, 
-    options: RequestInit = {}
-  ): Promise<Response> => {
-    if (!isAuthenticated) {
-      throw new Error('Not authenticated');
-    }
+  const authenticatedFetch = useCallback(
+    async (url: string, options: RequestInit = {}): Promise<Response> => {
+      if (!isAuthenticated) {
+        throw new Error('Not authenticated');
+      }
 
-    const authHeaders = getAuthHeaders();
-    const headers = {
-      'Content-Type': 'application/json',
-      ...authHeaders,
-      ...options.headers
-    };
+      const authHeaders = getAuthHeaders();
+      const headers = {
+        'Content-Type': 'application/json',
+        ...authHeaders,
+        ...options.headers,
+      };
 
-    return fetch(url, {
-      ...options,
-      headers
-    });
-  }, [getAuthHeaders, isAuthenticated]);
+      return fetch(url, {
+        ...options,
+        headers,
+      });
+    },
+    [getAuthHeaders, isAuthenticated]
+  );
 
   return authenticatedFetch;
 }

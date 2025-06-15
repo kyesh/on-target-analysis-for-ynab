@@ -82,28 +82,33 @@ The application implements a sophisticated 7-rule calculation system:
 ### System Components
 
 #### Core Processing Engine
+
 - **Data Processing**: Sophisticated calculation logic handling all YNAB goal types
 - **Analysis Engine**: Variance calculations, alignment scoring, and statistical analysis
 - **Caching Layer**: Intelligent caching to minimize API requests and improve performance
 
 #### User Interface
+
 - **Dashboard Components**: Modular React components for different analysis views
 - **Debug Interface**: Comprehensive debugging UI with collapsible panels
 - **Responsive Layout**: Mobile-first design with progressive enhancement
 
 #### OAuth Authentication System
+
 - **ImplicitOAuthClient**: Complete OAuth 2.0 flow with CSRF protection
 - **SecureTokenStorage**: Memory-first storage with integrity checking
 - **TokenValidator**: Automatic expiration monitoring and re-authentication
 - **AuthProvider**: React context for authentication state management
 
 #### API Integration
+
 - **YNABOAuthClient**: OAuth-compatible YNAB API client
 - **AuthMiddleware**: Bearer token validation for API routes
 - **Data Transformation**: Convert YNAB API responses to application data models
 - **Validation Layer**: Comprehensive input validation and sanitization
 
 #### Analytics & Monitoring
+
 - **PostHog Integration**: Privacy-first analytics with consent management
 - **Performance Monitoring**: API response times and page load tracking
 - **Error Tracking**: Comprehensive error reporting and monitoring
@@ -112,24 +117,28 @@ The application implements a sophisticated 7-rule calculation system:
 ### Security Implementation
 
 #### OAuth 2.0 Security
+
 - **CSRF Protection**: Secure state parameter generation and validation
 - **Token Security**: Memory-first storage with browser fingerprinting
 - **Automatic Expiration**: Token validation with re-authentication prompts
 - **URL Fragment Cleanup**: Immediate cleanup after OAuth callback
 
 #### Application Security
+
 - **XSS Prevention**: Comprehensive input sanitization utilities
 - **Content Security Policy**: Strict CSP headers preventing script injection
 - **Secure Input Components**: XSS-resistant form components
 - **Security Monitoring**: Client-side incident detection and reporting
 
 #### Data Protection
+
 - **No Data Persistence**: Stateless architecture with no server-side storage
 - **HTTPS Communication**: Encrypted API communications
 - **Input Validation**: Comprehensive validation of all user inputs
 - **Privacy-First Analytics**: GDPR/CCPA compliant with user consent
 
 #### Infrastructure Security
+
 - **Google Cloud Secret Manager**: Secure storage of OAuth credentials
 - **Service Account Permissions**: Least-privilege access control
 - **Rate Limiting**: Built-in compliance with YNAB API limits
@@ -174,19 +183,25 @@ The application processes several key YNAB data structures:
 ### Analysis Data Models
 
 #### MonthlyAnalysis
+
 Comprehensive monthly budget analysis including:
+
 - Total income, activity, and assigned amounts
 - Target alignment percentages and statistics
 - Category counts and classification metrics
 
 #### ProcessedCategory
+
 Enhanced category data with:
+
 - Calculated "Needed This Month" values
 - Variance analysis and alignment status
 - Debug information for transparency
 
 #### CategoryVariance
+
 Detailed variance analysis including:
+
 - Dollar amount differences from targets
 - Percentage calculations
 - Trend analysis capabilities

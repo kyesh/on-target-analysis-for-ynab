@@ -5,6 +5,7 @@
 ### PostgreSQL Implementation (Recommended)
 
 #### Database Schema
+
 ```sql
 -- PostgreSQL schema with optimized indexes
 CREATE TABLE user_sessions (
@@ -30,9 +31,9 @@ RETURNS INTEGER AS $$
 DECLARE
     deleted_count INTEGER;
 BEGIN
-    DELETE FROM user_sessions 
+    DELETE FROM user_sessions
     WHERE expires_at < NOW() - INTERVAL '1 day';
-    
+
     GET DIAGNOSTICS deleted_count = ROW_COUNT;
     RETURN deleted_count;
 END;
@@ -40,6 +41,7 @@ $$ LANGUAGE plpgsql;
 ```
 
 #### Prisma Schema
+
 ```typescript
 // schema.prisma
 model UserSession {
@@ -60,6 +62,7 @@ model UserSession {
 ```
 
 #### CRUD Implementation
+
 ```typescript
 // src/lib/storage/postgresql-token-storage.ts
 import { PrismaClient } from '@prisma/client';
@@ -76,9 +79,13 @@ export class PostgreSQLTokenStorage {
     refreshToken: string;
     expiresAt: Date;
   }): Promise<void> {
-    const encryptedAccessToken = await TokenEncryption.encrypt(sessionData.accessToken);
-    const encryptedRefreshToken = await TokenEncryption.encrypt(sessionData.refreshToken);
-    
+    const encryptedAccessToken = await TokenEncryption.encrypt(
+      sessionData.accessToken
+    );
+    const encryptedRefreshToken = await TokenEncryption.encrypt(
+      sessionData.refreshToken
+    );
+
     await this.prisma.userSession.create({
       data: {
         sessionId: sessionData.sessionId,
@@ -117,19 +124,28 @@ export class PostgreSQLTokenStorage {
 
     return {
       accessToken: await TokenEncryption.decrypt(session.encryptedAccessToken),
-      refreshToken: await TokenEncryption.decrypt(session.encryptedRefreshToken),
+      refreshToken: await TokenEncryption.decrypt(
+        session.encryptedRefreshToken
+      ),
       expiresAt: session.expiresAt,
       userId: session.userId,
     };
   }
 
   // UPDATE: Refresh tokens after OAuth refresh
-  async updateTokens(sessionId: string, newTokens: {
-    accessToken: string;
-    refreshToken: string;
-  }): Promise<void> {
-    const encryptedAccessToken = await TokenEncryption.encrypt(newTokens.accessToken);
-    const encryptedRefreshToken = await TokenEncryption.encrypt(newTokens.refreshToken);
+  async updateTokens(
+    sessionId: string,
+    newTokens: {
+      accessToken: string;
+      refreshToken: string;
+    }
+  ): Promise<void> {
+    const encryptedAccessToken = await TokenEncryption.encrypt(
+      newTokens.accessToken
+    );
+    const encryptedRefreshToken = await TokenEncryption.encrypt(
+      newTokens.refreshToken
+    );
 
     await this.prisma.userSession.update({
       where: { sessionId },
@@ -191,6 +207,7 @@ export class PostgreSQLTokenStorage {
 ### Firestore Implementation (Alternative)
 
 #### Collection Structure
+
 ```typescript
 // Firestore document structure
 interface SessionDocument {
@@ -207,6 +224,7 @@ interface SessionDocument {
 ```
 
 #### CRUD Implementation
+
 ```typescript
 // src/lib/storage/firestore-token-storage.ts
 import { getFirestore, Timestamp, FieldValue } from 'firebase-admin/firestore';
@@ -223,18 +241,25 @@ export class FirestoreTokenStorage {
     refreshToken: string;
     expiresAt: Date;
   }): Promise<void> {
-    const encryptedAccessToken = await TokenEncryption.encrypt(sessionData.accessToken);
-    const encryptedRefreshToken = await TokenEncryption.encrypt(sessionData.refreshToken);
-    
-    await this.db.collection('sessions').doc(sessionData.sessionId).set({
-      sessionId: sessionData.sessionId,
-      userId: this.hashUserId(sessionData.userId),
-      encryptedAccessToken,
-      encryptedRefreshToken,
-      expiresAt: Timestamp.fromDate(sessionData.expiresAt),
-      createdAt: Timestamp.now(),
-      lastUsed: Timestamp.now(),
-    });
+    const encryptedAccessToken = await TokenEncryption.encrypt(
+      sessionData.accessToken
+    );
+    const encryptedRefreshToken = await TokenEncryption.encrypt(
+      sessionData.refreshToken
+    );
+
+    await this.db
+      .collection('sessions')
+      .doc(sessionData.sessionId)
+      .set({
+        sessionId: sessionData.sessionId,
+        userId: this.hashUserId(sessionData.userId),
+        encryptedAccessToken,
+        encryptedRefreshToken,
+        expiresAt: Timestamp.fromDate(sessionData.expiresAt),
+        createdAt: Timestamp.now(),
+        lastUsed: Timestamp.now(),
+      });
   }
 
   // READ: Get tokens for session validation
@@ -244,14 +269,17 @@ export class FirestoreTokenStorage {
     expiresAt: Date;
     userId: string;
   } | null> {
-    const sessionDoc = await this.db.collection('sessions').doc(sessionId).get();
-    
+    const sessionDoc = await this.db
+      .collection('sessions')
+      .doc(sessionId)
+      .get();
+
     if (!sessionDoc.exists) {
       return null;
     }
 
     const session = sessionDoc.data() as SessionDocument;
-    
+
     if (session.expiresAt.toDate() < new Date()) {
       // Clean up expired session
       this.deleteSessionAsync(sessionId);
@@ -263,19 +291,28 @@ export class FirestoreTokenStorage {
 
     return {
       accessToken: await TokenEncryption.decrypt(session.encryptedAccessToken),
-      refreshToken: await TokenEncryption.decrypt(session.encryptedRefreshToken),
+      refreshToken: await TokenEncryption.decrypt(
+        session.encryptedRefreshToken
+      ),
       expiresAt: session.expiresAt.toDate(),
       userId: session.userId,
     };
   }
 
   // UPDATE: Refresh tokens
-  async updateTokens(sessionId: string, newTokens: {
-    accessToken: string;
-    refreshToken: string;
-  }): Promise<void> {
-    const encryptedAccessToken = await TokenEncryption.encrypt(newTokens.accessToken);
-    const encryptedRefreshToken = await TokenEncryption.encrypt(newTokens.refreshToken);
+  async updateTokens(
+    sessionId: string,
+    newTokens: {
+      accessToken: string;
+      refreshToken: string;
+    }
+  ): Promise<void> {
+    const encryptedAccessToken = await TokenEncryption.encrypt(
+      newTokens.accessToken
+    );
+    const encryptedRefreshToken = await TokenEncryption.encrypt(
+      newTokens.refreshToken
+    );
 
     await this.db.collection('sessions').doc(sessionId).update({
       encryptedAccessToken,
@@ -292,7 +329,8 @@ export class FirestoreTokenStorage {
   // BATCH DELETE: Cleanup expired sessions (complex in Firestore)
   async cleanupExpiredSessions(): Promise<number> {
     const now = Timestamp.now();
-    const expiredSessions = await this.db.collection('sessions')
+    const expiredSessions = await this.db
+      .collection('sessions')
       .where('expiresAt', '<', now)
       .limit(500) // Firestore batch limit
       .get();
@@ -307,7 +345,7 @@ export class FirestoreTokenStorage {
     });
 
     await batch.commit();
-    
+
     // If there were 500 results, there might be more
     if (expiredSessions.size === 500) {
       const additionalDeleted = await this.cleanupExpiredSessions();
@@ -320,7 +358,8 @@ export class FirestoreTokenStorage {
   // GDPR: Delete all user sessions (requires query + batch delete)
   async deleteUserSessions(userId: string): Promise<number> {
     const hashedUserId = this.hashUserId(userId);
-    const userSessions = await this.db.collection('sessions')
+    const userSessions = await this.db
+      .collection('sessions')
       .where('userId', '==', hashedUserId)
       .get();
 
@@ -374,7 +413,10 @@ export class FirestoreTokenStorage {
 ```typescript
 // Performance testing framework
 class PerformanceTest {
-  async testSessionValidation(storage: TokenStorage, iterations: number = 1000): Promise<{
+  async testSessionValidation(
+    storage: TokenStorage,
+    iterations: number = 1000
+  ): Promise<{
     avgTime: number;
     minTime: number;
     maxTime: number;
@@ -385,14 +427,14 @@ class PerformanceTest {
 
     for (let i = 0; i < iterations; i++) {
       const start = performance.now();
-      
+
       try {
         const session = await storage.getSession(`test-session-${i % 100}`);
         if (session) successes++;
       } catch (error) {
         console.error('Session validation failed:', error);
       }
-      
+
       times.push(performance.now() - start);
     }
 
@@ -437,13 +479,14 @@ class CleanupPerformance {
 ### Connection Management
 
 #### PostgreSQL Connection Pooling
+
 ```typescript
 // src/lib/database/connection-manager.ts
 import { PrismaClient } from '@prisma/client';
 
 class ConnectionManager {
   private static instance: PrismaClient;
-  
+
   static getInstance(): PrismaClient {
     if (!this.instance) {
       this.instance = new PrismaClient({
@@ -471,6 +514,7 @@ class ConnectionManager {
 ```
 
 #### Firestore Connection
+
 ```typescript
 // src/lib/database/firestore-manager.ts
 import { initializeApp, getApps, cert } from 'firebase-admin/app';
@@ -505,24 +549,28 @@ class FirestoreManager {
 ## Why PostgreSQL Wins for YNAB Application
 
 ### 1. **Security and Compliance**
+
 - **ACID transactions** ensure data consistency during token updates
 - **Better audit logging** with SQL-based audit tables
 - **Granular access controls** with row-level security
 - **Encryption at rest** with full control over encryption keys
 
 ### 2. **Performance for Session Operations**
+
 - **Faster reads** with optimized indexes (2-5ms vs 15-50ms)
 - **Efficient batch operations** for cleanup (1000+ deletes vs 500 limit)
 - **Connection pooling** reduces overhead
 - **Query optimization** with EXPLAIN ANALYZE
 
 ### 3. **Operational Excellence**
+
 - **Point-in-time recovery** for disaster scenarios
 - **Rich monitoring** with Cloud SQL insights
 - **Automated backups** with configurable retention
 - **Maintenance windows** with minimal downtime
 
 ### 4. **Development Experience**
+
 - **Type safety** with Prisma ORM
 - **SQL expertise** leverages existing team knowledge
 - **Migration tools** for schema evolution

@@ -33,7 +33,9 @@ export class ImplicitOAuthClient {
    */
   static initiateAuth(): void {
     if (!this.CLIENT_ID) {
-      throw new Error('YNAB Client ID not configured. Please set NEXT_PUBLIC_YNAB_CLIENT_ID environment variable.');
+      throw new Error(
+        'YNAB Client ID not configured. Please set NEXT_PUBLIC_YNAB_CLIENT_ID environment variable.'
+      );
     }
 
     try {
@@ -76,10 +78,13 @@ export class ImplicitOAuthClient {
       // Validate state parameter to prevent CSRF attacks
       const state = params.get('state');
       const storedState = sessionStorage.getItem(this.STATE_STORAGE_KEY);
-      
+
       if (!state || !storedState || state !== storedState) {
         this.cleanupStoredParameters();
-        return { success: false, error: 'Invalid state parameter - possible CSRF attack' };
+        return {
+          success: false,
+          error: 'Invalid state parameter - possible CSRF attack',
+        };
       }
 
       // Clean up stored parameters
@@ -92,7 +97,7 @@ export class ImplicitOAuthClient {
         return {
           success: false,
           error,
-          errorDescription: errorDescription || undefined
+          errorDescription: errorDescription || undefined,
         };
       }
 
@@ -120,7 +125,7 @@ export class ImplicitOAuthClient {
       return {
         success: true,
         accessToken,
-        expiresIn: expiresIn > 0 ? expiresIn : 7200 // Default to 2 hours if not provided
+        expiresIn: expiresIn > 0 ? expiresIn : 7200, // Default to 2 hours if not provided
       };
     } catch (error) {
       console.error('OAuth callback handling error:', error);
@@ -134,12 +139,16 @@ export class ImplicitOAuthClient {
    */
   private static generateSecureState(): string {
     if (typeof crypto === 'undefined' || !crypto.getRandomValues) {
-      throw new Error('Crypto API not available - secure random generation not possible');
+      throw new Error(
+        'Crypto API not available - secure random generation not possible'
+      );
     }
 
     const array = new Uint8Array(32);
     crypto.getRandomValues(array);
-    return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+    return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join(
+      ''
+    );
   }
 
   /**
@@ -147,12 +156,16 @@ export class ImplicitOAuthClient {
    */
   private static generateNonce(): string {
     if (typeof crypto === 'undefined' || !crypto.getRandomValues) {
-      throw new Error('Crypto API not available - secure random generation not possible');
+      throw new Error(
+        'Crypto API not available - secure random generation not possible'
+      );
     }
 
     const array = new Uint8Array(16);
     crypto.getRandomValues(array);
-    return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+    return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join(
+      ''
+    );
   }
 
   /**
@@ -174,8 +187,10 @@ export class ImplicitOAuthClient {
       const payloadPart = parts[1];
       if (!payloadPart) return false;
 
-      const payload = JSON.parse(atob(payloadPart.replace(/-/g, '+').replace(/_/g, '/')));
-      
+      const payload = JSON.parse(
+        atob(payloadPart.replace(/-/g, '+').replace(/_/g, '/'))
+      );
+
       // Check for required JWT claims
       if (!payload.exp || !payload.iat) return false;
 
@@ -224,18 +239,23 @@ export class ImplicitOAuthClient {
     }
 
     if (typeof window !== 'undefined') {
-      if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
+      if (
+        window.location.protocol !== 'https:' &&
+        window.location.hostname !== 'localhost'
+      ) {
         errors.push('OAuth requires HTTPS in production');
       }
 
       if (!window.crypto || !window.crypto.getRandomValues) {
-        errors.push('Crypto API not available - secure random generation not possible');
+        errors.push(
+          'Crypto API not available - secure random generation not possible'
+        );
       }
     }
 
     return {
       valid: errors.length === 0,
-      errors
+      errors,
     };
   }
 

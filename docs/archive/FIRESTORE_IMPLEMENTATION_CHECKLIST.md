@@ -3,17 +3,21 @@
 ## Pre-Implementation Setup
 
 ### 1. Google Cloud Platform Configuration
+
 - [ ] **Enable Firestore API**
+
   ```bash
   gcloud services enable firestore.googleapis.com --project=ynab-analysis-prod
   ```
 
 - [ ] **Create Firestore Database**
+
   ```bash
   gcloud firestore databases create --region=us-central1 --project=ynab-analysis-prod
   ```
 
 - [ ] **Set up Service Account**
+
   ```bash
   # Run scripts/setup-firestore-service-account.sh
   ./scripts/setup-firestore-service-account.sh
@@ -34,7 +38,9 @@
   ```
 
 ### 2. Secret Manager Setup
+
 - [ ] **Create encryption secrets**
+
   ```bash
   ./scripts/setup-firestore-secrets.sh
   ```
@@ -45,7 +51,9 @@
   ```
 
 ### 3. Firestore Indexes
+
 - [ ] **Create composite indexes**
+
   ```bash
   # Deploy indexes from firestore.indexes.json
   firebase deploy --only firestore:indexes
@@ -60,7 +68,9 @@
 ### Week 1: Basic Firestore Integration
 
 #### Day 1-2: Security Layer
+
 - [ ] **Implement FirestoreTokenEncryption class**
+
   - [ ] AES-256 encryption/decryption
   - [ ] Google Secret Manager integration
   - [ ] Key versioning support
@@ -70,12 +80,17 @@
   ```typescript
   // Test encryption roundtrip
   const encrypted = await FirestoreTokenEncryption.encrypt('test-token');
-  const decrypted = await FirestoreTokenEncryption.decrypt(encrypted.encryptedData, encrypted.keyVersion);
+  const decrypted = await FirestoreTokenEncryption.decrypt(
+    encrypted.encryptedData,
+    encrypted.keyVersion
+  );
   assert(decrypted === 'test-token');
   ```
 
 #### Day 3-4: Core Storage Operations
+
 - [ ] **Implement FirestoreTokenStorage class**
+
   - [ ] createSession method
   - [ ] getSession method
   - [ ] updateTokens method
@@ -91,7 +106,9 @@
   ```
 
 #### Day 5-7: Batch Operations
+
 - [ ] **Implement cleanup operations**
+
   - [ ] cleanupExpiredSessions with 500-batch limit
   - [ ] deleteUserData for GDPR compliance
   - [ ] enforceDataRetention for 90-day policy
@@ -106,7 +123,9 @@
 ### Week 2: Cloud Run Integration
 
 #### Day 1-2: Firebase Admin Setup
+
 - [ ] **Implement FirebaseAdminManager**
+
   - [ ] Service account authentication
   - [ ] Firestore connection management
   - [ ] Graceful shutdown handling
@@ -118,7 +137,9 @@
   ```
 
 #### Day 3-4: Performance Optimization
+
 - [ ] **Implement FirestorePerformanceOptimizer**
+
   - [ ] Query result caching
   - [ ] Batch session validation
   - [ ] Connection health checks
@@ -130,7 +151,9 @@
   ```
 
 #### Day 5-7: Cost Management
+
 - [ ] **Implement FirestoreCostOptimizer**
+
   - [ ] Operation tracking
   - [ ] Budget enforcement
   - [ ] Off-peak cleanup scheduling
@@ -145,7 +168,9 @@
 ### Week 3: NextAuth.js Integration
 
 #### Day 1-3: Session Strategy
+
 - [ ] **Implement FirestoreSessionStrategy**
+
   - [ ] OAuth callback handling
   - [ ] Session validation
   - [ ] Token refresh mechanism
@@ -158,7 +183,9 @@
   ```
 
 #### Day 4-5: NextAuth Configuration
+
 - [ ] **Update NextAuth.js configuration**
+
   - [ ] Custom session callbacks
   - [ ] Firestore session integration
   - [ ] Error handling
@@ -171,6 +198,7 @@
   ```
 
 #### Day 6-7: Migration Support
+
 - [ ] **Implement HybridSessionManager**
   - [ ] Support both OAuth and PAT
   - [ ] Gradual migration strategy
@@ -181,7 +209,9 @@
 ### Week 4: GDPR/CCPA Compliance
 
 #### Day 1-2: Data Rights Implementation
+
 - [ ] **User data export**
+
   ```typescript
   // Test data export
   const userData = await storage.exportUserData(userId);
@@ -196,7 +226,9 @@
   ```
 
 #### Day 3-4: Audit Logging
+
 - [ ] **Implement audit trail**
+
   - [ ] All session operations logged
   - [ ] User action tracking
   - [ ] Compliance reporting
@@ -209,6 +241,7 @@
   ```
 
 #### Day 5-7: Data Retention
+
 - [ ] **Automated retention enforcement**
   - [ ] 90-day data retention
   - [ ] Scheduled cleanup jobs
@@ -217,7 +250,9 @@
 ### Week 5: Production Deployment
 
 #### Day 1-2: Security Hardening
+
 - [ ] **Security review**
+
   - [ ] Encryption key rotation testing
   - [ ] Access control validation
   - [ ] Vulnerability assessment
@@ -231,7 +266,9 @@
   ```
 
 #### Day 3-4: Performance Testing
+
 - [ ] **Load testing**
+
   ```bash
   # Test with realistic load
   artillery run load-test-config.yml
@@ -243,13 +280,16 @@
   - [ ] Connection pooling validation
 
 #### Day 5-7: Production Deployment
+
 - [ ] **Staging deployment**
+
   ```bash
   # Deploy to staging environment
   gcloud run deploy ynab-analysis-staging --source .
   ```
 
 - [ ] **Production deployment**
+
   ```bash
   # Deploy to production
   gcloud run deploy ynab-analysis --source .
@@ -264,7 +304,9 @@
 ## Monitoring and Maintenance
 
 ### Daily Operations
+
 - [ ] **Monitor Firestore usage**
+
   - [ ] Check operation counts
   - [ ] Review cost reports
   - [ ] Monitor error rates
@@ -276,7 +318,9 @@
   ```
 
 ### Weekly Maintenance
+
 - [ ] **Cleanup operations**
+
   ```typescript
   // Run weekly cleanup
   const deleted = await storage.cleanupExpiredSessions();
@@ -289,7 +333,9 @@
   - [ ] Cost optimization opportunities
 
 ### Monthly Reviews
+
 - [ ] **Security audit**
+
   - [ ] Access log review
   - [ ] Encryption key rotation
   - [ ] Compliance validation
@@ -302,18 +348,21 @@
 ## Success Metrics
 
 ### Technical KPIs
+
 - [ ] **Session validation latency**: <50ms average
 - [ ] **OAuth success rate**: >99%
 - [ ] **Cleanup efficiency**: >95% expired sessions removed
 - [ ] **Cost efficiency**: <$10/month for 1000 users
 
 ### Security KPIs
+
 - [ ] **Zero security incidents**
 - [ ] **100% encryption coverage**
 - [ ] **GDPR compliance**: <24 hour response time
 - [ ] **Audit trail completeness**: 100%
 
 ### Operational KPIs
+
 - [ ] **Uptime**: >99.9%
 - [ ] **Error rate**: <0.1%
 - [ ] **Deployment frequency**: Weekly releases
@@ -322,12 +371,15 @@
 ## Rollback Plan
 
 ### Emergency Procedures
+
 1. **Immediate rollback to previous version**
+
    ```bash
    gcloud run services update-traffic ynab-analysis --to-revisions=PREVIOUS=100
    ```
 
 2. **Fallback to PAT authentication**
+
    ```bash
    # Enable PAT fallback
    gcloud run services update ynab-analysis --set-env-vars OAUTH_ENABLED=false

@@ -15,7 +15,7 @@ export enum ErrorType {
   CONFIGURATION_ERROR = 'configuration_error',
   DATA_PROCESSING_ERROR = 'data_processing_error',
   API_ERROR = 'api_error',
-  TIMEOUT_ERROR = 'timeout_error'
+  TIMEOUT_ERROR = 'timeout_error',
 }
 
 // Application error class
@@ -41,7 +41,7 @@ export class AppError extends Error {
     this.isRetryable = isRetryable;
     this.userMessage = userMessage;
     this.context = context;
-    
+
     // Maintain proper stack trace
     if (Error.captureStackTrace) {
       Error.captureStackTrace(this, AppError);
@@ -61,31 +61,44 @@ export class SecureErrorHandler {
 
     // Generic error messages for security
     const errorMap: Record<string, string> = {
-      'AUTHENTICATION_FAILED': 'Please check your YNAB access token and try again',
-      'RATE_LIMIT_EXCEEDED': 'Too many requests. Please wait and try again in a few minutes',
-      'NETWORK_ERROR': 'Unable to connect to YNAB. Please check your internet connection',
-      'DATA_PROCESSING_ERROR': 'Error processing budget data. Please try again',
-      'CONFIGURATION_ERROR': 'Application configuration error. Please check your setup',
-      'VALIDATION_ERROR': 'Invalid data provided. Please check your input',
-      'UNKNOWN_ERROR': 'An unexpected error occurred. Please try again'
+      AUTHENTICATION_FAILED:
+        'Please check your YNAB access token and try again',
+      RATE_LIMIT_EXCEEDED:
+        'Too many requests. Please wait and try again in a few minutes',
+      NETWORK_ERROR:
+        'Unable to connect to YNAB. Please check your internet connection',
+      DATA_PROCESSING_ERROR: 'Error processing budget data. Please try again',
+      CONFIGURATION_ERROR:
+        'Application configuration error. Please check your setup',
+      VALIDATION_ERROR: 'Invalid data provided. Please check your input',
+      UNKNOWN_ERROR: 'An unexpected error occurred. Please try again',
     };
 
-    return errorMap[error.name] || errorMap['UNKNOWN_ERROR'] || 'An unexpected error occurred. Please try again.';
+    return (
+      errorMap[error.name] ||
+      errorMap['UNKNOWN_ERROR'] ||
+      'An unexpected error occurred. Please try again.'
+    );
   }
 
   /**
    * Sanitize error message (remove sensitive data)
    */
   private static sanitizeErrorMessage(message: string): string {
-    return message
-      // Remove potential tokens
-      .replace(/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}/gi, '[TOKEN]')
-      // Remove Bearer tokens
-      .replace(/Bearer\s+[^\s]+/gi, 'Bearer [TOKEN]')
-      // Remove monetary amounts
-      .replace(/\$[\d,]+\.?\d*/g, '$[AMOUNT]')
-      // Remove potential API keys
-      .replace(/[A-Za-z0-9]{32,}/g, '[REDACTED]');
+    return (
+      message
+        // Remove potential tokens
+        .replace(
+          /[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}/gi,
+          '[TOKEN]'
+        )
+        // Remove Bearer tokens
+        .replace(/Bearer\s+[^\s]+/gi, 'Bearer [TOKEN]')
+        // Remove monetary amounts
+        .replace(/\$[\d,]+\.?\d*/g, '$[AMOUNT]')
+        // Remove potential API keys
+        .replace(/[A-Za-z0-9]{32,}/g, '[REDACTED]')
+    );
   }
 
   /**
@@ -98,12 +111,16 @@ export class SecureErrorHandler {
       type: error instanceof AppError ? error.type : 'unknown',
       context,
       timestamp: new Date().toISOString(),
-      userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'server',
-      stack: error.stack ? this.sanitizeErrorMessage(error.stack) : undefined
+      userAgent:
+        typeof navigator !== 'undefined' ? navigator.userAgent : 'server',
+      stack: error.stack ? this.sanitizeErrorMessage(error.stack) : undefined,
     };
 
     // Only log in development or if explicitly enabled
-    if (process.env.NODE_ENV === 'development' || process.env.ENABLE_ERROR_LOGGING === 'true') {
+    if (
+      process.env.NODE_ENV === 'development' ||
+      process.env.ENABLE_ERROR_LOGGING === 'true'
+    ) {
       console.error('Application Error:', sanitizedError);
     }
   }
@@ -111,7 +128,10 @@ export class SecureErrorHandler {
   /**
    * Handle API errors from YNAB
    */
-  static handleAPIError(error: unknown, context: string = 'API_CALL'): AppError {
+  static handleAPIError(
+    error: unknown,
+    context: string = 'API_CALL'
+  ): AppError {
     this.logError(error as Error, context);
 
     if (error instanceof AppError) {
@@ -121,7 +141,7 @@ export class SecureErrorHandler {
     // Handle fetch/axios errors
     if (error && typeof error === 'object' && 'response' in error) {
       const response = (error as any).response;
-      
+
       switch (response?.status) {
         case 401:
           return new AppError(
@@ -171,7 +191,10 @@ export class SecureErrorHandler {
     // Handle network errors
     if (error && typeof error === 'object' && 'code' in error) {
       const networkError = error as { code: string };
-      if (networkError.code === 'NETWORK_ERROR' || networkError.code === 'ENOTFOUND') {
+      if (
+        networkError.code === 'NETWORK_ERROR' ||
+        networkError.code === 'ENOTFOUND'
+      ) {
         return new AppError(
           ErrorType.NETWORK_ERROR,
           'Network error',
@@ -194,7 +217,9 @@ export class SecureErrorHandler {
 }
 
 // Predefined error creators for common scenarios
-export const createAuthenticationError = (message: string = 'Authentication failed') =>
+export const createAuthenticationError = (
+  message: string = 'Authentication failed'
+) =>
   new AppError(
     ErrorType.AUTHENTICATION,
     message,
@@ -207,7 +232,7 @@ export const createRateLimitError = (resetTime?: number) =>
   new AppError(
     ErrorType.RATE_LIMIT,
     'Rate limit exceeded',
-    resetTime 
+    resetTime
       ? `Rate limit exceeded. Please wait ${Math.ceil(resetTime / 1000)} seconds and try again.`
       : 'Rate limit exceeded. Please wait and try again.',
     429,

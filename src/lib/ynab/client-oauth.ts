@@ -12,7 +12,7 @@ import {
   YNABMonthResponse,
   YNABCategoryResponse,
   YNABUserResponse,
-  YNABErrorResponse
+  YNABErrorResponse,
 } from '@/types/ynab';
 
 export interface YNABClientConfig {
@@ -44,42 +44,48 @@ export class YNABOAuthClient {
       baseURL: this.baseURL,
       timeout: config.timeout || 30000, // 30 second timeout
       headers: {
-        'Authorization': `Bearer ${this.accessToken}`,
+        Authorization: `Bearer ${this.accessToken}`,
         'Content-Type': 'application/json',
-        'User-Agent': config.userAgent || 'YNAB-Off-Target-Analysis/1.0'
-      }
+        'User-Agent': config.userAgent || 'YNAB-Off-Target-Analysis/1.0',
+      },
     });
 
     // Add request interceptor for rate limiting and logging
     this.client.interceptors.request.use(
-      (requestConfig) => {
+      requestConfig => {
         // Enforce rate limiting before making request
         const endpoint = requestConfig.url || '';
         globalRateLimiter.enforceLimit('ynab-api', endpoint);
-        
+
         // Log request in development
         if (process.env.NODE_ENV === 'development') {
-          console.log(`YNAB OAuth API Request: ${requestConfig.method?.toUpperCase()} ${endpoint}`);
+          console.log(
+            `YNAB OAuth API Request: ${requestConfig.method?.toUpperCase()} ${endpoint}`
+          );
         }
-        
+
         return requestConfig;
       },
-      (error) => {
-        return Promise.reject(SecureErrorHandler.handleAPIError(error, 'REQUEST_INTERCEPTOR'));
+      error => {
+        return Promise.reject(
+          SecureErrorHandler.handleAPIError(error, 'REQUEST_INTERCEPTOR')
+        );
       }
     );
 
     // Add response interceptor for error handling
     this.client.interceptors.response.use(
-      (response) => {
+      response => {
         // Log successful response in development
         if (process.env.NODE_ENV === 'development') {
-          console.log(`YNAB OAuth API Response: ${response.status} ${response.config.url}`);
+          console.log(
+            `YNAB OAuth API Response: ${response.status} ${response.config.url}`
+          );
         }
-        
+
         return response;
       },
-      (error) => {
+      error => {
         // Handle OAuth-specific errors
         if (error.response?.status === 401) {
           throw new AppError(
@@ -89,8 +95,10 @@ export class YNABOAuthClient {
             401
           );
         }
-        
-        return Promise.reject(SecureErrorHandler.handleAPIError(error, 'RESPONSE_INTERCEPTOR'));
+
+        return Promise.reject(
+          SecureErrorHandler.handleAPIError(error, 'RESPONSE_INTERCEPTOR')
+        );
       }
     );
   }
@@ -113,7 +121,8 @@ export class YNABOAuthClient {
    */
   async getUser(): Promise<YNABUserResponse> {
     try {
-      const response: AxiosResponse<YNABUserResponse> = await this.client.get('/user');
+      const response: AxiosResponse<YNABUserResponse> =
+        await this.client.get('/user');
       return response.data;
     } catch (error) {
       throw SecureErrorHandler.handleAPIError(error, 'GET_USER');
@@ -125,7 +134,8 @@ export class YNABOAuthClient {
    */
   async getBudgets(): Promise<YNABBudgetsResponse> {
     try {
-      const response: AxiosResponse<YNABBudgetsResponse> = await this.client.get('/budgets');
+      const response: AxiosResponse<YNABBudgetsResponse> =
+        await this.client.get('/budgets');
       return response.data;
     } catch (error) {
       throw SecureErrorHandler.handleAPIError(error, 'GET_BUDGETS');
@@ -137,11 +147,10 @@ export class YNABOAuthClient {
    */
   async getCategories(budgetId: string): Promise<YNABCategoriesResponse> {
     this.validateBudgetId(budgetId);
-    
+
     try {
-      const response: AxiosResponse<YNABCategoriesResponse> = await this.client.get(
-        `/budgets/${budgetId}/categories`
-      );
+      const response: AxiosResponse<YNABCategoriesResponse> =
+        await this.client.get(`/budgets/${budgetId}/categories`);
       return response.data;
     } catch (error) {
       throw SecureErrorHandler.handleAPIError(error, 'GET_CATEGORIES');
@@ -154,7 +163,7 @@ export class YNABOAuthClient {
   async getMonth(budgetId: string, month: string): Promise<YNABMonthResponse> {
     this.validateBudgetId(budgetId);
     this.validateMonthFormat(month);
-    
+
     try {
       const response: AxiosResponse<YNABMonthResponse> = await this.client.get(
         `/budgets/${budgetId}/months/${month}`
@@ -168,15 +177,20 @@ export class YNABOAuthClient {
   /**
    * Get single category for specific month
    */
-  async getCategory(budgetId: string, month: string, categoryId: string): Promise<YNABCategoryResponse> {
+  async getCategory(
+    budgetId: string,
+    month: string,
+    categoryId: string
+  ): Promise<YNABCategoryResponse> {
     this.validateBudgetId(budgetId);
     this.validateMonthFormat(month);
     this.validateCategoryId(categoryId);
-    
+
     try {
-      const response: AxiosResponse<YNABCategoryResponse> = await this.client.get(
-        `/budgets/${budgetId}/months/${month}/categories/${categoryId}`
-      );
+      const response: AxiosResponse<YNABCategoryResponse> =
+        await this.client.get(
+          `/budgets/${budgetId}/months/${month}/categories/${categoryId}`
+        );
       return response.data;
     } catch (error) {
       throw SecureErrorHandler.handleAPIError(error, 'GET_CATEGORY');
@@ -193,7 +207,10 @@ export class YNABOAuthClient {
   /**
    * Make a custom request with validation
    */
-  async makeRequest<T>(endpoint: string, method: 'GET' | 'POST' | 'PUT' | 'DELETE' = 'GET'): Promise<T> {
+  async makeRequest<T>(
+    endpoint: string,
+    method: 'GET' | 'POST' | 'PUT' | 'DELETE' = 'GET'
+  ): Promise<T> {
     if (!this.isValidEndpoint(endpoint)) {
       throw new AppError(
         ErrorType.VALIDATION_ERROR,
@@ -206,7 +223,7 @@ export class YNABOAuthClient {
     try {
       const response: AxiosResponse<T> = await this.client.request({
         url: endpoint,
-        method
+        method,
       });
       return response.data;
     } catch (error) {
@@ -228,7 +245,8 @@ export class YNABOAuthClient {
     }
 
     // YNAB budget IDs are UUIDs
-    const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const uuidPattern =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (!uuidPattern.test(budgetId)) {
       throw new AppError(
         ErrorType.VALIDATION_ERROR,
@@ -288,7 +306,8 @@ export class YNABOAuthClient {
     }
 
     // YNAB category IDs are UUIDs
-    const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const uuidPattern =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (!uuidPattern.test(categoryId)) {
       throw new AppError(
         ErrorType.VALIDATION_ERROR,
@@ -310,11 +329,13 @@ export class YNABOAuthClient {
       /^\/budgets\/[0-9a-f-]{36}\/categories$/i,
       /^\/budgets\/[0-9a-f-]{36}\/months$/i,
       /^\/budgets\/[0-9a-f-]{36}\/months\/\d{4}-\d{2}-\d{2}$/i,
-      /^\/budgets\/[0-9a-f-]{36}\/months\/\d{4}-\d{2}-\d{2}\/categories\/[0-9a-f-]{36}$/i
+      /^\/budgets\/[0-9a-f-]{36}\/months\/\d{4}-\d{2}-\d{2}\/categories\/[0-9a-f-]{36}$/i,
     ];
 
-    return allowedEndpoints.some(pattern => 
-      typeof pattern === 'string' ? pattern === endpoint : pattern.test(endpoint)
+    return allowedEndpoints.some(pattern =>
+      typeof pattern === 'string'
+        ? pattern === endpoint
+        : pattern.test(endpoint)
     );
   }
 
@@ -330,10 +351,10 @@ export class YNABOAuthClient {
     return {
       baseURL: this.baseURL,
       hasToken: !!this.accessToken,
-      tokenPreview: this.accessToken ? 
-        `${this.accessToken.substring(0, 8)}...${this.accessToken.substring(this.accessToken.length - 8)}` : 
-        'No token',
-      rateLimitStatus: this.getRateLimitStatus()
+      tokenPreview: this.accessToken
+        ? `${this.accessToken.substring(0, 8)}...${this.accessToken.substring(this.accessToken.length - 8)}`
+        : 'No token',
+      rateLimitStatus: this.getRateLimitStatus(),
     };
   }
 }

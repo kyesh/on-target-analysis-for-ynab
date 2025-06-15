@@ -24,7 +24,8 @@ export interface TokenPayload {
 
 export class AuthMiddleware {
   private static readonly BEARER_PREFIX = 'Bearer ';
-  private static readonly TOKEN_PATTERN = /^[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+$/;
+  private static readonly TOKEN_PATTERN =
+    /^[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+$/;
 
   /**
    * Validate authentication from request headers
@@ -33,12 +34,12 @@ export class AuthMiddleware {
     try {
       // Extract Authorization header
       const authHeader = request.headers.get('Authorization');
-      
+
       if (!authHeader) {
         return {
           valid: false,
           error: 'Missing Authorization header',
-          statusCode: 401
+          statusCode: 401,
         };
       }
 
@@ -46,19 +47,20 @@ export class AuthMiddleware {
       if (!authHeader.startsWith(this.BEARER_PREFIX)) {
         return {
           valid: false,
-          error: 'Invalid Authorization header format. Expected: Bearer <token>',
-          statusCode: 401
+          error:
+            'Invalid Authorization header format. Expected: Bearer <token>',
+          statusCode: 401,
         };
       }
 
       // Extract token
       const token = authHeader.substring(this.BEARER_PREFIX.length).trim();
-      
+
       if (!token) {
         return {
           valid: false,
           error: 'Empty token in Authorization header',
-          statusCode: 401
+          statusCode: 401,
         };
       }
 
@@ -68,7 +70,7 @@ export class AuthMiddleware {
         return {
           valid: false,
           error: tokenValidation.error,
-          statusCode: 401
+          statusCode: 401,
         };
       }
 
@@ -78,20 +80,20 @@ export class AuthMiddleware {
         return {
           valid: false,
           error: expirationCheck.error,
-          statusCode: 401
+          statusCode: 401,
         };
       }
 
       return {
         valid: true,
-        token
+        token,
       };
     } catch (error) {
       console.error('Auth validation error:', error);
       return {
         valid: false,
         error: 'Authentication validation failed',
-        statusCode: 500
+        statusCode: 500,
       };
     }
   }
@@ -99,12 +101,15 @@ export class AuthMiddleware {
   /**
    * Validate JWT token format (basic structure check)
    */
-  private static validateTokenFormat(token: string): { valid: boolean; error?: string } {
+  private static validateTokenFormat(token: string): {
+    valid: boolean;
+    error?: string;
+  } {
     // Check basic JWT pattern
     if (!this.TOKEN_PATTERN.test(token)) {
       return {
         valid: false,
-        error: 'Invalid token format - not a valid JWT'
+        error: 'Invalid token format - not a valid JWT',
       };
     }
 
@@ -114,7 +119,7 @@ export class AuthMiddleware {
       if (parts.length !== 3) {
         return {
           valid: false,
-          error: 'Invalid JWT structure - must have 3 parts'
+          error: 'Invalid JWT structure - must have 3 parts',
         };
       }
 
@@ -124,7 +129,7 @@ export class AuthMiddleware {
         if (!part || part.length === 0) {
           return {
             valid: false,
-            error: `Invalid JWT part ${i + 1} - empty`
+            error: `Invalid JWT part ${i + 1} - empty`,
           };
         }
 
@@ -132,7 +137,7 @@ export class AuthMiddleware {
         if (!/^[A-Za-z0-9_-]+$/.test(part)) {
           return {
             valid: false,
-            error: `Invalid JWT part ${i + 1} - not base64url encoded`
+            error: `Invalid JWT part ${i + 1} - not base64url encoded`,
           };
         }
       }
@@ -142,7 +147,7 @@ export class AuthMiddleware {
       if (!payload) {
         return {
           valid: false,
-          error: 'Invalid JWT payload - not valid JSON'
+          error: 'Invalid JWT payload - not valid JSON',
         };
       }
 
@@ -150,7 +155,7 @@ export class AuthMiddleware {
     } catch (error) {
       return {
         valid: false,
-        error: 'Token format validation failed'
+        error: 'Token format validation failed',
       };
     }
   }
@@ -158,14 +163,17 @@ export class AuthMiddleware {
   /**
    * Check if token is expired
    */
-  private static checkTokenExpiration(token: string): { valid: boolean; error?: string } {
+  private static checkTokenExpiration(token: string): {
+    valid: boolean;
+    error?: string;
+  } {
     try {
       const payload = this.parseTokenPayload(token);
-      
+
       if (!payload) {
         return {
           valid: false,
-          error: 'Unable to parse token payload'
+          error: 'Unable to parse token payload',
         };
       }
 
@@ -173,7 +181,7 @@ export class AuthMiddleware {
       if (!payload.exp) {
         return {
           valid: false,
-          error: 'Token missing expiration claim'
+          error: 'Token missing expiration claim',
         };
       }
 
@@ -182,7 +190,7 @@ export class AuthMiddleware {
       if (payload.exp <= now) {
         return {
           valid: false,
-          error: 'Token has expired'
+          error: 'Token has expired',
         };
       }
 
@@ -190,7 +198,7 @@ export class AuthMiddleware {
       if (payload.nbf && payload.nbf > now) {
         return {
           valid: false,
-          error: 'Token not yet valid'
+          error: 'Token not yet valid',
         };
       }
 
@@ -198,7 +206,7 @@ export class AuthMiddleware {
     } catch (error) {
       return {
         valid: false,
-        error: 'Token expiration check failed'
+        error: 'Token expiration check failed',
       };
     }
   }
@@ -216,10 +224,10 @@ export class AuthMiddleware {
 
       // Handle base64url encoding
       const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
-      
+
       // Add padding if needed
-      const padded = base64 + '='.repeat((4 - base64.length % 4) % 4);
-      
+      const padded = base64 + '='.repeat((4 - (base64.length % 4)) % 4);
+
       const decoded = atob(padded);
       return JSON.parse(decoded) as TokenPayload;
     } catch (error) {
@@ -238,13 +246,13 @@ export class AuthMiddleware {
     timeUntilExpiry: number | null;
   } {
     const payload = this.parseTokenPayload(token);
-    
+
     if (!payload || !payload.exp) {
       return {
         payload,
         expiresAt: null,
         isExpired: true,
-        timeUntilExpiry: null
+        timeUntilExpiry: null,
       };
     }
 
@@ -257,7 +265,7 @@ export class AuthMiddleware {
       payload,
       expiresAt,
       isExpired,
-      timeUntilExpiry
+      timeUntilExpiry,
     };
   }
 
@@ -303,7 +311,10 @@ export class AuthMiddleware {
   /**
    * Check if token is close to expiring
    */
-  static isTokenExpiringSoon(token: string, thresholdMinutes: number = 5): boolean {
+  static isTokenExpiringSoon(
+    token: string,
+    thresholdMinutes: number = 5
+  ): boolean {
     try {
       const tokenInfo = this.getTokenInfo(token);
       if (!tokenInfo.timeUntilExpiry) return true;
@@ -321,7 +332,7 @@ export class AuthMiddleware {
   static validateYNABToken(token: string): { valid: boolean; error?: string } {
     try {
       const payload = this.parseTokenPayload(token);
-      
+
       if (!payload) {
         return { valid: false, error: 'Invalid token payload' };
       }
@@ -329,7 +340,7 @@ export class AuthMiddleware {
       // Check for YNAB-specific claims if needed
       // Note: This is a placeholder for any YNAB-specific validation
       // The actual validation would depend on YNAB's token structure
-      
+
       return { valid: true };
     } catch (error) {
       return { valid: false, error: 'YNAB token validation failed' };

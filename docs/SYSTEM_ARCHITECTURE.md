@@ -13,36 +13,42 @@ The On Target Analysis for YNAB application follows a modern, secure web applica
 ### System Components
 
 1. **🔐 OAuth 2.0 Authentication Layer**
+
    - ImplicitOAuthClient for secure authentication flow
    - SecureTokenStorage with memory-first strategy
    - TokenValidator with automatic expiration handling
    - AuthProvider for React context management
 
 2. **🎨 Frontend Application (Next.js)**
+
    - React-based user interface with OAuth integration
    - Client-side data processing
    - Responsive design with Tailwind CSS
    - Secure input components with XSS prevention
 
 3. **🔌 YNAB OAuth API Integration Layer**
+
    - YNABOAuthClient for authenticated API requests
    - AuthMiddleware for Bearer token validation
    - Rate limiting management
    - Response caching with SWR
 
 4. **🧮 Data Processing Engine**
+
    - Category analysis algorithms (7-rule system)
    - Target alignment calculations
    - Currency conversion utilities
    - Data transformation logic
 
 5. **🛡️ Security & Privacy Layer**
+
    - XSS prevention utilities
    - Content Security Policy enforcement
    - Google Cloud Secret Manager integration
    - GDPR/CCPA compliant analytics
 
 6. **📊 Analytics & Monitoring Layer**
+
    - PostHog integration with consent management
    - Performance monitoring hooks
    - Error tracking and reporting
@@ -64,58 +70,58 @@ graph TB
         CategoryView[Category Analysis View]
         Settings[Settings/Config]
     end
-    
+
     subgraph "Application Layer"
         NextJS[Next.js Framework]
         StateManager[State Management]
         Router[App Router]
     end
-    
+
     subgraph "Business Logic Layer"
         DataProcessor[Data Processing Engine]
         Calculator[Target Alignment Calculator]
         Formatter[Currency Formatter]
         Validator[Data Validator]
     end
-    
+
     subgraph "Integration Layer"
         APIClient[YNAB API Client]
         Cache[Response Cache]
         RateLimit[Rate Limiter]
         ErrorHandler[Error Handler]
     end
-    
+
     subgraph "Security Layer"
         EnvManager[Environment Manager]
         TokenValidator[Token Validator]
         SecureStorage[Secure Storage]
     end
-    
+
     subgraph "External Services"
         YNABAPI[YNAB API v1]
     end
-    
+
     UI --> NextJS
     Dashboard --> StateManager
     CategoryView --> StateManager
     Settings --> StateManager
-    
+
     NextJS --> DataProcessor
     StateManager --> Calculator
     DataProcessor --> Formatter
     DataProcessor --> Validator
-    
+
     Calculator --> APIClient
     APIClient --> Cache
     APIClient --> RateLimit
     APIClient --> ErrorHandler
-    
+
     APIClient --> EnvManager
     EnvManager --> TokenValidator
     TokenValidator --> SecureStorage
-    
+
     APIClient --> YNABAPI
-    
+
     style UI fill:#e1f5fe
     style NextJS fill:#f3e5f5
     style DataProcessor fill:#e8f5e8
@@ -137,14 +143,14 @@ sequenceDiagram
     participant API as YNAB API Client
     participant Cache as Response Cache
     participant YNAB as YNAB API
-    
+
     User->>UI: Select Month for Analysis
     UI->>App: Request Monthly Data
     App->>Processor: Process Analysis Request
-    
+
     Processor->>API: Check Cache for Data
     API->>Cache: Query Cached Response
-    
+
     alt Cache Hit
         Cache-->>API: Return Cached Data
         API-->>Processor: Cached Budget Data
@@ -154,7 +160,7 @@ sequenceDiagram
         API->>Cache: Store Response
         API-->>Processor: Fresh Budget Data
     end
-    
+
     Processor->>Processor: Calculate Target Alignment
     Processor->>Processor: Generate Analysis Summary
     Processor-->>App: Processed Analysis Data
@@ -171,11 +177,11 @@ sequenceDiagram
     participant App as Next.js App
     participant Security as Security Layer
     participant YNAB as YNAB API
-    
+
     User->>UI: Enter YNAB Access Token
     UI->>App: Submit Token
     App->>Security: Validate Token Format
-    
+
     alt Valid Format
         Security->>YNAB: GET /user
         alt Valid Token
@@ -201,33 +207,33 @@ sequenceDiagram
 ```mermaid
 graph TD
     App[App Component]
-    
+
     App --> Layout[Layout Component]
     App --> Dashboard[Dashboard Page]
     App --> Categories[Categories Page]
     App --> Settings[Settings Page]
-    
+
     Layout --> Header[Header Component]
     Layout --> Navigation[Navigation Component]
     Layout --> Footer[Footer Component]
-    
+
     Dashboard --> MonthSelector[Month Selector]
     Dashboard --> SummaryCards[Summary Cards]
     Dashboard --> AlignmentChart[Alignment Chart]
     Dashboard --> QuickInsights[Quick Insights]
-    
+
     Categories --> CategoryFilter[Category Filter]
     Categories --> CategoryTable[Category Table]
     Categories --> VarianceChart[Variance Chart]
     Categories --> ExportButton[Export Button]
-    
+
     Settings --> TokenInput[Token Input]
     Settings --> BudgetSelector[Budget Selector]
     Settings --> PreferencesForm[Preferences Form]
-    
+
     SummaryCards --> MetricCard[Metric Card]
     CategoryTable --> CategoryRow[Category Row]
-    
+
     style App fill:#e3f2fd
     style Dashboard fill:#f3e5f5
     style Categories fill:#e8f5e8
@@ -244,34 +250,34 @@ graph LR
         Cache[Response Cache]
         RateLimit[Rate Limiter]
     end
-    
+
     subgraph "Service Layer"
         BudgetService[Budget Service]
         CategoryService[Category Service]
         MonthService[Month Service]
     end
-    
+
     subgraph "Data Layer"
         Transformer[Data Transformer]
         Validator[Data Validator]
         Calculator[Calculation Engine]
     end
-    
+
     Client --> Auth
     Client --> Cache
     Client --> RateLimit
-    
+
     BudgetService --> Client
     CategoryService --> Client
     MonthService --> Client
-    
+
     BudgetService --> Transformer
     CategoryService --> Transformer
     MonthService --> Transformer
-    
+
     Transformer --> Validator
     Transformer --> Calculator
-    
+
     style Client fill:#bbdefb
     style BudgetService fill:#c8e6c9
     style Transformer fill:#ffe0b2
@@ -289,43 +295,43 @@ graph TB
         TypeScript[TypeScript]
         TailwindCSS[Tailwind CSS]
     end
-    
+
     subgraph "Build & Development Tools"
         ESLint[ESLint]
         Prettier[Prettier]
         PostCSS[PostCSS]
         Webpack[Webpack via Next.js]
     end
-    
+
     subgraph "API & Data"
         YNABAPI[YNAB API v1]
         Axios[Axios HTTP Client]
         SWR[SWR for Caching]
     end
-    
+
     subgraph "Utilities"
         DateFns[date-fns]
         Lodash[Lodash]
         Recharts[Recharts for Charts]
     end
-    
+
     NextJS --> React
     NextJS --> TypeScript
     React --> TailwindCSS
-    
+
     NextJS --> ESLint
     NextJS --> Prettier
     NextJS --> PostCSS
     NextJS --> Webpack
-    
+
     NextJS --> Axios
     Axios --> YNABAPI
     NextJS --> SWR
-    
+
     React --> DateFns
     React --> Lodash
     React --> Recharts
-    
+
     style NextJS fill:#000000,color:#ffffff
     style React fill:#61dafb
     style TypeScript fill:#3178c6,color:#ffffff
@@ -344,32 +350,32 @@ graph TD
         InputValidation[Input Validation]
         ErrorHandling[Secure Error Handling]
     end
-    
+
     subgraph "API Security"
         HTTPS[HTTPS Only]
         TokenAuth[Bearer Token Auth]
         RateLimit[Rate Limiting]
         RequestValidation[Request Validation]
     end
-    
+
     subgraph "Client Security"
         CSP[Content Security Policy]
         CORS[CORS Configuration]
         NoSensitiveStorage[No Sensitive Local Storage]
         SecureHeaders[Security Headers]
     end
-    
+
     EnvVars --> TokenStorage
     TokenStorage --> TokenAuth
     InputValidation --> RequestValidation
-    
+
     HTTPS --> TokenAuth
     TokenAuth --> RateLimit
-    
+
     CSP --> CORS
     CORS --> NoSensitiveStorage
     NoSensitiveStorage --> SecureHeaders
-    
+
     style EnvVars fill:#ffcdd2
     style HTTPS fill:#c8e6c9
     style CSP fill:#fff9c4
@@ -386,27 +392,27 @@ graph LR
         HotReload[Hot Reload]
         DevTools[React Dev Tools]
     end
-    
+
     subgraph "Local Storage"
         EnvFile[.env.local]
         NodeModules[node_modules]
         BuildCache[.next cache]
     end
-    
+
     subgraph "External Dependencies"
         YNABAPI[YNAB API]
         NPMRegistry[NPM Registry]
     end
-    
+
     DevServer --> HotReload
     DevServer --> DevTools
     DevServer --> EnvFile
     DevServer --> NodeModules
     DevServer --> BuildCache
-    
+
     DevServer --> YNABAPI
     NodeModules --> NPMRegistry
-    
+
     style DevServer fill:#4caf50,color:#ffffff
     style YNABAPI fill:#2196f3,color:#ffffff
 ```
@@ -416,12 +422,14 @@ graph LR
 ### Optimization Strategies
 
 1. **Client-Side Optimization**
+
    - Component lazy loading
    - Memoization of expensive calculations
    - Virtual scrolling for large lists
    - Image optimization
 
 2. **API Optimization**
+
    - Response caching with TTL
    - Request deduplication
    - Delta requests when available
@@ -442,20 +450,20 @@ graph TD
         MemoryCache[Memory Cache]
         APICache[API Response Cache]
     end
-    
+
     subgraph "Cache Policies"
         TTL[Time-to-Live]
         LRU[Least Recently Used]
         Invalidation[Cache Invalidation]
     end
-    
+
     BrowserCache --> TTL
     MemoryCache --> LRU
     APICache --> Invalidation
-    
+
     TTL --> Invalidation
     LRU --> Invalidation
-    
+
     style BrowserCache fill:#e1f5fe
     style MemoryCache fill:#f3e5f5
     style APICache fill:#e8f5e8
@@ -577,6 +585,7 @@ const lastMonth = budget.lastMonth || budget.last_month;
 ```
 
 **Key Implementation Files:**
+
 - `src/lib/monthly-analysis.ts`: Core calculation engine
 - `src/lib/data-processing.ts`: Utility functions and date handling
 - `src/components/MonthSelector.tsx`: Frontend month selection

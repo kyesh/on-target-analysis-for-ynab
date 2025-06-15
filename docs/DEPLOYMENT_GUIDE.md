@@ -5,12 +5,14 @@ This guide walks you through deploying the On Target Analysis for YNAB applicati
 ## Prerequisites
 
 ### Required Tools
+
 - [Google Cloud CLI (gcloud)](https://cloud.google.com/sdk/docs/install)
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) or Docker Engine
 - [Node.js 18+](https://nodejs.org/) and npm
 - A Google Cloud Platform account with billing enabled
 
 ### Required Accounts and Setup
+
 - **YNAB Developer Account**: Register at [YNAB Developer Settings](https://app.ynab.com/settings/developer)
 - **Google Cloud Project**: Create a new project or use an existing one
 - **PostHog Account** (Optional): Sign up at [PostHog](https://posthog.com) for analytics
@@ -18,6 +20,7 @@ This guide walks you through deploying the On Target Analysis for YNAB applicati
 ## Step 1: YNAB OAuth Application Setup
 
 1. **Register OAuth Application**:
+
    - Go to [YNAB Developer Settings](https://app.ynab.com/settings/developer)
    - Click "New Application"
    - Fill in application details:
@@ -35,6 +38,7 @@ This guide walks you through deploying the On Target Analysis for YNAB applicati
 ## Step 2: Google Cloud Platform Setup
 
 ### 2.1 Project Setup
+
 ```bash
 # Set your project ID
 export GCP_PROJECT_ID=your-project-id
@@ -50,6 +54,7 @@ gcloud config set project $GCP_PROJECT_ID
 ```
 
 ### 2.2 Enable Required APIs
+
 ```bash
 # Enable necessary Google Cloud APIs
 gcloud services enable cloudbuild.googleapis.com
@@ -61,6 +66,7 @@ gcloud services enable secretmanager.googleapis.com
 ## Step 3: Secret Management Setup
 
 ### 3.1 Run the Secret Setup Script
+
 ```bash
 # Make sure you're in the project root directory
 cd /path/to/YNAB_Off_Target_Assignment
@@ -81,6 +87,7 @@ The script will prompt you for the following information:
 6. **PostHog Personal API Key** (Optional): For analytics dashboard features
 
 ### 3.3 Manual Secret Generation
+
 If you prefer to generate secrets manually:
 
 ```bash
@@ -96,6 +103,7 @@ echo "https://your-domain.com" | gcloud secrets create app-url --data-file=-
 ## Step 4: Application Deployment
 
 ### 4.1 Configure Environment Variables
+
 ```bash
 # Set deployment configuration
 export GCP_PROJECT_ID=your-project-id
@@ -106,12 +114,14 @@ export GCP_MAX_INSTANCES=10
 ```
 
 ### 4.2 Run the Deployment Script
+
 ```bash
 # Deploy to Cloud Run
 ./scripts/deploy-gcp.sh
 ```
 
 ### 4.3 Manual Deployment (Alternative)
+
 If you prefer manual deployment:
 
 ```bash
@@ -140,6 +150,7 @@ gcloud run deploy ynab-off-target-analysis \
 ## Step 5: Post-Deployment Configuration
 
 ### 5.1 Update YNAB OAuth Redirect URI
+
 1. Go back to [YNAB Developer Settings](https://app.ynab.com/settings/developer)
 2. Edit your OAuth application
 3. Update the Redirect URI to match your deployed service URL:
@@ -147,6 +158,7 @@ gcloud run deploy ynab-off-target-analysis \
    - Example: `https://ynab-off-target-analysis-abc123-uc.a.run.app/auth/callback`
 
 ### 5.2 Verify Deployment
+
 ```bash
 # Get your service URL
 SERVICE_URL=$(gcloud run services describe ynab-off-target-analysis --region=$GCP_REGION --format="value(status.url)")
@@ -159,6 +171,7 @@ curl $SERVICE_URL/auth/signin
 ```
 
 ### 5.3 Set Up Custom Domain (Optional)
+
 ```bash
 # Map a custom domain
 gcloud run domain-mappings create \
@@ -170,6 +183,7 @@ gcloud run domain-mappings create \
 ## Step 6: Monitoring and Maintenance
 
 ### 6.1 View Logs
+
 ```bash
 # View application logs
 gcloud run logs read ynab-off-target-analysis --region=$GCP_REGION
@@ -179,6 +193,7 @@ gcloud run logs tail ynab-off-target-analysis --region=$GCP_REGION
 ```
 
 ### 6.2 Update Deployment
+
 ```bash
 # Update with new image
 ./scripts/deploy-gcp.sh
@@ -190,6 +205,7 @@ gcloud run services update ynab-off-target-analysis \
 ```
 
 ### 6.3 Manage Secrets
+
 ```bash
 # List secrets
 gcloud secrets list
@@ -206,14 +222,17 @@ gcloud secrets versions access latest --secret=secret-name
 ### Common Issues
 
 1. **OAuth Redirect Mismatch**:
+
    - Ensure YNAB OAuth Redirect URI exactly matches your deployed URL
    - Check for trailing slashes and protocol (https://)
 
 2. **Secret Access Errors**:
+
    - Verify service account has `secretmanager.secretAccessor` role
    - Check secret names match exactly in Cloud Run configuration
 
 3. **Build Failures**:
+
    - Ensure all dependencies are in package.json
    - Check Node.js version compatibility (18+)
    - Verify Docker daemon is running
@@ -224,6 +243,7 @@ gcloud secrets versions access latest --secret=secret-name
    - Ensure port 3000 is exposed and application is listening
 
 ### Debug Commands
+
 ```bash
 # Check service status
 gcloud run services describe ynab-off-target-analysis --region=$GCP_REGION
@@ -242,6 +262,7 @@ docker run -p 3000:3000 test-image
 ## Security Considerations
 
 ### Production Security Checklist
+
 - [ ] All secrets stored in Google Cloud Secret Manager
 - [ ] Service account follows principle of least privilege
 - [ ] HTTPS enforced for all traffic
@@ -250,6 +271,7 @@ docker run -p 3000:3000 test-image
 - [ ] Regular security updates applied
 
 ### Monitoring and Alerts
+
 - Set up Cloud Monitoring alerts for error rates
 - Monitor resource usage and scaling
 - Track authentication failures
@@ -258,11 +280,13 @@ docker run -p 3000:3000 test-image
 ## Cost Optimization
 
 ### Cloud Run Pricing Factors
+
 - **CPU and Memory**: Allocated resources during request processing
 - **Requests**: Number of requests served
 - **Networking**: Egress traffic
 
 ### Optimization Tips
+
 - Use minimum instances = 0 for cost savings
 - Monitor and adjust memory/CPU allocation based on usage
 - Implement request caching where appropriate

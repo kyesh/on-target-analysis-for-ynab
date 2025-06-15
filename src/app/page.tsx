@@ -10,14 +10,18 @@ import { YNABBudget } from '@/types/ynab';
 
 export default function HomePage() {
   const [isConfigValid, setIsConfigValid] = useState<boolean | null>(null);
-  const [connectionStatus, setConnectionStatus] = useState<'checking' | 'connected' | 'error'>('checking');
+  const [connectionStatus, setConnectionStatus] = useState<
+    'checking' | 'connected' | 'error'
+  >('checking');
   const [error, setError] = useState<string | null>(null);
   const [missingVars, setMissingVars] = useState<string[]>([]);
   const [rateLimitStatus, setRateLimitStatus] = useState<any>(null);
   const [selectedBudgetId, setSelectedBudgetId] = useState<string>('');
   const [selectedMonth, setSelectedMonth] = useState<string>('');
   const [selectedBudget, setSelectedBudget] = useState<YNABBudget | null>(null);
-  const [analysis, setAnalysis] = useState<MonthlyAnalysisResponse | null>(null);
+  const [analysis, setAnalysis] = useState<MonthlyAnalysisResponse | null>(
+    null
+  );
 
   useEffect(() => {
     // Check configuration via API route (server-side)
@@ -42,12 +46,17 @@ export default function HomePage() {
             const connectionResponse = await fetch('/api/ynab/test-connection');
             const connectionResult = await connectionResponse.json();
 
-            setConnectionStatus(connectionResult.connected ? 'connected' : 'error');
+            setConnectionStatus(
+              connectionResult.connected ? 'connected' : 'error'
+            );
 
             if (connectionResult.connected) {
               setRateLimitStatus(connectionResult.rateLimit);
             } else {
-              setError(connectionResult.error || 'Unable to connect to YNAB API. Please check your access token.');
+              setError(
+                connectionResult.error ||
+                  'Unable to connect to YNAB API. Please check your access token.'
+              );
             }
           } catch (err) {
             setConnectionStatus('error');
@@ -78,7 +87,9 @@ export default function HomePage() {
       const data = await response.json();
 
       if (data.success) {
-        const budget = data.data.budgets.find((b: YNABBudget) => b.id === selectedBudgetId);
+        const budget = data.data.budgets.find(
+          (b: YNABBudget) => b.id === selectedBudgetId
+        );
         setSelectedBudget(budget || null);
       }
     } catch (error) {
@@ -116,34 +127,43 @@ export default function HomePage() {
     <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100">
       <div className="container mx-auto px-4 py-16">
         {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+        <div className="mb-12 text-center">
+          <h1 className="mb-4 text-4xl font-bold text-gray-900">
             On Target Analysis for YNAB
           </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Analyze your budget target alignment and identify spending patterns that don't align with your financial goals.
+          <p className="mx-auto max-w-2xl text-xl text-gray-600">
+            Analyze your budget target alignment and identify spending patterns
+            that don't align with your financial goals.
           </p>
         </div>
 
         {/* Status Card */}
-        <div className="max-w-2xl mx-auto">
+        <div className="mx-auto max-w-2xl">
           <div className="card">
             <div className="card-header">
-              <h2 className="text-lg font-semibold text-gray-900">System Status</h2>
+              <h2 className="text-lg font-semibold text-gray-900">
+                System Status
+              </h2>
             </div>
             <div className="card-body">
               <div className="space-y-4">
                 {/* Configuration Status */}
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-700">Configuration</span>
-                  <span className={`text-sm font-medium ${isConfigValid ? 'text-success-600' : 'text-danger-600'}`}>
+                  <span className="text-sm font-medium text-gray-700">
+                    Configuration
+                  </span>
+                  <span
+                    className={`text-sm font-medium ${isConfigValid ? 'text-success-600' : 'text-danger-600'}`}
+                  >
                     {isConfigValid ? '✓ Valid' : '✗ Invalid'}
                   </span>
                 </div>
 
                 {/* Connection Status */}
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-700">YNAB API Connection</span>
+                  <span className="text-sm font-medium text-gray-700">
+                    YNAB API Connection
+                  </span>
                   <div className="flex items-center space-x-2">
                     {connectionStatus === 'checking' && (
                       <div className="loading-spinner h-4 w-4"></div>
@@ -157,24 +177,37 @@ export default function HomePage() {
                 {/* Rate Limit Status */}
                 {connectionStatus === 'connected' && rateLimitStatus && (
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-700">API Rate Limit</span>
+                    <span className="text-sm font-medium text-gray-700">
+                      API Rate Limit
+                    </span>
                     <span className="text-sm text-gray-600">
-                      {rateLimitStatus.remaining} / {rateLimitStatus.limit} remaining
+                      {rateLimitStatus.remaining} / {rateLimitStatus.limit}{' '}
+                      remaining
                     </span>
                   </div>
                 )}
 
                 {/* Error Display */}
                 {error && (
-                  <div className="mt-4 p-4 bg-danger-50 border border-danger-200 rounded-md">
+                  <div className="mt-4 rounded-md border border-danger-200 bg-danger-50 p-4">
                     <div className="flex">
                       <div className="flex-shrink-0">
-                        <svg className="h-5 w-5 text-danger-400" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                        <svg
+                          className="h-5 w-5 text-danger-400"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                            clipRule="evenodd"
+                          />
                         </svg>
                       </div>
                       <div className="ml-3">
-                        <h3 className="text-sm font-medium text-danger-800">Configuration Error</h3>
+                        <h3 className="text-sm font-medium text-danger-800">
+                          Configuration Error
+                        </h3>
                         <div className="mt-2 text-sm text-danger-700">
                           <p>{error}</p>
                         </div>
@@ -185,17 +218,30 @@ export default function HomePage() {
 
                 {/* Success State */}
                 {connectionStatus === 'connected' && (
-                  <div className="mt-4 p-4 bg-success-50 border border-success-200 rounded-md">
+                  <div className="mt-4 rounded-md border border-success-200 bg-success-50 p-4">
                     <div className="flex">
                       <div className="flex-shrink-0">
-                        <svg className="h-5 w-5 text-success-400" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        <svg
+                          className="h-5 w-5 text-success-400"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                            clipRule="evenodd"
+                          />
                         </svg>
                       </div>
                       <div className="ml-3">
-                        <h3 className="text-sm font-medium text-success-800">Ready to Analyze</h3>
+                        <h3 className="text-sm font-medium text-success-800">
+                          Ready to Analyze
+                        </h3>
                         <div className="mt-2 text-sm text-success-700">
-                          <p>Your YNAB connection is working. Select a budget below to start analyzing!</p>
+                          <p>
+                            Your YNAB connection is working. Select a budget
+                            below to start analyzing!
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -208,14 +254,16 @@ export default function HomePage() {
 
         {/* Analysis Dashboard */}
         {connectionStatus === 'connected' && (
-          <div className="max-w-7xl mx-auto mt-8 space-y-6">
+          <div className="mx-auto mt-8 max-w-7xl space-y-6">
             {/* Controls */}
             <div className="card">
               <div className="card-header">
-                <h2 className="text-lg font-semibold text-gray-900">Budget Analysis</h2>
+                <h2 className="text-lg font-semibold text-gray-900">
+                  Budget Analysis
+                </h2>
               </div>
               <div className="card-body">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                   <BudgetSelector
                     onBudgetSelect={setSelectedBudgetId}
                     selectedBudgetId={selectedBudgetId}
@@ -229,7 +277,7 @@ export default function HomePage() {
                 </div>
 
                 {analysis && (
-                  <div className="mt-4 pt-4 border-t border-gray-200 flex justify-end">
+                  <div className="mt-4 flex justify-end border-t border-gray-200 pt-4">
                     <ExportButton
                       analysis={analysis}
                       budgetName={selectedBudget?.name}
@@ -250,16 +298,20 @@ export default function HomePage() {
 
         {/* Setup Instructions */}
         {!isConfigValid && (
-          <div className="max-w-2xl mx-auto mt-8">
+          <div className="mx-auto mt-8 max-w-2xl">
             <div className="card">
               <div className="card-header">
-                <h2 className="text-lg font-semibold text-gray-900">Setup Instructions</h2>
+                <h2 className="text-lg font-semibold text-gray-900">
+                  Setup Instructions
+                </h2>
               </div>
               <div className="card-body">
                 <div className="mb-4">
-                  <h3 className="text-sm font-medium text-gray-900 mb-2">Missing Configuration:</h3>
+                  <h3 className="mb-2 text-sm font-medium text-gray-900">
+                    Missing Configuration:
+                  </h3>
                   {missingVars.length > 0 && (
-                    <ul className="list-disc list-inside text-sm text-danger-700 mb-4">
+                    <ul className="mb-4 list-inside list-disc text-sm text-danger-700">
                       {missingVars.map(varName => (
                         <li key={varName}>{varName}</li>
                       ))}
@@ -267,33 +319,56 @@ export default function HomePage() {
                   )}
                 </div>
 
-                <h3 className="text-sm font-medium text-gray-900 mb-2">OAuth Setup Steps:</h3>
-                <ol className="list-decimal list-inside space-y-3 text-sm text-gray-700">
+                <h3 className="mb-2 text-sm font-medium text-gray-900">
+                  OAuth Setup Steps:
+                </h3>
+                <ol className="list-inside list-decimal space-y-3 text-sm text-gray-700">
                   <li>
                     <strong>Register YNAB OAuth Application:</strong>
                     <br />
-                    Visit <a href="https://app.ynab.com/settings/developer" target="_blank" rel="noopener noreferrer" className="text-primary-600 hover:text-primary-700 underline">YNAB Developer Settings</a> and create a new OAuth application
+                    Visit{' '}
+                    <a
+                      href="https://app.ynab.com/settings/developer"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary-600 underline hover:text-primary-700"
+                    >
+                      YNAB Developer Settings
+                    </a>{' '}
+                    and create a new OAuth application
                   </li>
                   <li>
                     <strong>Configure OAuth Redirect URI:</strong>
                     <br />
-                    Set redirect URI to: <code className="bg-gray-100 px-1 py-0.5 rounded text-xs">http://localhost:3000/auth/callback</code>
+                    Set redirect URI to:{' '}
+                    <code className="rounded bg-gray-100 px-1 py-0.5 text-xs">
+                      http://localhost:3000/auth/callback
+                    </code>
                   </li>
                   <li>
                     <strong>Update the .env.local file:</strong>
                     <br />
-                    Add your OAuth Client ID: <code className="bg-gray-100 px-1 py-0.5 rounded text-xs">NEXT_PUBLIC_YNAB_CLIENT_ID=your-client-id</code>
+                    Add your OAuth Client ID:{' '}
+                    <code className="rounded bg-gray-100 px-1 py-0.5 text-xs">
+                      NEXT_PUBLIC_YNAB_CLIENT_ID=your-client-id
+                    </code>
                   </li>
                   <li>
                     <strong>Restart the development server:</strong>
                     <br />
-                    Stop the current server (Ctrl+C) and run <code className="bg-gray-100 px-1 py-0.5 rounded text-xs">npm run dev</code> again
+                    Stop the current server (Ctrl+C) and run{' '}
+                    <code className="rounded bg-gray-100 px-1 py-0.5 text-xs">
+                      npm run dev
+                    </code>{' '}
+                    again
                   </li>
                 </ol>
 
-                <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-md">
+                <div className="mt-4 rounded-md border border-green-200 bg-green-50 p-3">
                   <p className="text-sm text-green-800">
-                    <strong>🔐 Secure OAuth 2.0:</strong> No Personal Access Tokens needed! OAuth provides secure, user-controlled access to your YNAB data.
+                    <strong>🔐 Secure OAuth 2.0:</strong> No Personal Access
+                    Tokens needed! OAuth provides secure, user-controlled access
+                    to your YNAB data.
                   </p>
                 </div>
               </div>
