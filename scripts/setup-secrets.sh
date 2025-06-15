@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Google Cloud Secret Manager Setup Script
-# Securely stores and manages secrets for YNAB Off-Target Analysis application
+# Securely stores and manages secrets for On Target Analysis for YNAB application
 
 set -e  # Exit on any error
 
@@ -14,7 +14,7 @@ NC='\033[0m' # No Color
 
 # Configuration
 PROJECT_ID="${GCP_PROJECT_ID:-}"
-SERVICE_ACCOUNT_NAME="${GCP_SERVICE_ACCOUNT:-ynab-analysis-service-account}"
+SERVICE_ACCOUNT_NAME="${GCP_SERVICE_ACCOUNT:-ontarget-analysis-sa}"
 SERVICE_ACCOUNT_EMAIL="${SERVICE_ACCOUNT_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
 
 # Function to print colored output
@@ -118,8 +118,8 @@ create_service_account() {
         print_warning "Service account $SERVICE_ACCOUNT_EMAIL already exists"
     else
         gcloud iam service-accounts create "$SERVICE_ACCOUNT_NAME" \
-            --display-name="YNAB Analysis Service Account" \
-            --description="Service account for YNAB Off-Target Analysis application"
+            --display-name="On Target Analysis Service Account" \
+            --description="Service account for On Target Analysis for YNAB application"
         
         print_success "Service account created: $SERVICE_ACCOUNT_EMAIL"
     fi
@@ -152,7 +152,7 @@ create_or_update_secret() {
         print_status "Creating new secret: $secret_name"
         echo -n "$secret_value" | gcloud secrets create "$secret_name" \
             --data-file=- \
-            --labels="app=ynab-analysis,environment=production" \
+            --labels="app=on-target-analysis,environment=production" \
             --replication-policy="automatic"
     fi
     
@@ -223,7 +223,7 @@ test_posthog_connectivity() {
 
 # Function to collect all secrets
 collect_secrets() {
-    print_status "Collecting secrets for YNAB Off-Target Analysis..."
+    print_status "Collecting secrets for On Target Analysis for YNAB..."
     echo ""
     
     # YNAB OAuth Client ID
@@ -369,7 +369,7 @@ case "${1:-}" in
         echo ""
         echo "Environment variables:"
         echo "  GCP_PROJECT_ID           Google Cloud Project ID (required)"
-        echo "  GCP_SERVICE_ACCOUNT      Service account name (default: ynab-analysis-service-account)"
+        echo "  GCP_SERVICE_ACCOUNT      Service account name (default: ontarget-analysis-sa)"
         ;;
     "test")
         check_prerequisites
@@ -379,7 +379,7 @@ case "${1:-}" in
     "list")
         check_prerequisites
         print_status "Listing existing secrets..."
-        gcloud secrets list --filter="labels.app=ynab-analysis"
+        gcloud secrets list --filter="labels.app=on-target-analysis"
         ;;
     "setup"|"")
         main

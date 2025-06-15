@@ -13,9 +13,10 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Configuration
-PROJECT_ID="${GCP_PROJECT_ID:-}"
+PROJECT_ID="${GCP_PROJECT_ID:-on-target-analysis-for-ynab}"
 REGION="${GCP_REGION:-us-central1}"
 SERVICE_NAME="${GCP_SERVICE_NAME:-on-target-analysis-for-ynab}"
+SERVICE_ACCOUNT_NAME="${GCP_SERVICE_ACCOUNT:-ontarget-analysis-sa}"
 IMAGE_NAME="gcr.io/${PROJECT_ID}/${SERVICE_NAME}"
 MIN_INSTANCES="${GCP_MIN_INSTANCES:-0}"
 MAX_INSTANCES="${GCP_MAX_INSTANCES:-10}"
@@ -69,31 +70,20 @@ check_prerequisites() {
 validate_config() {
     print_status "Validating configuration..."
     
-    if [ -z "$PROJECT_ID" ]; then
-        print_error "GCP_PROJECT_ID environment variable is not set"
-        print_status "Please set it with: export GCP_PROJECT_ID=your-project-id"
-        exit 1
-    fi
+    print_status "Using GCP Project ID: $PROJECT_ID"
     
-    # Check if .env.local exists
-    if [ ! -f ".env.local" ]; then
-        print_warning ".env.local file not found"
-        print_status "Creating .env.local from .env.example..."
-        cp .env.example .env.local
-        print_warning "Please edit .env.local with your actual values before deploying"
-        exit 1
-    fi
-    
-    # Validate required environment variables in .env.local
-    if ! grep -q "NEXT_PUBLIC_YNAB_CLIENT_ID=" .env.local || grep -q "your_ynab_oauth_client_id_here" .env.local; then
-        print_error "NEXT_PUBLIC_YNAB_CLIENT_ID is not properly configured in .env.local"
-        exit 1
-    fi
-    
-    if ! grep -q "NEXTAUTH_SECRET=" .env.local || grep -q "your_nextauth_secret_here" .env.local; then
-        print_error "NEXTAUTH_SECRET is not properly configured in .env.local"
-        exit 1
-    fi
+    # Check if required secrets exist in Secret Manager
+    print_status "Checking required secrets in Secret Manager..."
+
+    REQUIRED_SECRETS=("ynab-oauth-client-id" "nextauth-secret" "app-url" "posthog-project-key" "posthog-host")
+
+    for secret in "${REQUIRED_SECRETS[@]}"; do
+        if ! gcloud secrets describe "$secret" &> /dev/null; then
+            print_error "Required secret '$secret' not found in Secret Manager"
+            print_status "Please run: ./scripts/setup-production-secrets.sh"
+            exit 1
+        fi
+    done
     
     print_success "Configuration is valid"
 }
@@ -230,18 +220,21 @@ deploy_to_cloud_run() {
         --max-instances=$MAX_INSTANCES \
         --port=3000"
     
-    # Add environment variables from .env.local (excluding sensitive ones)
-    while IFS= read -r line; do
-        if [[ $line =~ ^NEXT_PUBLIC_ ]] && [[ ! $line =~ ^# ]] && [[ $line =~ = ]]; then
-            key=$(echo "$line" | cut -d'=' -f1)
-            value=$(echo "$line" | cut -d'=' -f2-)
-            DEPLOY_CMD="$DEPLOY_CMD --set-env-vars=$key=$value"
-        fi
-    done < .env.local
-    
+    # Add environment variables from GCP Secret Manager
+    DEPLOY_CMD="$DEPLOY_CMD --set-secrets=NEXT_PUBLIC_YNAB_CLIENT_ID=ynab-oauth-client-id:latest"
+    DEPLOY_CMD="$DEPLOY_CMD --set-secrets=NEXTAUTH_SECRET=nextauth-secret:latest"
+    DEPLOY_CMD="$DEPLOY_CMD --set-secrets=NEXT_PUBLIC_APP_URL=app-url:latest"
+    DEPLOY_CMD="$DEPLOY_CMD --set-secrets=NEXT_PUBLIC_POSTHOG_KEY=posthog-project-key:latest"
+    DEPLOY_CMD="$DEPLOY_CMD --set-secrets=NEXT_PUBLIC_POSTHOG_HOST=posthog-host:latest"
+
     # Add production environment variables
     DEPLOY_CMD="$DEPLOY_CMD --set-env-vars=NODE_ENV=production"
     DEPLOY_CMD="$DEPLOY_CMD --set-env-vars=NEXT_TELEMETRY_DISABLED=1"
+    DEPLOY_CMD="$DEPLOY_CMD --set-env-vars=NEXT_PUBLIC_APP_NAME='On Target Analysis for YNAB'"
+
+    # Set service account
+    SERVICE_ACCOUNT_EMAIL="${SERVICE_ACCOUNT_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
+    DEPLOY_CMD="$DEPLOY_CMD --service-account=$SERVICE_ACCOUNT_EMAIL"
     
     # Execute deployment
     eval "$DEPLOY_CMD"
@@ -331,7 +324,7 @@ case "${1:-}" in
         echo "  deploy  Full deployment (default)"
         echo ""
         echo "Environment variables:"
-        echo "  GCP_PROJECT_ID     Google Cloud Project ID (required)"
+        echo "  GCP_PROJECT_ID     Google Cloud Project ID (default: on-target-analysis-for-ynab)"
         echo "  GCP_REGION         Deployment region (default: us-central1)"
         echo "  GCP_SERVICE_NAME   Cloud Run service name (default: on-target-analysis-for-ynab)"
         echo "  GCP_MIN_INSTANCES  Minimum instances (default: 0)"
