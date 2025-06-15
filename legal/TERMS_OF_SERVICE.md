@@ -186,6 +186,6 @@ We comply with applicable data protection laws including GDPR and CCPA.
 
 ---
 
-**By using the YNAB Off-Target Assignment Analysis Service, you acknowledge that you have read, understood, and agree to be bound by these Terms of Service.**
+**By using the On Target Analysis for YNAB Service, you acknowledge that you have read, understood, and agree to be bound by these Terms of Service.**
 
 *This document should be reviewed by qualified legal counsel before implementation.*

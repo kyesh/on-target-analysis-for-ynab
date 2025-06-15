@@ -1,6 +1,6 @@
 # Archived Documentation
 
-This directory contains documentation for features, approaches, and implementation plans that were **considered but not implemented** in the final YNAB Off-Target Assignment Analysis application.
+This directory contains documentation for features, approaches, and implementation plans that were **considered but not implemented** in the final On Target Analysis for YNAB application.
 
 ## 📋 Archive Purpose
 

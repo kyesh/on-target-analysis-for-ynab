@@ -2,7 +2,7 @@
 
 ## Overview
 
-Comprehensive deployment strategy for the YNAB Off-Target Assignment Analysis application using Google Cloud Platform services with automated CI/CD, security, and monitoring.
+Comprehensive deployment strategy for the On Target Analysis for YNAB application using Google Cloud Platform services with automated CI/CD, security, and monitoring.
 
 ## Architecture Overview
 

@@ -2,7 +2,7 @@
 
 ## Overview
 
-This guide covers the comprehensive testing strategy for the YNAB Off-Target Assignment Analysis application, including unit tests, integration tests, and end-to-end testing approaches.
+This guide covers the comprehensive testing strategy for the On Target Analysis for YNAB application, including unit tests, integration tests, and end-to-end testing approaches.
 
 ## Testing Philosophy
 

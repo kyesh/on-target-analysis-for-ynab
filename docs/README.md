@@ -39,6 +39,9 @@ Welcome to the comprehensive documentation for the On Target Analysis for YNAB a
 ### **👥 User Documentation**
 - **[User Guide](USER_GUIDE.md)** - End-user instructions and features
 
+### **☁️ GCP Secret Manager Setup**
+- **[GCP Secret Manager Guide](GCP_SECRET_MANAGER_GUIDE.md)** - Comprehensive setup guide for all required credentials
+
 ## 🎯 **Current Implementation Status**
 
 ### ✅ **PRODUCTION READY FEATURES**
@@ -121,6 +124,7 @@ Documentation prioritizes practical usage and deployment instructions over theor
 2. **Check [Implementation Status](IMPLEMENTATION_STATUS.md)** for current capabilities
 3. **Follow [Deployment Guide](DEPLOYMENT_GUIDE.md)** for production setup
 4. **Review [OAuth Implementation Plan](IMPLICIT_GRANT_IMPLEMENTATION_PLAN.md)** for authentication details
+5. **Setup [GCP Secret Manager](GCP_SECRET_MANAGER_GUIDE.md)** for production credentials
 
 ## 📞 **Support & Questions**
 

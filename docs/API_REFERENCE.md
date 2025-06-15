@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document describes the REST API endpoints for the YNAB Off-Target Assignment Analysis application. All endpoints provide comprehensive budget target alignment analysis with detailed calculation breakdowns using OAuth 2.0 authentication.
+This document describes the REST API endpoints for the On Target Analysis for YNAB application. All endpoints provide comprehensive budget target alignment analysis with detailed calculation breakdowns using OAuth 2.0 authentication.
 
 ## Base URL
 

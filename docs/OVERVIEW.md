@@ -1,8 +1,8 @@
-# YNAB Off-Target Assignment Analysis - Project Overview
+# On Target Analysis for YNAB - Project Overview
 
 ## Executive Summary
 
-The YNAB Off-Target Assignment Analysis application is a secure, privacy-focused Next.js web application that integrates with the YNAB (You Need A Budget) API using OAuth 2.0 authentication to provide detailed analysis of budget target alignment. This production-ready tool helps users understand how their monthly budget assignments compare against their predefined targets, offering insights into budget discipline and financial goal achievement while maintaining the highest security standards.
+The On Target Analysis for YNAB application is a secure, privacy-focused Next.js web application that integrates with the YNAB (You Need A Budget) API using OAuth 2.0 authentication to provide detailed analysis of budget target alignment. This production-ready tool helps users understand how their monthly budget assignments compare against their predefined targets, offering insights into budget discipline and financial goal achievement while maintaining the highest security standards.
 
 ## Project Objectives
 

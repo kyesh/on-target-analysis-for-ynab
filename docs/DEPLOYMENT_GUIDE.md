@@ -1,6 +1,6 @@
 # Google Cloud Platform Deployment Guide
 
-This guide walks you through deploying the YNAB Off-Target Analysis application to Google Cloud Platform using Cloud Run.
+This guide walks you through deploying the On Target Analysis for YNAB application to Google Cloud Platform using Cloud Run.
 
 ## Prerequisites
 
@@ -21,7 +21,7 @@ This guide walks you through deploying the YNAB Off-Target Analysis application 
    - Go to [YNAB Developer Settings](https://app.ynab.com/settings/developer)
    - Click "New Application"
    - Fill in application details:
-     - **Application Name**: YNAB Off-Target Analysis
+     - **Application Name**: On Target Analysis for YNAB
      - **Description**: Budget target analysis and variance tracking
      - **Redirect URI**: `https://your-domain.com/auth/callback` (update with your actual domain)
    - Click "Save"

@@ -1,4 +1,4 @@
-# YNAB Off-Target Assignment Analysis - System Architecture
+# On Target Analysis for YNAB - System Architecture
 
 **Version:** 2.0
 **Last Updated:** June 2025
@@ -6,7 +6,7 @@
 
 ## Architecture Overview
 
-The YNAB Off-Target Assignment Analysis application follows a modern, secure web application architecture using Next.js with OAuth 2.0 authentication, client-side data processing, privacy-first analytics, and cloud-native deployment. The architecture prioritizes security, operational simplicity, and user privacy while maintaining high performance and reliability.
+The On Target Analysis for YNAB application follows a modern, secure web application architecture using Next.js with OAuth 2.0 authentication, client-side data processing, privacy-first analytics, and cloud-native deployment. The architecture prioritizes security, operational simplicity, and user privacy while maintaining high performance and reliability.
 
 ## High-Level Architecture
 
@@ -582,4 +582,4 @@ const lastMonth = budget.lastMonth || budget.last_month;
 - `src/components/MonthSelector.tsx`: Frontend month selection
 - `src/app/api/analysis/monthly/route.ts`: Server-side validation
 
-This system architecture provides a robust, scalable, and secure foundation for the YNAB Off-Target Assignment Analysis application while maintaining simplicity for local development and deployment.
+This system architecture provides a robust, scalable, and secure foundation for the On Target Analysis for YNAB application while maintaining simplicity for local development and deployment.

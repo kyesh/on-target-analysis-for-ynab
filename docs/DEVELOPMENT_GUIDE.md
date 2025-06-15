@@ -2,7 +2,7 @@
 
 ## Overview
 
-This guide provides technical implementation details for developers working on the YNAB Off-Target Assignment Analysis application. It covers the codebase structure, development workflow, testing strategies, and recent architectural decisions.
+This guide provides technical implementation details for developers working on the On Target Analysis for YNAB application. It covers the codebase structure, development workflow, testing strategies, and recent architectural decisions.
 
 ## Core Architecture
 

@@ -1,8 +1,8 @@
-# YNAB Off-Target Assignment Analysis - Security Implementation Plan
+# On Target Analysis for YNAB - Security Implementation Plan
 
 ## Security Overview
 
-This document outlines the comprehensive security strategy for the YNAB Off-Target Assignment Analysis application, focusing on protecting sensitive financial data and ensuring secure API integration.
+This document outlines the comprehensive security strategy for the On Target Analysis for YNAB application, focusing on protecting sensitive financial data and ensuring secure API integration.
 
 ## Security Principles
 
@@ -286,7 +286,7 @@ class SecureErrorHandler {
 NEXT_PUBLIC_YNAB_CLIENT_ID=your-oauth-client-id-here
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 NODE_ENV=development
-NEXT_PUBLIC_APP_NAME=YNAB Off-Target Analysis
+NEXT_PUBLIC_APP_NAME=On Target Analysis for YNAB
 NEXT_PUBLIC_API_BASE_URL=https://api.ynab.com/v1
 
 # Optional configuration
@@ -545,4 +545,4 @@ class SecureAPIClient {
 - [ ] Security headers are properly configured
 - [ ] Default configurations are secure
 
-This comprehensive security plan ensures that the YNAB Off-Target Assignment Analysis application maintains the highest standards of security while providing a seamless user experience.
+This comprehensive security plan ensures that the On Target Analysis for YNAB application maintains the highest standards of security while providing a seamless user experience.

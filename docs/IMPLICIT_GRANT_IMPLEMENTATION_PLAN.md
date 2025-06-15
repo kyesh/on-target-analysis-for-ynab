@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document provides a comprehensive implementation plan for OAuth 2.0 Implicit Grant Flow for the YNAB Off-Target Assignment Analysis application, prioritizing implementation simplicity while maintaining the highest security possible within this approach's constraints.
+This document provides a comprehensive implementation plan for OAuth 2.0 Implicit Grant Flow for the On Target Analysis for YNAB application, prioritizing implementation simplicity while maintaining the highest security possible within this approach's constraints.
 
 ## 1. Security and Storage Analysis
 

@@ -266,7 +266,7 @@ const bills = {
 - **Third-Party Tools**: Reference implementations and community tools
 
 ### Contact and Contributions
-This simplified documentation package was created as part of the YNAB Off-Target Assignment Analysis project. The simplified approach eliminates over-engineering while maintaining accuracy for all practical scenarios.
+This simplified documentation package was created as part of the On Target Analysis for YNAB project. The simplified approach eliminates over-engineering while maintaining accuracy for all practical scenarios.
 
 ---
 

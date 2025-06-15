@@ -1,4 +1,4 @@
-# YNAB Off-Target Assignment Analysis - User Guide
+# On Target Analysis for YNAB - User Guide
 
 **Version:** 1.0  
 **Last Updated:** June 2025  
@@ -6,7 +6,7 @@
 
 ## Overview
 
-The YNAB Off-Target Assignment Analysis application helps you understand how well your monthly budget assignments align with your predefined targets. This guide explains how to use the application effectively.
+The On Target Analysis for YNAB application helps you understand how well your monthly budget assignments align with your predefined targets. This guide explains how to use the application effectively.
 
 ## Getting Started
 

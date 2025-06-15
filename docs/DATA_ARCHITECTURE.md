@@ -1,4 +1,4 @@
-# YNAB Off-Target Assignment Analysis - Data Architecture Design
+# On Target Analysis for YNAB - Data Architecture Design
 
 **Version:** 1.0
 **Last Updated:** June 2025
@@ -6,7 +6,7 @@
 
 ## Overview
 
-This document defines the data models, structures, and flow for the YNAB Off-Target Assignment Analysis application. The application processes YNAB API data to analyze budget target alignment, including detailed calculation methodologies and current implementation details.
+This document defines the data models, structures, and flow for the On Target Analysis for YNAB application. The application processes YNAB API data to analyze budget target alignment, including detailed calculation methodologies and current implementation details.
 
 ## YNAB API Data Models
 

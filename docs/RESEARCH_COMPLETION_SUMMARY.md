@@ -158,7 +158,7 @@ Future-dated goals use calculated monthly amounts:
 
 ## 🎯 Conclusion
 
-**MISSION ACCOMPLISHED**: The YNAB Off-Target Assignment Analysis application now provides the most accurate monthly target calculations possible, perfectly aligned with YNAB's internal monthly funding calculations for ALL goal types, including the previously problematic future-dated goals.
+**MISSION ACCOMPLISHED**: The On Target Analysis for YNAB application now provides the most accurate monthly target calculations possible, perfectly aligned with YNAB's internal monthly funding calculations for ALL goal types, including the previously problematic future-dated goals.
 
 **Research Status**: ✅ COMPLETE  
 **Implementation Status**: ✅ DEPLOYED  

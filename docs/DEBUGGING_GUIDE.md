@@ -2,7 +2,7 @@
 
 ## Overview
 
-This guide explains how to use the comprehensive debugging features in the YNAB Off-Target Assignment Analysis application. The debugging UI provides detailed insights into calculation logic, raw YNAB API data, and step-by-step rule evaluation.
+This guide explains how to use the comprehensive debugging features in the On Target Analysis for YNAB application. The debugging UI provides detailed insights into calculation logic, raw YNAB API data, and step-by-step rule evaluation.
 
 ## Accessing Debug Mode
 

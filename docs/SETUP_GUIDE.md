@@ -1,4 +1,4 @@
-# YNAB Off-Target Assignment Analysis - Setup Guide
+# On Target Analysis for YNAB - Setup Guide
 
 ## Prerequisites
 
@@ -21,7 +21,7 @@ npm install
 2. Go to [YNAB Developer Settings](https://app.ynab.com/settings/developer)
 3. Click **"New Application"**
 4. Fill in application details:
-   - **Application Name**: YNAB Off-Target Analysis (Local)
+   - **Application Name**: On Target Analysis for YNAB (Local)
    - **Description**: Budget target alignment analysis tool
    - **Redirect URI**: `http://localhost:3000/auth/callback`
 5. Click **"Save"**
