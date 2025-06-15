@@ -192,9 +192,9 @@ build_and_push_image() {
     # Configure Docker to use gcloud as a credential helper
     gcloud auth configure-docker
     
-    # Build the Docker image
+    # Build the Docker image for linux/amd64 platform (Cloud Run requirement)
     print_status "Building Docker image: $IMAGE_NAME"
-    docker build -t "$IMAGE_NAME" .
+    docker build --platform linux/amd64 -t "$IMAGE_NAME" .
     
     # Push the image to Google Container Registry
     print_status "Pushing image to Google Container Registry..."
