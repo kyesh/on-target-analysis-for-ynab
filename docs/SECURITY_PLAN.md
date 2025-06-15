@@ -283,18 +283,14 @@ class SecureErrorHandler {
 #### Development Environment
 ```bash
 # .env.local (never commit to version control)
-YNAB_ACCESS_TOKEN=your-personal-access-token-here
+NEXT_PUBLIC_YNAB_CLIENT_ID=your-oauth-client-id-here
+NEXT_PUBLIC_APP_URL=http://localhost:3000
 NODE_ENV=development
 NEXT_PUBLIC_APP_NAME=YNAB Off-Target Analysis
 NEXT_PUBLIC_API_BASE_URL=https://api.ynab.com/v1
 
-# Rate limiting configuration
-RATE_LIMIT_REQUESTS_PER_HOUR=200
-CACHE_TTL_SECONDS=300
-
-# Security configuration
-ENABLE_SECURITY_HEADERS=true
-LOG_LEVEL=info
+# Optional configuration
+NEXT_PUBLIC_ENABLE_DEBUG=false
 ```
 
 #### .gitignore Configuration
@@ -340,28 +336,28 @@ tmp/
 class ConfigValidator {
   static validateEnvironment(): ValidationResult {
     const requiredVars = [
-      'YNAB_ACCESS_TOKEN',
-      'NODE_ENV'
+      'NEXT_PUBLIC_YNAB_CLIENT_ID',
+      'NEXT_PUBLIC_APP_URL'
     ];
-    
+
     const missing = requiredVars.filter(varName => !process.env[varName]);
-    
+
     if (missing.length > 0) {
       return {
         valid: false,
         error: `Missing required environment variables: ${missing.join(', ')}`
       };
     }
-    
-    // Validate token format
-    const tokenValidation = InputValidator.validateToken(process.env.YNAB_ACCESS_TOKEN!);
-    if (!tokenValidation.valid) {
+
+    // Validate client ID format
+    const clientId = process.env.NEXT_PUBLIC_YNAB_CLIENT_ID!;
+    if (!clientId || clientId.length < 10) {
       return {
         valid: false,
-        error: `Invalid YNAB_ACCESS_TOKEN: ${tokenValidation.error}`
+        error: 'Invalid NEXT_PUBLIC_YNAB_CLIENT_ID: must be a valid OAuth client ID'
       };
     }
-    
+
     return { valid: true };
   }
 }
@@ -425,9 +421,9 @@ class SecureAPIClient {
       throw new Error('INVALID_ENDPOINT');
     }
     
-    // Secure headers
+    // Secure headers (token provided by OAuth client)
     const secureHeaders = {
-      'Authorization': `Bearer ${process.env.YNAB_ACCESS_TOKEN}`,
+      'Authorization': `Bearer ${this.accessToken}`,
       'Content-Type': 'application/json',
       'User-Agent': 'YNAB-Off-Target-Analysis/1.0',
       ...options.headers

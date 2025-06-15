@@ -207,11 +207,11 @@ test('shows raw YNAB API fields with proper formatting', () => {
 
 ## API Integration Testing
 
-### YNAB Service Tests
+### YNAB OAuth Client Tests
 
 #### API Response Handling
 ```typescript
-import { YNABService } from '../lib/ynab-service';
+import { YNABOAuthClient } from '../lib/ynab/client-oauth';
 
 test('handles successful budget fetch', async () => {
   const mockResponse = createMockBudgetResponse();
@@ -220,10 +220,11 @@ test('handles successful budget fetch', async () => {
     json: () => Promise.resolve(mockResponse),
   });
 
-  const budgets = await YNABService.getBudgets();
-  
-  expect(budgets).toHaveLength(1);
-  expect(budgets[0].name).toBe('Test Budget');
+  const client = new YNABOAuthClient('mock-oauth-token');
+  const budgets = await client.getBudgets();
+
+  expect(budgets.data.budgets).toHaveLength(1);
+  expect(budgets.data.budgets[0].name).toBe('Test Budget');
 });
 
 test('handles API rate limiting', async () => {
@@ -233,7 +234,8 @@ test('handles API rate limiting', async () => {
     statusText: 'Too Many Requests',
   });
 
-  await expect(YNABService.getBudgets()).rejects.toThrow('Rate limit exceeded');
+  const client = new YNABOAuthClient('mock-oauth-token');
+  await expect(client.getBudgets()).rejects.toThrow('Rate limit exceeded');
 });
 ```
 
@@ -242,7 +244,8 @@ test('handles API rate limiting', async () => {
 test('handles network errors gracefully', async () => {
   global.fetch = jest.fn().mockRejectedValue(new Error('Network error'));
 
-  await expect(YNABService.getBudgets()).rejects.toThrow('Network error');
+  const client = new YNABOAuthClient('mock-oauth-token');
+  await expect(client.getBudgets()).rejects.toThrow('Network error');
 });
 
 test('handles invalid API responses', async () => {
@@ -251,7 +254,8 @@ test('handles invalid API responses', async () => {
     json: () => Promise.resolve({ invalid: 'response' }),
   });
 
-  await expect(YNABService.getBudgets()).rejects.toThrow('Invalid response format');
+  const client = new YNABOAuthClient('mock-oauth-token');
+  await expect(client.getBudgets()).rejects.toThrow('Invalid response format');
 });
 ```
 

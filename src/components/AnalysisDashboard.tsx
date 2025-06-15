@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { MonthlyAnalysisResponse } from '@/types/analysis';
+import { DashboardSummary } from '@/types/analysis';
 import { formatCurrency } from '@/lib/data-processing';
 import { CategoryDebugPanel, DebugToggle } from './CategoryDebugPanel';
 import { MonthlyOverview } from './MonthlyOverview';

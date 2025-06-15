@@ -14,8 +14,8 @@ function validateMonthInBudgetRange(month: string, budget: any): { isValid: bool
   }
 
   // Handle both camelCase and snake_case property names
-  const firstMonth = budget.firstMonth || budget.first_month;
-  const lastMonth = budget.lastMonth || budget.last_month;
+  const firstMonth = budget.first_month;
+  const lastMonth = budget.last_month;
 
   // Validate budget has required date properties
   if (!firstMonth || !lastMonth) {
@@ -59,8 +59,8 @@ function validateMonthInBudgetRange(month: string, budget: any): { isValid: bool
  */
 function getSafeDefaultMonth(budget: any): string {
   // Handle both camelCase and snake_case property names
-  const firstMonth = budget.firstMonth || budget.first_month;
-  const lastMonth = budget.lastMonth || budget.last_month;
+  const firstMonth = budget.first_month;
+  const lastMonth = budget.last_month;
 
   // Validate budget has required date properties
   if (!firstMonth || !lastMonth) {
@@ -196,8 +196,8 @@ export async function GET(request: NextRequest) {
             message: validation.error,
             statusCode: 400,
             availableRange: {
-              firstMonth: budget.firstMonth || budget.first_month,
-              lastMonth: budget.lastMonth || budget.last_month,
+              firstMonth: budget.first_month,
+              lastMonth: budget.last_month,
             }
           }
         }, { status: 400 });
@@ -230,11 +230,11 @@ export async function GET(request: NextRequest) {
         budgetName: budget.name,
         month: analysisMonth,
         budgetRange: {
-          firstMonth: budget.firstMonth || budget.first_month,
-          lastMonth: budget.lastMonth || budget.last_month,
+          firstMonth: budget.first_month,
+          lastMonth: budget.last_month,
         },
         generatedAt: new Date().toISOString(),
-        cacheStats: YNABService.getCacheStats(),
+        rateLimitStatus: ynabClient.getRateLimitStatus(),
       }
     });
 
@@ -335,8 +335,8 @@ export async function POST(request: NextRequest) {
             message: validation.error,
             statusCode: 400,
             availableRange: {
-              firstMonth: budget.firstMonth || budget.first_month,
-              lastMonth: budget.lastMonth || budget.last_month,
+              firstMonth: budget.first_month,
+              lastMonth: budget.last_month,
             }
           }
         }, { status: 400 });
@@ -370,8 +370,8 @@ export async function POST(request: NextRequest) {
         budgetName: budget.name,
         month: analysisMonth,
         budgetRange: {
-          firstMonth: budget.firstMonth || budget.first_month,
-          lastMonth: budget.lastMonth || budget.last_month,
+          firstMonth: budget.first_month,
+          lastMonth: budget.last_month,
         },
         config,
         generatedAt: new Date().toISOString(),

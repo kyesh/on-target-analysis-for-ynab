@@ -122,7 +122,7 @@ A comprehensive dashboard and analysis tool that provides:
 ### YNAB API Constraints
 - **Rate Limiting**: 200 requests per hour per access token
 - **Data Format**: JSON with milliunits for currency
-- **Authentication**: Personal Access Token (for individual use)
+- **Authentication**: OAuth 2.0 Implicit Grant Flow
 - **Timezone**: All dates in UTC
 
 ### Development Constraints

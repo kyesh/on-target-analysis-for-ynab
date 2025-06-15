@@ -5,7 +5,7 @@ import BudgetSelector from '@/components/BudgetSelector';
 import MonthSelector from '@/components/MonthSelector';
 import AnalysisDashboard from '@/components/AnalysisDashboard';
 import ExportButton from '@/components/ExportButton';
-import { MonthlyAnalysisResponse } from '@/types/analysis';
+import { DashboardSummary } from '@/types/analysis';
 import { YNABBudget } from '@/types/ynab';
 
 export default function HomePage() {
@@ -223,8 +223,8 @@ export default function HomePage() {
                   <MonthSelector
                     onMonthSelect={setSelectedMonth}
                     selectedMonth={selectedMonth}
-                    budgetFirstMonth={selectedBudget?.firstMonth}
-                    budgetLastMonth={selectedBudget?.lastMonth}
+                    budgetFirstMonth={selectedBudget?.first_month}
+                    budgetLastMonth={selectedBudget?.last_month}
                   />
                 </div>
 

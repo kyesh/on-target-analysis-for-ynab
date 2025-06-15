@@ -28,16 +28,18 @@ npm install
 6. **Copy the Client ID** (you'll need this for configuration)on't be able to see it again)
 
 #### Configure Environment Variables
-1. Open the `.env.local` file in the project root
-2. Replace the placeholder token with your actual token:
+1. Create a `.env.local` file in the project root
+2. Add your YNAB OAuth Client ID:
 
 ```env
-YNAB_ACCESS_TOKEN=your-actual-token-here
+NEXT_PUBLIC_YNAB_CLIENT_ID=your-client-id-here
+NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
 **Example:**
 ```env
-YNAB_ACCESS_TOKEN=EXAMPLE-TOKEN-DO-NOT-USE-REAL-TOKEN-HERE
+NEXT_PUBLIC_YNAB_CLIENT_ID=abc123def456ghi789
+NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
 ### 3. Start the Application
@@ -49,10 +51,10 @@ npm run dev
 ### 4. Verify Setup
 
 1. Open [http://localhost:3000](http://localhost:3000) in your browser
-2. Check the **System Status** section
-3. Verify you see:
-   - ✅ **Configuration: Valid**
-   - ✅ **YNAB API Connection: Connected**
+2. Click **"Connect to YNAB"** to start the OAuth flow
+3. You'll be redirected to YNAB to authorize the application
+4. After authorization, you'll be redirected back to the application
+5. Verify you can see your budgets and select one for analysis
 
 ## Troubleshooting
 
@@ -63,30 +65,31 @@ npm run dev
 
 **Solution:**
 1. Ensure `.env.local` exists in the project root
-2. Verify it contains: `YNAB_ACCESS_TOKEN=your-token-here`
+2. Verify it contains: `NEXT_PUBLIC_YNAB_CLIENT_ID=your-client-id-here`
 3. Restart the development server: `npm run dev`
 
-#### "Invalid YNAB access token format"
-**Problem:** The token format is incorrect.
+#### "OAuth authorization failed"
+**Problem:** The OAuth flow is not working correctly.
 
 **Solution:**
-1. Verify your token is a 43-character alphanumeric string (like: `EXAMPLE-TOKEN-DO-NOT-USE-REAL-TOKEN-HERE`)
-2. Ensure there are no extra spaces or characters
-3. Generate a new token if needed
+1. Verify your Client ID is correct in `.env.local`
+2. Ensure the redirect URI in YNAB matches exactly: `http://localhost:3000/auth/callback`
+3. Check that your YNAB OAuth application is active
+4. Clear browser cache and try again
 
 #### "Unable to connect to YNAB API"
-**Problem:** The token is invalid or expired.
+**Problem:** Authentication or API connection issues.
 
 **Solutions:**
-1. **Check token validity:**
+1. **Re-authorize with YNAB:**
+   - Click "Connect to YNAB" again to restart the OAuth flow
+   - Ensure you grant all requested permissions
+
+2. **Check OAuth application:**
    - Go to [YNAB Developer Settings](https://app.ynab.com/settings/developer)
-   - Verify your token is still listed and active
-   
-2. **Generate new token:**
-   - Delete the old token in YNAB settings
-   - Create a new token
-   - Update `.env.local` with the new token
-   
+   - Verify your application is still active
+   - Ensure the redirect URI is correct
+
 3. **Check internet connection:**
    - Ensure you can access https://api.ynab.com in your browser
 
@@ -96,8 +99,8 @@ npm run dev
 **Solution:**
 1. Check that all required variables are set:
    ```env
-   YNAB_ACCESS_TOKEN=your-token-here
-   NODE_ENV=development
+   NEXT_PUBLIC_YNAB_CLIENT_ID=your-client-id-here
+   NEXT_PUBLIC_APP_URL=http://localhost:3000
    ```
 2. Restart the development server
 3. Clear browser cache if needed
@@ -136,7 +139,8 @@ npm run dev
 
 | Variable | Description | Example |
 |----------|-------------|---------|
-| `YNAB_ACCESS_TOKEN` | Your YNAB Personal Access Token | `EXAMPLE-TOKEN-DO-NOT-USE-REAL-TOKEN-HERE` |
+| `NEXT_PUBLIC_YNAB_CLIENT_ID` | Your YNAB OAuth Client ID | `abc123def456ghi789` |
+| `NEXT_PUBLIC_APP_URL` | Application URL for OAuth redirects | `http://localhost:3000` |
 
 ### Optional Variables
 
@@ -144,33 +148,31 @@ npm run dev
 |----------|---------|-------------|
 | `NODE_ENV` | `development` | Environment mode |
 | `NEXT_PUBLIC_API_BASE_URL` | `https://api.ynab.com/v1` | YNAB API base URL |
-| `RATE_LIMIT_REQUESTS_PER_HOUR` | `200` | API rate limit |
-| `CACHE_TTL_SECONDS` | `300` | Cache time-to-live |
-| `ENABLE_SECURITY_HEADERS` | `true` | Enable security headers |
-| `LOG_LEVEL` | `info` | Logging level |
+| `NEXT_PUBLIC_ENABLE_DEBUG` | `false` | Enable debug mode |
 
 ## Security Notes
 
-### Token Security
+### OAuth Security
 - **Never commit** your `.env.local` file to version control
-- **Don't share** your Personal Access Token
-- **Regenerate tokens** if compromised
-- **Use environment variables** only for token storage
+- **Don't share** your OAuth Client ID publicly (though it's less sensitive than tokens)
+- **Revoke OAuth access** in YNAB settings if compromised
+- **Use environment variables** for configuration
 
 ### Local Development
 - The application runs locally only
 - No data is sent to external servers (except YNAB API)
 - All processing happens on your machine
-- Tokens are stored in environment variables only
+- OAuth tokens are stored securely in browser memory only
 
 ## Next Steps
 
 Once setup is complete:
 
-1. **Verify Connection** - Ensure the status page shows "Connected"
-2. **Explore Features** - The dashboard will be available soon
-3. **Review Documentation** - Check other docs for feature details
-4. **Report Issues** - Use GitHub issues for any problems
+1. **Authorize with YNAB** - Complete the OAuth flow to connect your account
+2. **Select a Budget** - Choose which budget to analyze
+3. **Explore Features** - Use the dashboard to analyze your budget targets
+4. **Review Documentation** - Check other docs for feature details
+5. **Report Issues** - Use GitHub issues for any problems
 
 ## Getting Help
 
@@ -183,9 +185,10 @@ Once setup is complete:
 ### Common Solutions
 - Restart the development server
 - Clear browser cache and cookies
-- Regenerate YNAB access token
+- Re-authorize with YNAB OAuth
 - Check internet connection
 - Verify YNAB account is active
+- Ensure OAuth application is configured correctly
 
 ### Still Need Help?
 - Review the [troubleshooting section](#troubleshooting)

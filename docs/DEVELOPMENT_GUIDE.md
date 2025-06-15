@@ -33,10 +33,10 @@ src/
 │   ├── BudgetSelector.tsx
 │   └── MonthSelector.tsx
 ├── lib/                   # Core utilities
+│   ├── auth/              # Authentication middleware
 │   ├── data-processing.ts # Analysis calculations
 │   ├── monthly-analysis.ts # Month processing
-│   ├── ynab-client.ts     # YNAB API client
-│   └── ynab-service.ts    # Service layer
+│   └── ynab/              # YNAB OAuth client
 ├── types/                 # TypeScript definitions
 │   ├── analysis.ts        # Analysis types
 │   └── ynab.ts           # YNAB API types
@@ -295,28 +295,24 @@ const lastMonth = budget.lastMonth || budget.last_month;
 
 ### Service Layer Architecture
 
-**YNABClient** (`src/lib/ynab-client.ts`):
-- Low-level HTTP client for YNAB API
-- Handles authentication and rate limiting
-- Provides raw API responses
+**YNABOAuthClient** (`src/lib/ynab/client-oauth.ts`):
+- OAuth-based HTTP client for YNAB API
+- Handles authentication with OAuth tokens
+- Provides rate limiting and error handling
+- Direct API interaction without caching layer
 
-**YNABService** (`src/lib/ynab-service.ts`):
-- High-level service layer
-- Implements caching (5-10 minute TTL)
-- Provides application-specific methods
-
-### Caching Strategy
+### OAuth Authentication Flow
 
 ```typescript
-class YNABService {
-  private static cache = new Map<string, { data: any; timestamp: number; ttl: number }>();
-  
-  private static getCacheKey(endpoint: string, params?: any): string {
-    return params ? `${endpoint}:${JSON.stringify(params)}` : endpoint;
+class YNABOAuthClient {
+  constructor(private accessToken: string) {
+    // Token validation and client setup
   }
-  
-  private static isExpired(item: { timestamp: number; ttl: number }): boolean {
-    return Date.now() - item.timestamp > item.ttl;
+
+  async getBudgets(): Promise<YNABBudgetsResponse> {
+    // Direct API calls with OAuth token
+    const response = await this.client.get('/budgets');
+    return response.data;
   }
 }
 ```
@@ -412,7 +408,8 @@ describe('getNextMonth', () => {
 ### Environment Variables
 
 ```bash
-YNAB_ACCESS_TOKEN=your_token_here
+NEXT_PUBLIC_YNAB_CLIENT_ID=your_client_id_here
+NEXT_PUBLIC_APP_URL=https://your-domain.com
 NODE_ENV=production
 ```
 
