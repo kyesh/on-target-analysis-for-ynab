@@ -299,6 +299,8 @@ export class SecureTokenStorage {
       if (parts.length !== 3) return null;
 
       const payload = parts[1];
+      if (!payload) return null;
+
       // Handle base64url encoding
       const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
       const decoded = atob(base64);

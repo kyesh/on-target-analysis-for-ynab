@@ -76,7 +76,7 @@ export function analyzeMonth(
   const categoriesUnderTarget = processedCategories.filter(cat => cat.alignmentStatus === 'under-target').length;
   const categoriesWithoutTargets = processedCategories.filter(cat => cat.alignmentStatus === 'no-target').length;
 
-  return {
+  const analysis = {
     month: monthData.month,
     budgetId,
     budgetName,
@@ -97,8 +97,14 @@ export function analyzeMonth(
     categoriesOverTarget,
     categoriesUnderTarget,
     categoriesWithoutTargets,
+    budgetDisciplineRating: 'Fair' as BudgetDisciplineRating, // Will be calculated
     lastUpdated: new Date().toISOString(),
   };
+
+  // Calculate and set the budget discipline rating
+  analysis.budgetDisciplineRating = calculateBudgetDisciplineRating(analysis);
+
+  return analysis;
 }
 
 /**

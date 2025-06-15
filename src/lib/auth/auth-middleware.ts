@@ -212,6 +212,8 @@ export class AuthMiddleware {
       if (parts.length !== 3) return null;
 
       const payload = parts[1];
+      if (!payload) return null;
+
       // Handle base64url encoding
       const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
       
@@ -280,7 +282,7 @@ export class AuthMiddleware {
       if (parts.length !== 3) return '[INVALID_TOKEN]';
 
       // Show first 8 chars of header, hide payload, show first 8 chars of signature
-      return `${parts[0].substring(0, 8)}...[PAYLOAD_HIDDEN]...${parts[2].substring(0, 8)}...`;
+      return `${parts[0]?.substring(0, 8) || ''}...[PAYLOAD_HIDDEN]...${parts[2]?.substring(0, 8) || ''}...`;
     } catch {
       return '[TOKEN_SANITIZATION_FAILED]';
     }

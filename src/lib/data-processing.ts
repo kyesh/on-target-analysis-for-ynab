@@ -84,6 +84,20 @@ export function calculateTargetPercentage(assigned: number, target: number | nul
 
 
 /**
+ * Type-safe wrapper for counting day occurrences with optional goal_day
+ * @param year - Year (e.g., 2024)
+ * @param month - Month (1-12)
+ * @param goalDay - Optional goal day from YNAB category
+ * @returns Number of occurrences or 1 as fallback
+ */
+function safeCountDayOccurrences(year: number, month: number, goalDay: number | null | undefined): number {
+  if (typeof goalDay === 'number') {
+    return countDayOccurrencesInMonth(year, month, goalDay);
+  }
+  return 1; // Fallback to 1 occurrence if goal_day is not valid
+}
+
+/**
  * Count occurrences of a specific day of the week in a given month
  * @param year - Year (e.g., 2024)
  * @param month - Month (1-12)
@@ -141,8 +155,16 @@ export function calculateNeededThisMonth(category: YNABCategory, currentMonth?: 
 
     try {
       // Parse month (YYYY-MM-DD format)
-      const [year, month] = currentMonth.split('-').map(Number);
-      const dayCount = countDayOccurrencesInMonth(year, month, category.goal_day!);
+      const parts = currentMonth.split('-');
+      if (parts.length < 2) {
+        return category.goal_target;
+      }
+      const year = parseInt(parts[0]!, 10);
+      const month = parseInt(parts[1]!, 10);
+      if (isNaN(year) || isNaN(month)) {
+        return category.goal_target;
+      }
+      const dayCount = safeCountDayOccurrences(year, month, category.goal_day);
       return Math.round(category.goal_target * dayCount);
     } catch (error) {
       console.warn('Error calculating weekly goal for month:', currentMonth, error);
@@ -242,8 +264,30 @@ export function calculateNeededThisMonthWithRule(
     }
 
     try {
-      const [year, month] = currentMonth.split('-').map(Number);
-      const dayCount = countDayOccurrencesInMonth(year, month, category.goal_day!);
+      const parts = currentMonth.split('-');
+      if (parts.length < 2) {
+        return {
+          amount: category.goal_target,
+          rule: "Rule 2: Weekly NEED (invalid month format)",
+          debugInfo: {
+            calculation: `goal_target = ${category.goal_target} (invalid month format)`,
+            currentMonth: currentMonth
+          }
+        };
+      }
+      const year = parseInt(parts[0]!, 10);
+      const month = parseInt(parts[1]!, 10);
+      if (isNaN(year) || isNaN(month)) {
+        return {
+          amount: category.goal_target,
+          rule: "Rule 2: Weekly NEED (invalid date)",
+          debugInfo: {
+            calculation: `goal_target = ${category.goal_target} (invalid date parsing)`,
+            currentMonth: currentMonth
+          }
+        };
+      }
+      const dayCount = safeCountDayOccurrences(year, month, category.goal_day);
       const amount = Math.round(category.goal_target * dayCount);
       return {
         amount,

@@ -98,6 +98,7 @@ export function usePageLoadTracking(pageName: string) {
     // Track when page is fully loaded
     if (document.readyState === 'complete') {
       trackPageLoad();
+      return undefined;
     } else {
       window.addEventListener('load', trackPageLoad);
       return () => window.removeEventListener('load', trackPageLoad);
@@ -186,7 +187,7 @@ export function useInteractionPerformanceTracking() {
 export function useNetworkPerformanceTracking() {
   useEffect(() => {
     if (typeof window === 'undefined' || !('navigator' in window)) {
-      return;
+      return undefined;
     }
 
     // Track network information if available
@@ -224,6 +225,8 @@ export function useNetworkPerformanceTracking() {
         connection.removeEventListener('change', handleNetworkChange);
       };
     }
+
+    return undefined;
   }, []);
 }
 

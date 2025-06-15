@@ -57,6 +57,8 @@ export default function MonthSelector({
       }, 0);
       return () => clearTimeout(timer);
     }
+    // Return undefined for cases where no cleanup is needed
+    return undefined;
   }, [currentMonth, selectedMonth, budgetFirstMonth, budgetLastMonth, onMonthSelect]);
 
   const formatMonthDisplay = (monthStr: string): string => {

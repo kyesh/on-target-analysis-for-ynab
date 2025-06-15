@@ -171,7 +171,10 @@ export class ImplicitOAuthClient {
       }
 
       // Try to decode the payload to ensure it's valid JSON
-      const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+      const payloadPart = parts[1];
+      if (!payloadPart) return false;
+
+      const payload = JSON.parse(atob(payloadPart.replace(/-/g, '+').replace(/_/g, '/')));
       
       // Check for required JWT claims
       if (!payload.exp || !payload.iat) return false;
