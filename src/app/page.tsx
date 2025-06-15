@@ -6,7 +6,7 @@ import MonthSelector from '@/components/MonthSelector';
 import AnalysisDashboard from '@/components/AnalysisDashboard';
 import ExportButton from '@/components/ExportButton';
 import { DashboardSummary, MonthlyAnalysisResponse } from '@/types/analysis';
-import { YNABBudget } from '@/types/ynab';
+import { SafeBudget } from '@/types/ynab';
 import { ApiClient } from '@/lib/api/client';
 
 export default function HomePage() {
@@ -19,7 +19,7 @@ export default function HomePage() {
   const [rateLimitStatus, setRateLimitStatus] = useState<any>(null);
   const [selectedBudgetId, setSelectedBudgetId] = useState<string>('');
   const [selectedMonth, setSelectedMonth] = useState<string>('');
-  const [selectedBudget, setSelectedBudget] = useState<YNABBudget | null>(null);
+  const [selectedBudget, setSelectedBudget] = useState<SafeBudget | null>(null);
   const [analysis, setAnalysis] = useState<MonthlyAnalysisResponse | null>(
     null
   );
@@ -71,7 +71,7 @@ export default function HomePage() {
 
       if (data.success) {
         const budget = data.data.budgets.find(
-          (b: YNABBudget) => b.id === selectedBudgetId
+          (b: SafeBudget) => b.id === selectedBudgetId
         );
         setSelectedBudget(budget || null);
       }
