@@ -24,47 +24,30 @@ export default function HomePage() {
   );
 
   useEffect(() => {
-    // Check configuration via API route (server-side)
+    // Check configuration via health API route (server-side)
     const checkConfiguration = async () => {
       try {
-        const response = await fetch('/api/config');
-        const configStatus = await response.json();
+        const response = await fetch('/api/health');
+        const healthStatus = await response.json();
 
-        setIsConfigValid(configStatus.valid);
+        // Extract configuration status from health response
+        const configValid = healthStatus.checks?.oauth_config === true;
+        setIsConfigValid(configValid);
 
-        if (!configStatus.valid) {
-          setError(configStatus.error || 'Configuration validation failed');
-          setMissingVars(configStatus.missingVars || []);
+        if (!configValid) {
+          setError('OAuth configuration is invalid. Please check your YNAB Client ID.');
+          setMissingVars(['NEXT_PUBLIC_YNAB_CLIENT_ID']);
           setConnectionStatus('error');
           return;
         }
 
-        // If configuration is valid, test YNAB API connection
-        const testConnection = async () => {
-          try {
-            // Test connection via API route to avoid client-side token exposure
-            const connectionResponse = await fetch('/api/ynab/test-connection');
-            const connectionResult = await connectionResponse.json();
+        // If configuration is valid, check YNAB API connectivity from health status
+        const ynabConnected = healthStatus.checks?.ynab_connectivity === true;
+        setConnectionStatus(ynabConnected ? 'connected' : 'error');
 
-            setConnectionStatus(
-              connectionResult.connected ? 'connected' : 'error'
-            );
-
-            if (connectionResult.connected) {
-              setRateLimitStatus(connectionResult.rateLimit);
-            } else {
-              setError(
-                connectionResult.error ||
-                  'Unable to connect to YNAB API. Please check your access token.'
-              );
-            }
-          } catch (err) {
-            setConnectionStatus('error');
-            setError('Failed to test YNAB API connection');
-          }
-        };
-
-        await testConnection();
+        if (!ynabConnected) {
+          setError('Unable to connect to YNAB API. Please check your internet connection.');
+        }
       } catch (err) {
         setConnectionStatus('error');
         setError('Failed to check configuration');
