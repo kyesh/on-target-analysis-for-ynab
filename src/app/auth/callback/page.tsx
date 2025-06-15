@@ -37,7 +37,7 @@ export default function CallbackPage() {
             checkInterval: 60000, // 1 minute
             warningThreshold: 5 * 60 * 1000, // 5 minutes
             autoRedirectThreshold: 1 * 60 * 1000, // 1 minute
-            enableNotifications: true,
+            enableNotifications: false,
           });
 
           setStatus('success');

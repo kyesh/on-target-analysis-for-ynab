@@ -13,17 +13,6 @@ export function SecurityInitializer() {
     // Initialize XSS monitoring
     XSSPrevention.initialize();
 
-    // Request notification permission for token expiration warnings
-    if ('Notification' in window && Notification.permission === 'default') {
-      // Don't request immediately, wait for user interaction
-      const requestPermission = () => {
-        Notification.requestPermission().catch(console.warn);
-        document.removeEventListener('click', requestPermission);
-      };
-
-      document.addEventListener('click', requestPermission, { once: true });
-    }
-
     // Enforce HTTPS in production
     if (
       process.env.NODE_ENV === 'production' &&
