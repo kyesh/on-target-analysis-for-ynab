@@ -63,16 +63,8 @@ With your explicit consent, we collect:
 - **Session Storage**: Minimal session data stored temporarily
 - **Cache Duration**: Temporary cache expires within 5 minutes
 
-### 4.2 Security Measures
-- **Encryption**: All data encrypted in transit and at rest
-- **Access Controls**: Strict access controls and authentication
-- **Regular Audits**: Security audits and vulnerability assessments
-- **Secure Infrastructure**: Google Cloud Platform security standards
-
-### 4.3 Token Security
+### 4.2 Token Security
 - **OAuth 2.0**: Industry-standard OAuth 2.0 implementation
-- **Token Encryption**: All tokens encrypted using AES-256
-- **Automatic Refresh**: Secure token refresh without user intervention
 - **Revocation**: Users can revoke access anytime through YNAB
 
 ## 5. Data Sharing and Third Parties
@@ -110,129 +102,31 @@ With your explicit consent, we collect:
 - **Granular Control**: Choose specific analytics features
 - **Consent Management**: Update consent preferences
 
-### 6.3 Data Portability
-- **Export Results**: Download your analysis results
-- **No Lock-In**: Your data remains in your YNAB account
-- **Standard Formats**: Export in common formats (CSV, JSON)
+## 7. Data Retention
 
-## 7. GDPR Rights (EU Residents)
-
-Under GDPR, you have the right to:
-- **Access**: Request information about data processing
-- **Rectification**: Correct inaccurate data
-- **Erasure**: Request deletion of your data
-- **Portability**: Receive your data in a portable format
-- **Restriction**: Limit processing of your data
-- **Objection**: Object to certain types of processing
-
-To exercise these rights, contact us at [PRIVACY_EMAIL].
-
-## 8. CCPA Rights (California Residents)
-
-Under CCPA, you have the right to:
-- **Know**: What personal information we collect and how it's used
-- **Delete**: Request deletion of your personal information
-- **Opt-Out**: Opt-out of the sale of personal information (we don't sell data)
-- **Non-Discrimination**: Equal service regardless of privacy choices
-
-## 9. Data Retention
-
-### 9.1 Retention Periods
+### 7.1 Retention Periods
 - **YNAB Data**: Not permanently retained (processed in real-time)
 - **Session Data**: Deleted when session expires
 - **Analytics Data**: Retained for 90 days maximum
 - **Log Data**: Retained for 30 days for security purposes
 
-### 9.2 Deletion Process
+### 7.2 Deletion Process
 - **Automatic Deletion**: Data automatically deleted per retention schedule
-- **User Requested**: Manual deletion upon user request
-- **Account Closure**: All data deleted when account is closed
 
-## 10. Cookies and Tracking
+## 8. Cookies and Tracking
 
-### 10.1 Essential Cookies
+### 8.1 Essential Cookies
 - **Session Management**: Maintain your login session
 - **Security**: Prevent cross-site request forgery
 - **Functionality**: Remember your preferences
 
-### 10.2 Analytics Cookies (Optional)
+### 8.2 Analytics Cookies (Optional)
 - **Usage Analytics**: Track feature usage and performance
 - **Consent Required**: Only with your explicit consent
 - **Opt-Out Available**: Can be disabled in settings
 
-### 10.3 Third-Party Cookies
+### 8.3 Third-Party Cookies
 - **PostHog**: Analytics cookies (with consent)
 - **YNAB OAuth**: Authentication cookies during login process
 
-## 11. International Data Transfers
-
-### 11.1 Data Location
-- **Primary Processing**: United States (Google Cloud Platform)
-- **GDPR Compliance**: Adequate safeguards for EU data
-- **Standard Contractual Clauses**: Used for international transfers
-
-### 11.2 Safeguards
-- **Encryption**: All data encrypted during transfer
-- **Access Controls**: Strict access controls and monitoring
-- **Compliance**: Adherence to international privacy standards
-
-## 12. Children's Privacy
-
-- **Age Restriction**: Service not intended for users under 18
-- **No Collection**: We do not knowingly collect data from minors
-- **Parental Rights**: Parents can request deletion of minor's data
-
-## 13. Changes to Privacy Policy
-
-### 13.1 Updates
-- **Notification**: Material changes communicated via email
-- **Effective Date**: Changes effective 30 days after notification
-- **Continued Use**: Constitutes acceptance of updated policy
-
-### 13.2 Review Process
-- **Regular Review**: Policy reviewed annually
-- **Legal Updates**: Updated for regulatory changes
-- **User Feedback**: Incorporates user privacy concerns
-
-## 14. Contact Information
-
-### 14.1 Privacy Questions
-For privacy-related questions or requests:
-- **Email**: [PRIVACY_EMAIL]
-- **Address**: [BUSINESS_ADDRESS]
-- **Response Time**: We respond within 30 days
-
-### 14.2 Data Protection Officer
-For GDPR-related inquiries:
-- **Email**: [DPO_EMAIL]
-- **Role**: Data Protection Officer
-
-## 15. Compliance and Certifications
-
-### 15.1 Standards Compliance
-- **GDPR**: General Data Protection Regulation compliant
-- **CCPA**: California Consumer Privacy Act compliant
-- **SOC 2**: Infrastructure meets SOC 2 standards (via Google Cloud)
-
-### 15.2 Security Certifications
-- **ISO 27001**: Information security management
-- **PCI DSS**: Payment card industry standards (infrastructure)
-- **HIPAA**: Healthcare privacy standards (infrastructure)
-
-## 16. Breach Notification
-
-### 16.1 Incident Response
-- **Detection**: Continuous monitoring for security incidents
-- **Assessment**: Rapid assessment of potential breaches
-- **Notification**: Prompt notification to affected users and authorities
-
-### 16.2 User Notification
-- **Timeline**: Notification within 72 hours of discovery
-- **Method**: Email notification to affected users
-- **Information**: Details about the incident and protective measures
-
----
-
 **This Privacy Policy is designed to be transparent about our data practices. If you have questions or concerns, please contact us.**
-
-*This document should be reviewed by qualified legal counsel and privacy professionals before implementation.*
