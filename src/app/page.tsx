@@ -118,7 +118,7 @@ export default function HomePage() {
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            YNAB Off-Target Assignment Analysis
+            On Target Analysis for YNAB
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
             Analyze your budget target alignment and identify spending patterns that don't align with your financial goals.

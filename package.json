@@ -1,8 +1,8 @@
 {
-  "name": "ynab-off-target-assignment",
+  "name": "on-target-analysis-for-ynab",
   "version": "0.1.0",
   "private": true,
-  "description": "YNAB Off-Target Assignment Analysis - Budget target alignment dashboard",
+  "description": "On Target Analysis for YNAB - Budget target alignment dashboard",
   "author": "Ken Yesh <ken.yesh@apella.io>",
   "license": "MIT",
   "scripts": {

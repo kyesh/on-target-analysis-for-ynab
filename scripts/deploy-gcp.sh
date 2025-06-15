@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Google Cloud Platform Deployment Script for YNAB Off-Target Analysis
+# Google Cloud Platform Deployment Script for On Target Analysis for YNAB
 # Deploys the OAuth 2.0 Implicit Grant Flow application to Cloud Run
 
 set -e  # Exit on any error
@@ -15,7 +15,7 @@ NC='\033[0m' # No Color
 # Configuration
 PROJECT_ID="${GCP_PROJECT_ID:-}"
 REGION="${GCP_REGION:-us-central1}"
-SERVICE_NAME="${GCP_SERVICE_NAME:-ynab-off-target-analysis}"
+SERVICE_NAME="${GCP_SERVICE_NAME:-on-target-analysis-for-ynab}"
 IMAGE_NAME="gcr.io/${PROJECT_ID}/${SERVICE_NAME}"
 MIN_INSTANCES="${GCP_MIN_INSTANCES:-0}"
 MAX_INSTANCES="${GCP_MAX_INSTANCES:-10}"
@@ -333,7 +333,7 @@ case "${1:-}" in
         echo "Environment variables:"
         echo "  GCP_PROJECT_ID     Google Cloud Project ID (required)"
         echo "  GCP_REGION         Deployment region (default: us-central1)"
-        echo "  GCP_SERVICE_NAME   Cloud Run service name (default: ynab-off-target-analysis)"
+        echo "  GCP_SERVICE_NAME   Cloud Run service name (default: on-target-analysis-for-ynab)"
         echo "  GCP_MIN_INSTANCES  Minimum instances (default: 0)"
         echo "  GCP_MAX_INSTANCES  Maximum instances (default: 10)"
         echo "  GCP_MEMORY         Memory allocation (default: 1Gi)"

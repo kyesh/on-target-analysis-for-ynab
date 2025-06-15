@@ -1,4 +1,4 @@
-# YNAB Off-Target Assignment Analysis
+# On Target Analysis for YNAB
 
 A secure, privacy-focused budget analysis tool that identifies categories where spending significantly deviates from YNAB targets, helping users understand their budget discipline and make informed financial decisions.
 
@@ -44,8 +44,8 @@ This tool provides **secure, detailed budget analysis** for YNAB users by:
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/your-username/YNAB_Off_Target_Assignment.git
-   cd YNAB_Off_Target_Assignment
+   git clone https://github.com/your-username/on-target-analysis-for-ynab.git
+   cd on-target-analysis-for-ynab
    ```
 
 2. **Install dependencies**
@@ -56,7 +56,7 @@ This tool provides **secure, detailed budget analysis** for YNAB users by:
 3. **Register YNAB OAuth Application**
    - Go to [YNAB Developer Settings](https://app.ynab.com/settings/developer)
    - Create a new OAuth application
-   - Set redirect URI to: `http://localhost:3000/auth/callback`
+   - Set redirect URI to: `http://localhost:3000/auth/callback` (development) or `https://ontargetanalysisforynab.com/auth/callback` (production)
    - Copy the Client ID
 
 4. **Configure environment**
@@ -116,7 +116,7 @@ For detailed deployment instructions, see [DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_
 
 1. Go to [YNAB Developer Settings](https://app.ynab.com/settings/developer)
 2. Create a new OAuth application
-3. Set redirect URI to your domain + `/auth/callback`
+3. Set redirect URI to your domain + `/auth/callback` (e.g., `https://ontargetanalysisforynab.com/auth/callback`)
 4. Copy the Client ID to your environment configuration
 
 🔐 **Security Note**: OAuth 2.0 eliminates the need for Personal Access Tokens!
@@ -266,7 +266,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 If you encounter any issues or have questions:
 
 1. Check the [documentation](docs/)
-2. Search existing [issues](https://github.com/your-username/YNAB_Off_Target_Assignment/issues)
+2. Search existing [issues](https://github.com/your-username/on-target-analysis-for-ynab/issues)
 3. Create a new issue with detailed information
 
 ---

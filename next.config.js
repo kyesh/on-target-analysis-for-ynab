@@ -21,7 +21,7 @@ const nextConfig = {
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com", // Tailwind CSS + Google Fonts
               "img-src 'self' data: https: blob:",
               "font-src 'self' https://fonts.gstatic.com",
-              "connect-src 'self' https://api.ynab.com https://app.ynab.com", // YNAB API and OAuth
+              "connect-src 'self' https://api.ynab.com https://app.ynab.com https://ontargetanalysisforynab.com", // YNAB API, OAuth, and production domain
               "frame-ancestors 'none'",
               "base-uri 'self'",
               "form-action 'self'",

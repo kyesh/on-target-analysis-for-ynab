@@ -5,11 +5,11 @@
 
 ## 1. Acceptance of Terms
 
-By accessing or using the YNAB Off-Target Assignment Analysis application ("Service"), you agree to be bound by these Terms of Service ("Terms"). If you do not agree to these Terms, do not use the Service.
+By accessing or using the On Target Analysis for YNAB application ("Service"), you agree to be bound by these Terms of Service ("Terms"). If you do not agree to these Terms, do not use the Service.
 
 ## 2. Description of Service
 
-The YNAB Off-Target Assignment Analysis application is a web-based tool that integrates with the You Need A Budget (YNAB) API to provide budget target alignment analysis. The Service helps users understand how their monthly budget assignments compare against their predefined targets.
+The On Target Analysis for YNAB application is a web-based tool that integrates with the You Need A Budget (YNAB) API to provide budget target alignment analysis. The Service helps users understand how their monthly budget assignments compare against their predefined targets.
 
 ## 3. YNAB API Integration and Compliance
 
