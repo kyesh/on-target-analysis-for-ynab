@@ -5,6 +5,7 @@ import { AuthProvider } from '@/lib/auth/auth-context';
 import { SecurityInitializer } from '@/components/SecurityInitializer';
 import { ConsentBanner } from '@/components/analytics/ConsentBanner';
 import { AnalyticsInitializer } from '@/components/analytics/AnalyticsInitializer';
+import { Footer } from '@/components/Footer';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -33,7 +34,10 @@ export default function RootLayout({
         <SecurityInitializer />
         <AnalyticsInitializer />
         <AuthProvider enableNotifications={false} autoRefreshThreshold={5}>
-          <div className="min-h-full">{children}</div>
+          <div className="min-h-full flex flex-col">
+            <main className="flex-1">{children}</main>
+            <Footer />
+          </div>
           <ConsentBanner />
         </AuthProvider>
       </body>
