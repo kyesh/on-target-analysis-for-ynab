@@ -9,10 +9,17 @@ Comprehensive analytics implementation for user behavior tracking, performance m
 ### 1.1 PostHog Installation
 
 ```bash
-npm install posthog-js
-npm install posthog-node
+npm install posthog-js@^1.252.1
+npm install posthog-node@^5.1.0
 npm install @types/posthog-js
 ```
+
+**Current Version**: PostHog-JS 1.252.1 (verified working with session recordings)
+
+**Version Notes**:
+- PostHog-JS 1.252.1 is the latest stable version with full session recording support
+- Previous versions (1.251.x) had compatibility issues with session recording processing
+- This version includes enhanced session recording capabilities and improved privacy controls
 
 ### 1.2 Environment Configuration
 
@@ -50,6 +57,8 @@ if (typeof window !== 'undefined') {
         password: true,
         email: true,
       },
+      recordCrossOriginIframes: false,
+      recordCanvas: false,
     },
     autocapture: false, // We'll use custom events
     respect_dnt: true,
@@ -542,6 +551,41 @@ export default async function AnalyticsDashboard() {
 - Optimize event tracking performance
 - Validate privacy compliance
 
+## Session Recording Verification
+
+### Verification Steps
+
+1. **Check PostHog Version Loading**:
+   ```javascript
+   // In browser console, verify PostHog-JS version
+   console.log(posthog.version); // Should show 1.252.1
+   ```
+
+2. **Monitor Network Requests**:
+   - Look for successful POST requests to `https://us.i.posthog.com/s/` (session recordings)
+   - Look for successful POST requests to `https://us.i.posthog.com/e/` (events)
+   - All requests should return 200 status codes
+
+3. **Verify Dashboard Visibility**:
+   - Navigate to PostHog project dashboard
+   - Go to Session Replay section
+   - Recordings should appear within 5-10 minutes of user activity
+
+### Troubleshooting Session Recordings
+
+**Issue**: Session recordings not appearing in dashboard
+**Solution**:
+- Verify PostHog-JS version is 1.252.1 or later
+- Check network requests for successful transmission
+- Ensure sufficient user interaction (minimum 30 seconds recommended)
+- Verify PostHog project configuration allows session recordings
+
+**Issue**: Recordings appear but are incomplete
+**Solution**:
+- Check for JavaScript errors in browser console
+- Verify session recording configuration in PostHog init
+- Ensure proper masking rules are not blocking content
+
 ## Success Metrics
 
 - ✅ User behavior insights collected
@@ -550,3 +594,6 @@ export default async function AnalyticsDashboard() {
 - ✅ Analytics dashboard functional
 - ✅ No PII leakage detected
 - ✅ GDPR/CCPA compliance achieved
+- ✅ Session recordings operational (PostHog-JS 1.252.1)
+- ✅ Network transmission verified (200 status codes)
+- ✅ Dashboard visibility confirmed

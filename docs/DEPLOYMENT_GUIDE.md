@@ -9,7 +9,7 @@ This guide walks you through deploying the On Target Analysis for YNAB applicati
 - **Production URL**: https://www.ontargetanalysisforynab.com/
 - **Platform**: Google Cloud Run
 - **Authentication**: OAuth 2.0 Implicit Grant Flow
-- **Analytics**: PostHog with GDPR/CCPA compliance
+- **Analytics**: PostHog-JS 1.252.1 with GDPR/CCPA compliance and session recordings
 - **Security**: Enterprise-grade security hardening
 - **Custom Domain**: Configured with SSL/TLS certificates
 - **Health Monitoring**: Operational with comprehensive checks
@@ -211,9 +211,20 @@ curl -I $SERVICE_URL/auth/callback
 
 ### 6.3 Analytics Verification
 
+**PostHog-JS Version Check**:
+- Verify PostHog-JS 1.252.1 is loading correctly
+- Check browser network tab for PostHog script version parameter (v=1.252.1)
+
+**Event Tracking Verification**:
 - Check PostHog dashboard for event tracking
 - Verify consent banner functionality
 - Test analytics opt-out mechanisms
+
+**Session Recording Verification**:
+- Perform substantial user interaction (5+ minutes recommended)
+- Check network requests for successful POST to `/s/` endpoint (200 status)
+- Verify recordings appear in PostHog Session Replay dashboard within 10 minutes
+- Test recording playback functionality
 
 ## Step 7: Monitoring and Maintenance
 

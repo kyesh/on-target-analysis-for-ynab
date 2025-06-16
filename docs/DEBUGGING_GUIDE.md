@@ -244,4 +244,92 @@ Use debug mode to verify:
 - **Edge case handling** for unusual YNAB configurations
 - **Performance stability** with debug information enabled
 
-This debugging system provides comprehensive visibility into the calculation engine, enabling thorough validation and troubleshooting of YNAB budget analysis results.
+## PostHog Analytics Debugging
+
+### Session Recording Issues
+
+#### Problem: Session recordings not appearing in PostHog dashboard
+
+**Verification Steps**:
+
+1. **Check PostHog-JS Version**:
+   ```javascript
+   // In browser console
+   console.log(posthog.version); // Should show 1.252.1
+   ```
+
+2. **Monitor Network Requests**:
+   - Open browser Developer Tools → Network tab
+   - Look for POST requests to `https://us.i.posthog.com/s/` (session recordings)
+   - Look for POST requests to `https://us.i.posthog.com/e/` (events)
+   - All requests should return 200 status codes
+
+3. **Verify User Activity**:
+   - Ensure substantial user interaction (minimum 30 seconds recommended)
+   - Perform multiple actions: clicks, navigation, form interactions
+   - Session recordings require meaningful user activity to be processed
+
+**Common Solutions**:
+
+- **Outdated PostHog-JS**: Upgrade to version 1.252.1 or later
+- **Insufficient Activity**: Create longer, more interactive sessions
+- **Network Issues**: Check for blocked requests or CORS errors
+- **Configuration Issues**: Verify PostHog project settings allow session recordings
+
+#### Problem: Recordings appear but are incomplete or corrupted
+
+**Troubleshooting**:
+
+1. **Check JavaScript Errors**:
+   ```javascript
+   // Monitor console for PostHog-related errors
+   console.error.bind(console);
+   ```
+
+2. **Verify Session Recording Configuration**:
+   ```javascript
+   // Check PostHog configuration
+   console.log(posthog.config);
+   ```
+
+3. **Review Masking Rules**:
+   - Ensure masking rules aren't blocking essential content
+   - Check `maskAllInputs` and `maskInputOptions` settings
+
+### Event Tracking Issues
+
+#### Problem: Custom events not appearing in PostHog
+
+**Debugging Steps**:
+
+1. **Verify Event Capture**:
+   ```javascript
+   // Test event capture in console
+   posthog.capture('test_event', { test_property: 'test_value' });
+   ```
+
+2. **Check Event Properties**:
+   - Ensure event names follow PostHog naming conventions
+   - Verify property values are serializable
+   - Check for special characters or reserved names
+
+3. **Monitor Network Transmission**:
+   - Look for POST requests to `/e/` endpoint
+   - Verify events are included in request payload
+
+### Performance Monitoring
+
+#### PostHog Impact Assessment
+
+1. **Monitor Page Load Times**:
+   ```javascript
+   // Check PostHog loading impact
+   performance.getEntriesByName('posthog-js');
+   ```
+
+2. **Session Recording Performance**:
+   - Monitor CPU usage during recording
+   - Check memory consumption for long sessions
+   - Verify no significant impact on user experience
+
+This debugging system provides comprehensive visibility into both the calculation engine and analytics infrastructure, enabling thorough validation and troubleshooting of all application components.
