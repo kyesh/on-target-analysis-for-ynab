@@ -71,7 +71,7 @@ export default function CallbackPage() {
   }, [router]);
 
   const handleManualRedirect = () => {
-    router.push('/dashboard');
+    router.push('/');
   };
 
   const handleRetry = () => {
