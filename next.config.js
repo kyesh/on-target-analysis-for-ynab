@@ -17,11 +17,11 @@ const nextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-eval' 'unsafe-inline'", // Next.js requirements
+              "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://us-assets.i.posthog.com", // Next.js requirements and PostHog scripts
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com", // Tailwind CSS + Google Fonts
               "img-src 'self' data: https: blob:",
               "font-src 'self' https://fonts.gstatic.com",
-              "connect-src 'self' https://api.ynab.com https://app.ynab.com https://ontargetanalysisforynab.com", // YNAB API, OAuth, and production domain
+              "connect-src 'self' https://api.ynab.com https://app.ynab.com https://ontargetanalysisforynab.com https://us.i.posthog.com https://us-assets.i.posthog.com", // YNAB API, OAuth, production domain, and PostHog analytics
               "frame-ancestors 'none'",
               "base-uri 'self'",
               "form-action 'self'",
