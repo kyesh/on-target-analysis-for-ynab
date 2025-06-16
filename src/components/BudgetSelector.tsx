@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { SafeBudget } from '@/types/ynab';
 import { ApiClient } from '@/lib/api/client';
+import { AuthenticationError } from './AuthenticationError';
 
 interface BudgetSelectorProps {
   onBudgetSelect: (budgetId: string) => void;
@@ -60,15 +61,12 @@ export default function BudgetSelector({
 
   if (error) {
     return (
-      <div className="text-sm text-red-600">
-        Error: {error}
-        <button
-          onClick={fetchBudgets}
-          className="ml-2 text-blue-600 underline hover:text-blue-800"
-        >
-          Retry
-        </button>
-      </div>
+      <AuthenticationError
+        error={error}
+        onRetry={fetchBudgets}
+        showAutoRedirect={true}
+        redirectDelay={5}
+      />
     );
   }
 
