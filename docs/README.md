@@ -1,26 +1,28 @@
 # On Target Analysis for YNAB - Documentation Index
 
-Welcome to the comprehensive documentation for the On Target Analysis for YNAB application. This documentation reflects the **production-ready OAuth 2.0 implementation** with PostHog analytics and Google Cloud Platform deployment automation.
+Welcome to the comprehensive documentation for the On Target Analysis for YNAB application. This documentation reflects the **production-deployed OAuth 2.0 implementation** with enhanced authentication error handling, PostHog analytics, and Google Cloud Platform deployment.
 
 ## 📋 Quick Navigation
 
 ### **🚀 Getting Started**
 
 - **[Main README](../README.md)** - Project overview and quick start guide
-- **[Implementation Status](IMPLEMENTATION_STATUS.md)** - Complete implementation overview and decisions
+- **[Implementation Status](IMPLEMENTATION_STATUS.md)** - Complete implementation overview and current status
 - **[Deployment Guide](DEPLOYMENT_GUIDE.md)** - Step-by-step Google Cloud Platform deployment
+- **[Production Deployment Summary](PRODUCTION_DEPLOYMENT_SUMMARY.md)** - Current production status and achievements
 
 ### **🔐 OAuth 2.0 Implementation**
 
 - **[OAuth Implementation Plan](IMPLICIT_GRANT_IMPLEMENTATION_PLAN.md)** - OAuth 2.0 Implicit Grant Flow details
 - **[Security Checklist](IMPLICIT_GRANT_SECURITY_CHECKLIST.md)** - Security measures implemented
-- **[Architecture Tradeoffs](IMPLICIT_GRANT_TRADEOFFS_MIGRATION.md)** - Decision rationale and trade-offs
+- **[Authentication Error Handling](AUTHENTICATION_ERROR_HANDLING.md)** - Enhanced error handling and user experience
 
 ### **🏗️ System Architecture**
 
 - **[System Architecture](SYSTEM_ARCHITECTURE.md)** - Complete system design and component overview
 - **[Overview](OVERVIEW.md)** - Project objectives, features, and technical stack
 - **[Data Architecture](DATA_ARCHITECTURE.md)** - Data flow and processing architecture
+- **[Component Architecture](COMPONENT_ARCHITECTURE.md)** - React component structure and relationships
 
 ### **🧮 Core Functionality**
 
@@ -30,7 +32,7 @@ Welcome to the comprehensive documentation for the On Target Analysis for YNAB a
 
 ### **🛠️ Development & Testing**
 
-- **[Development Guide](DEVELOPMENT_GUIDE.md)** - Technical implementation details
+- **[Development Guide](DEVELOPMENT_GUIDE.md)** - Technical implementation details and development workflow
 - **[Testing Guide](TESTING_GUIDE.md)** - Testing procedures and integration tests
 - **[Setup Guide](SETUP_GUIDE.md)** - Local development setup instructions
 
@@ -53,11 +55,12 @@ Welcome to the comprehensive documentation for the On Target Analysis for YNAB a
 
 ## 🎯 **Current Implementation Status**
 
-### ✅ **PRODUCTION READY FEATURES**
+### ✅ **PRODUCTION DEPLOYED FEATURES**
 
 #### **Authentication & Security**
 
 - **OAuth 2.0 Implicit Grant Flow** - Complete implementation with CSRF protection
+- **Enhanced Error Handling** - AuthenticationError component with auto-redirect functionality
 - **Secure Token Storage** - Memory-first strategy with integrity checking
 - **XSS Prevention** - Comprehensive input sanitization and secure components
 - **Content Security Policy** - Strict headers preventing script injection
@@ -68,6 +71,14 @@ Welcome to the comprehensive documentation for the On Target Analysis for YNAB a
 - **Interactive Debugging UI** - Comprehensive debugging with rule explanations
 - **Monthly Overview** - Income, activity, and variance analysis
 - **Category Analysis** - Detailed breakdown with filtering and sorting
+- **Export Functionality** - CSV export for analysis data
+
+#### **User Experience Enhancements**
+
+- **Authentication Error Handling** - User-friendly error messages with auto-redirect
+- **Responsive Design** - Optimized for desktop, tablet, and mobile devices
+- **Loading States** - Proper loading indicators and skeleton screens
+- **Error Recovery** - Retry functionality and graceful error handling
 
 #### **Analytics & Privacy**
 
@@ -77,7 +88,8 @@ Welcome to the comprehensive documentation for the On Target Analysis for YNAB a
 
 #### **Deployment & Infrastructure**
 
-- **Google Cloud Platform** - Automated deployment to Cloud Run
+- **Google Cloud Platform** - Production deployment to Cloud Run
+- **Custom Domain** - https://www.ontargetanalysisforynab.com/
 - **Secret Management** - Google Cloud Secret Manager integration
 - **Health Monitoring** - Comprehensive health checks and monitoring
 
@@ -85,7 +97,7 @@ Welcome to the comprehensive documentation for the On Target Analysis for YNAB a
 
 Documentation for features that were **considered but not implemented** has been moved to the [`archive/`](archive/) directory. This includes:
 
-- **Authorization Code Grant Flow** plans (not implemented)
+- **Authorization Code Grant Flow** plans (not implemented - chose Implicit Grant for simplicity)
 - **Database integration** plans (not needed for stateless architecture)
 - **Complex token storage** strategies (simplified with Implicit Grant)
 - **Multi-phase deployment** plans (simplified to one-command deployment)
@@ -110,9 +122,9 @@ Documentation prioritizes practical usage and deployment instructions over theor
 
 ### **Last Updated**: June 2025
 
-### **Version**: 2.0 (OAuth Implementation)
+### **Version**: 3.0 (Production Deployment with Enhanced Authentication)
 
-### **Status**: Production Ready
+### **Status**: Production Deployed
 
 ### **Update Policy**
 
@@ -140,6 +152,12 @@ Documentation prioritizes practical usage and deployment instructions over theor
 - **Benefits**: Granular consent controls, data minimization, user control
 - **Trade-offs**: More complex implementation, potential data limitations
 
+### **Chosen: Enhanced Authentication Error Handling**
+
+- **Rationale**: Improve user experience for unauthenticated users
+- **Benefits**: Clear guidance, auto-redirect functionality, reduced user confusion
+- **Implementation**: AuthenticationError component with 5-second countdown timer
+
 ## 🚀 **Quick Start for New Users**
 
 1. **Read the [Main README](../README.md)** for project overview
@@ -159,4 +177,4 @@ For questions about the implementation or documentation:
 
 ---
 
-**This documentation reflects the production-ready OAuth 2.0 implementation with comprehensive security hardening, privacy-first analytics, and automated cloud deployment.**
+**This documentation reflects the production-deployed OAuth 2.0 implementation with enhanced authentication error handling, comprehensive security hardening, privacy-first analytics, and automated cloud deployment.**
