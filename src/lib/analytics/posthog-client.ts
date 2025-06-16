@@ -66,8 +66,34 @@ export class PostHogClient {
         // Privacy and compliance settings
         opt_out_capturing_by_default: true, // Require explicit consent
         respect_dnt: true, // Respect Do Not Track
-        disable_session_recording: true, // Disable session recording for privacy
         disable_surveys: true, // Disable surveys
+
+        // Session recording settings (enabled with privacy controls)
+        disable_session_recording: false, // Enable session recording
+        session_recording: {
+          maskAllInputs: true, // Mask all input fields for privacy
+          maskInputOptions: {
+            password: true,
+            email: true,
+            color: false,
+            date: false,
+            'datetime-local': false,
+            month: false,
+            number: false,
+            range: false,
+            search: false,
+            tel: false,
+            text: true, // Mask text inputs for privacy
+            time: false,
+            url: false,
+            week: false,
+          },
+          maskTextSelector: '.sensitive, [data-sensitive]', // Mask elements with sensitive class
+          blockClass: 'ph-no-capture', // Don't record elements with this class
+          blockSelector: '[data-ph-no-capture]', // Don't record elements with this attribute
+          collectFonts: false, // Don't collect fonts for privacy
+          recordCrossOriginIframes: false, // Don't record cross-origin iframes
+        },
 
         // Performance settings
         loaded: posthog => {
@@ -76,9 +102,10 @@ export class PostHogClient {
           }
         },
 
-        // Capture settings
-        capture_pageview: false, // We'll handle pageviews manually
-        capture_pageleave: true,
+        // Capture settings (enable default PostHog events)
+        capture_pageview: true, // Enable automatic $pageview events
+        capture_pageleave: true, // Keep pageleave events
+        autocapture: true, // Enable automatic click tracking ($autocapture events)
 
         // Cross-domain tracking
         cross_subdomain_cookie: false,
@@ -124,11 +151,21 @@ export class PostHogClient {
       // Opt in to capturing
       posthog.opt_in_capturing();
 
+      // Enable session recording if performance consent is given
+      if (consent.performance) {
+        posthog.startSessionRecording();
+      } else {
+        posthog.stopSessionRecording();
+      }
+
       // Process queued events
       this.processQueuedEvents();
     } else {
       // Opt out of capturing
       posthog.opt_out_capturing();
+
+      // Stop session recording
+      posthog.stopSessionRecording();
 
       // Clear queued events
       this.queuedEvents = [];
@@ -147,7 +184,18 @@ export class PostHogClient {
 
         if (this.consentGiven) {
           posthog.opt_in_capturing();
+
+          // Enable session recording if performance consent is given
+          if (consent.performance) {
+            posthog.startSessionRecording();
+          } else {
+            posthog.stopSessionRecording();
+          }
+
           this.processQueuedEvents();
+        } else {
+          // Ensure session recording is stopped if no consent
+          posthog.stopSessionRecording();
         }
       }
     } catch (error) {

@@ -146,4 +146,13 @@
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
+
+  /* PostHog Privacy Classes */
+  .ph-no-capture {
+    /* Elements with this class will not be recorded in session replay */
+  }
+
+  .sensitive {
+    /* Elements with this class will be masked in session replay */
+  }
 }

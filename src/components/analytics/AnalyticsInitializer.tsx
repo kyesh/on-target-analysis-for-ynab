@@ -55,10 +55,14 @@ export function AnalyticsInitializer() {
     };
   }, []);
 
-  // Track page views when pathname changes
+  // Track custom page views when pathname changes (in addition to automatic $pageview)
   useEffect(() => {
     if (pathname) {
-      trackInteraction.pageView(pathname);
+      // Only track custom page_view events if consent is given
+      // PostHog will automatically track $pageview events
+      if (analytics.getConsentStatus().given) {
+        trackInteraction.pageView(pathname);
+      }
     }
   }, [pathname]);
 
