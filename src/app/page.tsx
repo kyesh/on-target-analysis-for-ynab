@@ -132,14 +132,14 @@ export default function HomePage() {
               <div className="space-y-4">
                 {/* Configuration Status */}
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-700">
-                    Configuration
-                  </span>
-                  <span
-                    className={`text-sm font-medium ${isConfigValid ? 'text-success-600' : 'text-danger-600'}`}
-                  >
-                    {isConfigValid ? '✓ Valid' : '✗ Invalid'}
-                  </span>
+                  <span className="text-sm font-medium text-gray-700">Configuration</span>
+                  {isConfigValid === null ? (
+                    <span className="text-sm font-medium text-gray-500">Checking…</span>
+                  ) : (
+                    <span className={`text-sm font-medium ${isConfigValid ? 'text-success-600' : 'text-danger-600'}`}>
+                      {isConfigValid ? '✓ Valid' : '✗ Invalid'}
+                    </span>
+                  )}
                 </div>
 
                 {/* Connection Status */}
@@ -332,7 +332,7 @@ export default function HomePage() {
         )}
 
         {/* Setup Instructions */}
-        {!isConfigValid && (
+        {isConfigValid === false && (
           <div className="mx-auto mt-8 max-w-2xl">
             <div className="card">
               <div className="card-header">
