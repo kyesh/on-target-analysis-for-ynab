@@ -254,7 +254,7 @@ export function generateDashboardSummary(
   const { overTarget, underTarget } = getTopVarianceCategories(
     monthData,
     monthData.month,
-    10,
+    Number.POSITIVE_INFINITY,
     config
   );
 
