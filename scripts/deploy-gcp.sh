@@ -184,6 +184,8 @@ CMD ["node", "server.js"]
 EOF
 
         print_success "Dockerfile created"
+    fi
+}
 
 # Helper: build via Google Cloud Build if Docker not available
 cloud_build_and_push_image() {
@@ -193,9 +195,6 @@ cloud_build_and_push_image() {
     gcloud builds submit --tag "$IMAGE_NAME" --machine-type=e2-highcpu-8 .
 
     print_success "Image built and pushed via Cloud Build"
-}
-
-    fi
 }
 
 # Function to build and push Docker image
