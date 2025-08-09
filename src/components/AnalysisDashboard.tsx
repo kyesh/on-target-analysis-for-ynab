@@ -385,55 +385,7 @@ export default function AnalysisDashboard({
                           ? `${Math.abs(category.variancePercentage).toFixed(1)}% under target`
                           : 'Under target'}
 
-	      {/* Target Summary */}
-	      <div className="rounded-lg bg-white shadow">
-	        <div className="px-4 py-5 sm:p-6">
-	          <h3 className="mb-4 text-lg font-medium leading-6 text-gray-900">
-	            Target Summary ({targetSummary.length})
-	          </h3>
-	          {targetSummary.length > 0 ? (
-	            <div className="space-y-3 max-h-96 overflow-y-auto pr-1">
-	              {targetSummary.map(item => (
-	                <div
-	                  key={item.id}
-	                  className="flex items-center justify-between rounded-md bg-gray-50 p-3"
-	                >
-	                  <div className="flex-1">
-	                    <p className="text-sm font-medium text-gray-900">
-	                      {item.name}
-	                    </p>
-	                    <p className="text-xs text-gray-500">
-	                      {item.categoryGroupName}
-	                    </p>
-	                    <div className="mt-1 space-x-2 text-xs text-gray-600">
-	                      <span>Target: {formatCurrency(item.target)}</span>
-	                      <span>•</span>
-	                      <span>Assigned: {formatCurrency(item.assigned)}</span>
-	                    </div>
-	                  </div>
-	                  <div className="text-right">
-	                    <p
-	                      className={`text-sm font-medium ${
-	                        item.variance > 0
-	                          ? 'text-red-600'
-	                          : item.variance < 0
-	                            ? 'text-yellow-600'
-	                            : 'text-green-600'
-	                      }`}
-	                    >
-	                      Variance: {formatCurrency(item.variance)}
-	                    </p>
-	                  </div>
-	                </div>
-	              ))}
-	            </div>
-	          ) : (
-	            <p className="text-sm text-gray-500">
-	              No categories with targets this month.
-	            </p>
-	          )}
-	        </div>
-	      </div>
+
                       </p>
                     </div>
                   </div>
@@ -447,6 +399,57 @@ export default function AnalysisDashboard({
           </div>
         </div>
       </div>
+
+        {/* Target Summary */}
+        <div className="rounded-lg bg-white shadow">
+          <div className="px-4 py-5 sm:p-6">
+            <h3 className="mb-4 text-lg font-medium leading-6 text-gray-900">
+              Target Summary ({targetSummary.length})
+            </h3>
+            {targetSummary.length > 0 ? (
+              <div className="space-y-3 max-h-96 overflow-y-auto pr-1">
+                {targetSummary.map(item => (
+                  <div
+                    key={item.id}
+                    className="flex items-center justify-between rounded-md bg-gray-50 p-3"
+                  >
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-gray-900">
+                        {item.name}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {item.categoryGroupName}
+                      </p>
+                      <div className="mt-1 space-x-2 text-xs text-gray-600">
+                        <span>Target: {formatCurrency(item.target)}</span>
+                        <span>•</span>
+                        <span>Assigned: {formatCurrency(item.assigned)}</span>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p
+                        className={`text-sm font-medium ${
+                          item.variance > 0
+                            ? 'text-red-600'
+                            : item.variance < 0
+                              ? 'text-yellow-600'
+                              : 'text-green-600'
+                        }`}
+                      >
+                        Variance: {formatCurrency(item.variance)}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500">
+                No categories with targets this month.
+              </p>
+            )}
+          </div>
+        </div>
+
 
       {/* Detailed Category List with Debug Information */}
       <div className="rounded-lg bg-white shadow">
