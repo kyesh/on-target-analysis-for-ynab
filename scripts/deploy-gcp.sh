@@ -23,6 +23,8 @@ MAX_INSTANCES="${GCP_MAX_INSTANCES:-10}"
 MEMORY="${GCP_MEMORY:-1Gi}"
 CPU="${GCP_CPU:-1}"
 TIMEOUT="${GCP_TIMEOUT:-300}"
+# Fallback to Cloud Build when local Docker daemon is unavailable
+USE_CLOUD_BUILD=0
 
 # Function to print colored output
 print_status() {
@@ -44,34 +46,34 @@ print_error() {
 # Function to check if required tools are installed
 check_prerequisites() {
     print_status "Checking prerequisites..."
-    
+
     # Check if gcloud is installed
     if ! command -v gcloud &> /dev/null; then
         print_error "gcloud CLI is not installed. Please install it from https://cloud.google.com/sdk/docs/install"
         exit 1
     fi
-    
+
     # Check if docker is installed
     if ! command -v docker &> /dev/null; then
         print_error "Docker is not installed. Please install Docker Desktop or Docker Engine"
         exit 1
     fi
-    
+
     # Check if npm is installed
     if ! command -v npm &> /dev/null; then
         print_error "npm is not installed. Please install Node.js and npm"
         exit 1
     fi
-    
+
     print_success "All prerequisites are installed"
 }
 
 # Function to validate configuration
 validate_config() {
     print_status "Validating configuration..."
-    
+
     print_status "Using GCP Project ID: $PROJECT_ID"
-    
+
     # Check if required secrets exist in Secret Manager
     print_status "Checking required secrets in Secret Manager..."
 
@@ -84,49 +86,49 @@ validate_config() {
             exit 1
         fi
     done
-    
+
     print_success "Configuration is valid"
 }
 
 # Function to authenticate with GCP
 authenticate_gcp() {
     print_status "Authenticating with Google Cloud Platform..."
-    
+
     # Check if already authenticated
     if ! gcloud auth list --filter=status:ACTIVE --format="value(account)" | grep -q "@"; then
         print_status "Not authenticated. Starting authentication flow..."
         gcloud auth login
     fi
-    
+
     # Set the project
     gcloud config set project "$PROJECT_ID"
-    
+
     # Enable required APIs
     print_status "Enabling required Google Cloud APIs..."
     gcloud services enable cloudbuild.googleapis.com
     gcloud services enable run.googleapis.com
     gcloud services enable containerregistry.googleapis.com
     gcloud services enable secretmanager.googleapis.com
-    
+
     print_success "GCP authentication and setup complete"
 }
 
 # Function to build the application
 build_application() {
     print_status "Building the application..."
-    
+
     # Install dependencies
     print_status "Installing dependencies..."
     npm ci
-    
+
     # Run type checking
     print_status "Running type checking..."
     npm run type-check
-    
+
     # Build the application
     print_status "Building Next.js application..."
     npm run build
-    
+
     print_success "Application build complete"
 }
 
@@ -134,7 +136,7 @@ build_application() {
 create_dockerfile() {
     if [ ! -f "Dockerfile" ]; then
         print_status "Creating Dockerfile for Cloud Run deployment..."
-        
+
         cat > Dockerfile << 'EOF'
 # Use the official Node.js runtime as the base image
 FROM node:18-alpine AS base
@@ -180,33 +182,50 @@ ENV HOSTNAME "0.0.0.0"
 
 CMD ["node", "server.js"]
 EOF
-        
+
         print_success "Dockerfile created"
+
+# Helper: build via Google Cloud Build if Docker not available
+cloud_build_and_push_image() {
+    print_status "Building and pushing Docker image using Google Cloud Build (no local Docker daemon)..."
+
+    # Submit the build to Cloud Build; it will build the image and push to GCR
+    gcloud builds submit --tag "$IMAGE_NAME" --machine-type=e2-highcpu-8 .
+
+    print_success "Image built and pushed via Cloud Build"
+}
+
     fi
 }
 
 # Function to build and push Docker image
 build_and_push_image() {
     print_status "Building and pushing Docker image..."
-    
-    # Configure Docker to use gcloud as a credential helper
-    gcloud auth configure-docker
-    
-    # Build the Docker image for linux/amd64 platform (Cloud Run requirement)
-    print_status "Building Docker image: $IMAGE_NAME"
-    docker build --platform linux/amd64 -t "$IMAGE_NAME" .
-    
-    # Push the image to Google Container Registry
-    print_status "Pushing image to Google Container Registry..."
-    docker push "$IMAGE_NAME"
-    
-    print_success "Docker image built and pushed successfully"
+
+    # Try local Docker first; if it fails, fall back to Cloud Build
+    if docker info > /dev/null 2>&1; then
+        # Configure Docker to use gcloud as a credential helper
+        gcloud auth configure-docker
+
+        # Build the Docker image for linux/amd64 platform (Cloud Run requirement)
+        print_status "Building Docker image: $IMAGE_NAME"
+        docker build --platform linux/amd64 -t "$IMAGE_NAME" .
+
+        # Push the image to Google Container Registry
+        print_status "Pushing image to Google Container Registry..."
+        docker push "$IMAGE_NAME"
+
+        print_success "Docker image built and pushed successfully"
+    else
+        print_warning "Local Docker daemon not available; using Google Cloud Build instead"
+        cloud_build_and_push_image
+    fi
 }
 
 # Function to deploy to Cloud Run
 deploy_to_cloud_run() {
     print_status "Deploying to Cloud Run..."
-    
+
     # Create deployment command
     DEPLOY_CMD="gcloud run deploy $SERVICE_NAME \
         --image=$IMAGE_NAME \
@@ -219,7 +238,7 @@ deploy_to_cloud_run() {
         --min-instances=$MIN_INSTANCES \
         --max-instances=$MAX_INSTANCES \
         --port=3000"
-    
+
     # Add environment variables from GCP Secret Manager
     DEPLOY_CMD="$DEPLOY_CMD --set-secrets=NEXT_PUBLIC_YNAB_CLIENT_ID=ynab-oauth-client-id:latest"
     DEPLOY_CMD="$DEPLOY_CMD --set-secrets=NEXTAUTH_SECRET=nextauth-secret:latest"
@@ -235,13 +254,13 @@ deploy_to_cloud_run() {
     # Set service account
     SERVICE_ACCOUNT_EMAIL="${SERVICE_ACCOUNT_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
     DEPLOY_CMD="$DEPLOY_CMD --service-account=$SERVICE_ACCOUNT_EMAIL"
-    
+
     # Execute deployment
     eval "$DEPLOY_CMD"
-    
+
     # Get the service URL
     SERVICE_URL=$(gcloud run services describe "$SERVICE_NAME" --region="$REGION" --format="value(status.url)")
-    
+
     print_success "Deployment complete!"
     print_success "Service URL: $SERVICE_URL"
     print_status "Health check: $SERVICE_URL/api/health"
@@ -250,14 +269,14 @@ deploy_to_cloud_run() {
 # Function to run health checks
 run_health_checks() {
     print_status "Running health checks..."
-    
+
     # Get service URL
     SERVICE_URL=$(gcloud run services describe "$SERVICE_NAME" --region="$REGION" --format="value(status.url)")
-    
+
     # Wait for service to be ready
     print_status "Waiting for service to be ready..."
     sleep 30
-    
+
     # Check health endpoint
     if curl -f -s "$SERVICE_URL/api/health" > /dev/null; then
         print_success "Health check passed"
@@ -266,7 +285,7 @@ run_health_checks() {
         print_status "Check the logs with: gcloud run logs read $SERVICE_NAME --region=$REGION"
         exit 1
     fi
-    
+
     # Check OAuth configuration
     if curl -f -s "$SERVICE_URL/auth/signin" > /dev/null; then
         print_success "OAuth configuration check passed"
@@ -298,7 +317,7 @@ main() {
     print_status "Region: $REGION"
     print_status "Service: $SERVICE_NAME"
     echo ""
-    
+
     check_prerequisites
     validate_config
     authenticate_gcp
@@ -308,7 +327,7 @@ main() {
     deploy_to_cloud_run
     run_health_checks
     display_deployment_info
-    
+
     print_success "Deployment completed successfully!"
 }
 
