@@ -12,7 +12,8 @@ WORKDIR /app
 
 # Copy package files
 COPY package.json package-lock.json* ./
-RUN npm ci --only=production && npm cache clean --force
+# Install only production dependencies to keep image slim and avoid deprecation noise from dev tooling
+RUN npm ci --omit=dev
 
 # Rebuild the source code only when needed
 FROM base AS builder
