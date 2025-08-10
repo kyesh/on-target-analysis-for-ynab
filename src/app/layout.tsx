@@ -18,6 +18,8 @@ export const metadata: Metadata = {
   authors: [{ name: 'Ken Yesh' }],
   robots: 'noindex, nofollow', // Local app, no indexing needed
 };
+export const dynamic = 'force-dynamic';
+
 
 export const viewport = {
   width: 'device-width',
