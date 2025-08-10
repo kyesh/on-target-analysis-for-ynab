@@ -143,13 +143,17 @@ export function calculateNeededThisMonth(
     return null;
   }
 
-  // Rule 3: Goals with months to budget take precedence
-  if (category.goal_months_to_budget && category.goal_months_to_budget > 0) {
-    const overallLeft = category.goal_overall_left || 0;
-    const budgeted = category.budgeted || 0;
-    return Math.round(
-      (overallLeft + budgeted) / category.goal_months_to_budget
-    );
+  // Rule 6: Goal Creation Month Check - future goals should not contribute
+  if (category.goal_creation_month && currentMonth) {
+    try {
+      const goalCreationDate = new Date(category.goal_creation_month + 'T00:00:00.000Z');
+      const currentMonthDate = new Date(currentMonth + 'T00:00:00.000Z');
+      if (goalCreationDate > currentMonthDate) {
+        return 0;
+      }
+    } catch {
+      // If date parsing fails, continue with normal calculation
+    }
   }
 
   // Rule 1: Monthly NEED Goals (cadence = 1, frequency = 1)
@@ -157,7 +161,7 @@ export function calculateNeededThisMonth(
     return category.goal_target;
   }
 
-  // Rule 2: Weekly NEED Goals (cadence = 2, frequency = 1)
+  // Rule 2: Weekly NEED Goals (cadence = 2, frequency = 1) - takes precedence over months_to_budget
   if (
     category.goal_cadence === 2 &&
     category.goal_cadence_frequency === 1 &&
@@ -182,13 +186,24 @@ export function calculateNeededThisMonth(
       const dayCount = safeCountDayOccurrences(year, month, category.goal_day);
       return Math.round(category.goal_target * dayCount);
     } catch (error) {
-      console.warn(
-        'Error calculating weekly goal for month:',
-        currentMonth,
-        error
-      );
+      console.warn('Error calculating weekly goal for month:', currentMonth, error);
       return category.goal_target;
     }
+  }
+
+  // Rule 3: Goals with months to budget (only if no specific cadence rules apply)
+  if (category.goal_months_to_budget && category.goal_months_to_budget > 0) {
+    const overallLeft = category.goal_overall_left || 0;
+    const budgeted = category.budgeted || 0;
+    return Math.round((overallLeft + budgeted) / category.goal_months_to_budget);
+  }
+
+  // Rule 5: Low months to budget (zero target when <= 0)
+  if (
+    typeof category.goal_months_to_budget === 'number' &&
+    category.goal_months_to_budget <= 0
+  ) {
+    return 0;
   }
 
   // Rule 4: All other cases - fallback to goal_target
