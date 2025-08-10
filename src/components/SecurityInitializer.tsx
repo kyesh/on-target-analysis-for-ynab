@@ -13,13 +13,15 @@ export function SecurityInitializer() {
     // Initialize XSS monitoring
     XSSPrevention.initialize();
 
-    // Enforce HTTPS in production
-    if (
-      process.env.NODE_ENV === 'production' &&
-      typeof window !== 'undefined' &&
-      window.location.protocol !== 'https:'
-    ) {
-      window.location.href = window.location.href.replace('http:', 'https:');
+    // Enforce HTTPS in production, but allow localhost for local testing
+    if (process.env.NODE_ENV === 'production' && typeof window !== 'undefined') {
+      const hostname = window.location.hostname;
+      const isLocalhost =
+        hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1';
+
+      if (!isLocalhost && window.location.protocol !== 'https:') {
+        window.location.href = window.location.href.replace('http:', 'https:');
+      }
     }
 
     // Log security initialization
