@@ -270,8 +270,8 @@ describe('Data Processing Utilities', () => {
       };
 
       // Should use Rule 2 (Weekly) not Rule 3 (Months to Budget)
-      // For December 2024, there are 5 Thursdays, so 25000 * 5 = 125000
-      const result = calculateNeededThisMonth(category, '2024-12-01');
+      // For October 2024, there are 5 Thursdays, so 25000 * 5 = 125000
+      const result = calculateNeededThisMonth(category, '2024-10-01');
       expect(result).toBe(125000); // 5 Thursdays * 25000
 
       // Verify it's NOT using months to budget calculation
