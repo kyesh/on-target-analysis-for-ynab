@@ -6,6 +6,7 @@ import { SecurityInitializer } from '@/components/SecurityInitializer';
 import { ConsentBanner } from '@/components/analytics/ConsentBanner';
 import { AnalyticsInitializer } from '@/components/analytics/AnalyticsInitializer';
 import { Footer } from '@/components/Footer';
+import { PublicRuntimeConfig } from '@/components/PublicRuntimeConfig';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -31,6 +32,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full">
       <body className={`${inter.className} h-full bg-gray-50 antialiased`}>
+        <PublicRuntimeConfig />
         <SecurityInitializer />
         <AnalyticsInitializer />
         <AuthProvider enableNotifications={false} autoRefreshThreshold={5}>

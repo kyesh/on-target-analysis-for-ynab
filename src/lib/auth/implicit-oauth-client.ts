@@ -12,10 +12,28 @@ export interface OAuthCallbackResult {
 }
 
 export class ImplicitOAuthClient {
-  private static readonly CLIENT_ID = process.env.NEXT_PUBLIC_YNAB_CLIENT_ID!;
   private static readonly SCOPE = 'read-only';
   private static readonly STATE_STORAGE_KEY = 'oauth_state';
   private static readonly NONCE_STORAGE_KEY = 'oauth_nonce';
+
+  /**
+   * Resolve the OAuth Client ID at runtime.
+   * Prefers injected public config (window.__PUBLIC_CONFIG__) and falls back to process.env for dev.
+   */
+  private static getClientId(): string {
+    try {
+      if (typeof window !== 'undefined') {
+        const cfg = (window as any).__PUBLIC_CONFIG__;
+        if (cfg && typeof cfg.YNAB_CLIENT_ID === 'string') {
+          return cfg.YNAB_CLIENT_ID;
+        }
+      }
+      // Server-side or no public config; use env (useful for dev)
+      return process.env.NEXT_PUBLIC_YNAB_CLIENT_ID || '';
+    } catch {
+      return '';
+    }
+  }
 
   /**
    * Get the OAuth redirect URI for the current environment
@@ -32,7 +50,8 @@ export class ImplicitOAuthClient {
    * Redirects user to YNAB OAuth authorization page
    */
   static initiateAuth(): void {
-    if (!this.CLIENT_ID) {
+    const clientId = this.getClientId();
+    if (!clientId) {
       throw new Error(
         'YNAB Client ID not configured. Please set NEXT_PUBLIC_YNAB_CLIENT_ID environment variable.'
       );
@@ -47,7 +66,7 @@ export class ImplicitOAuthClient {
       sessionStorage.setItem(this.NONCE_STORAGE_KEY, nonce);
 
       const authUrl = new URL('https://app.ynab.com/oauth/authorize');
-      authUrl.searchParams.set('client_id', this.CLIENT_ID);
+      authUrl.searchParams.set('client_id', clientId);
       authUrl.searchParams.set('redirect_uri', this.getRedirectUri());
       authUrl.searchParams.set('response_type', 'token');
       authUrl.searchParams.set('scope', this.SCOPE);
@@ -255,7 +274,8 @@ export class ImplicitOAuthClient {
   static validateConfiguration(): { valid: boolean; errors: string[] } {
     const errors: string[] = [];
 
-    if (!this.CLIENT_ID) {
+    const clientId = this.getClientId();
+    if (!clientId) {
       errors.push('NEXT_PUBLIC_YNAB_CLIENT_ID environment variable is not set');
     }
 
@@ -286,9 +306,10 @@ export class ImplicitOAuthClient {
   static getAuthorizationUrl(): string {
     const state = this.generateSecureState();
     const nonce = this.generateNonce();
+    const clientId = this.getClientId();
 
     const authUrl = new URL('https://app.ynab.com/oauth/authorize');
-    authUrl.searchParams.set('client_id', this.CLIENT_ID);
+    authUrl.searchParams.set('client_id', clientId);
     authUrl.searchParams.set('redirect_uri', this.getRedirectUri());
     authUrl.searchParams.set('response_type', 'token');
     authUrl.searchParams.set('scope', this.SCOPE);
