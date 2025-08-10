@@ -404,7 +404,7 @@ export default function AnalysisDashboard({
         <div className="rounded-lg bg-white shadow">
           <div className="px-4 py-5 sm:p-6">
             <h3 className="mb-4 text-lg font-medium leading-6 text-gray-900">
-              Target Summary ({targetSummary.length})
+              Target Summary ({targetSummary.length}) - {formatCurrency(monthlyAnalysis.totalTargeted)} Total Targeted
             </h3>
             {targetSummary.length > 0 ? (
               <div className="space-y-3 max-h-96 overflow-y-auto pr-1">
@@ -420,23 +420,16 @@ export default function AnalysisDashboard({
                       <p className="text-xs text-gray-500">
                         {item.categoryGroupName}
                       </p>
-                      <div className="mt-1 space-x-2 text-xs text-gray-600">
-                        <span>Target: {formatCurrency(item.target)}</span>
-                        <span>•</span>
-                        <span>Assigned: {formatCurrency(item.assigned)}</span>
-                      </div>
                     </div>
                     <div className="text-right">
-                      <p
-                        className={`text-sm font-medium ${
-                          item.variance > 0
-                            ? 'text-red-600'
-                            : item.variance < 0
-                              ? 'text-yellow-600'
-                              : 'text-green-600'
-                        }`}
-                      >
-                        Variance: {formatCurrency(item.variance)}
+                      <p className="text-sm font-semibold text-blue-600">
+                        {formatCurrency(item.target)}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {monthlyAnalysis.totalTargeted > 0
+                          ? ((item.target / monthlyAnalysis.totalTargeted) * 100).toFixed(1)
+                          : '0.0'}
+                        % of total targeted
                       </p>
                     </div>
                   </div>
