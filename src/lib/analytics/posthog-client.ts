@@ -50,9 +50,10 @@ export class PostHogClient {
       return;
     }
 
-    const apiKey = process.env.NEXT_PUBLIC_POSTHOG_KEY;
-    const host =
-      process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://app.posthog.com';
+    // Prefer runtime-injected public config for flexibility in Cloud Run
+    const runtimeCfg = (typeof window !== 'undefined' && (window as any).__PUBLIC_CONFIG__) || {};
+    const apiKey = runtimeCfg.POSTHOG_KEY || process.env.NEXT_PUBLIC_POSTHOG_KEY;
+    const host = runtimeCfg.POSTHOG_HOST || process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://app.posthog.com';
 
     if (!apiKey) {
       console.warn('PostHog API key not configured');

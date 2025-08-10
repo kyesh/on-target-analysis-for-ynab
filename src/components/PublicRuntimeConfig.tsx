@@ -9,6 +9,8 @@ export function PublicRuntimeConfig() {
   const cfg = {
     YNAB_CLIENT_ID: process.env.NEXT_PUBLIC_YNAB_CLIENT_ID || '',
     APP_URL: process.env.NEXT_PUBLIC_APP_URL || '',
+    POSTHOG_KEY: process.env.NEXT_PUBLIC_POSTHOG_KEY || '',
+    POSTHOG_HOST: process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://app.posthog.com',
   } as const;
 
   const script = `window.__PUBLIC_CONFIG__ = Object.assign({}, window.__PUBLIC_CONFIG__, ${JSON.stringify(cfg)});`;
