@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "description": "On Target Analysis for YNAB - Budget target alignment dashboard",
-  "author": "Ken Yesh <ken.yesh@apella.io>",
+  "author": "Ken Yesh <kenyesh@gmail.com>",
   "license": "MIT",
   "scripts": {
     "dev": "next dev",

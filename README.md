@@ -6,7 +6,7 @@ A secure, privacy-focused budget analysis tool that identifies categories where 
 
 ![YNAB Analysis Dashboard](https://img.shields.io/badge/Status-Production%20Deployed-brightgreen)
 ![OAuth 2.0](https://img.shields.io/badge/OAuth%202.0-Secure-green)
-![Next.js](https://img.shields.io/badge/Next.js-14+-black)
+![Next.js](https://img.shields.io/badge/Next.js-15+-black)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.4+-blue)
 ![React](https://img.shields.io/badge/React-18+-blue)
 ![Cloud Run](https://img.shields.io/badge/Google%20Cloud-Deployed-blue)
