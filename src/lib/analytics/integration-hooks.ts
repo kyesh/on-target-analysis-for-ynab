@@ -5,7 +5,7 @@
 
 'use client';
 
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/lib/auth/auth-context';
 import { analytics } from './posthog-client';
 import { trackAuth, trackBudget, trackInteraction, trackError } from './events';
@@ -14,17 +14,33 @@ import { trackAuth, trackBudget, trackInteraction, trackError } from './events';
  * Hook to track authentication events
  */
 export function useAuthAnalytics() {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated } = useAuth();
 
+  const identifiedRef = useRef(false);
   useEffect(() => {
-    if (isAuthenticated && user) {
-      // Identify user for analytics (using anonymous ID)
-      analytics.identify(`user_${Date.now()}`, {
-        authenticated_at: new Date().toISOString(),
-        session_start: new Date().toISOString(),
-      });
-    }
-  }, [isAuthenticated, user]);
+    let cancelled = false;
+    const identify = async () => {
+      if (!isAuthenticated || identifiedRef.current) return;
+      try {
+        const resp = await fetch('/api/user', { method: 'GET' });
+        const data = await resp.json();
+        if (!cancelled && data?.success && data?.data?.userId) {
+          analytics.identify(data.data.userId, {
+            ynab_user_id: data.data.userId,
+            authenticated_at: new Date().toISOString(),
+            session_start: new Date().toISOString(),
+          });
+          identifiedRef.current = true;
+        }
+      } catch (e) {
+        console.warn('Identify failed:', e);
+      }
+    };
+    identify();
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthenticated]);
 
   const trackOAuthInitiated = useCallback(
     (method: 'button_click' | 'auto_redirect' = 'button_click') => {

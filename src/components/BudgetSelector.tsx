@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { analytics } from '@/lib/analytics/posthog-client';
 import { SafeBudget } from '@/types/ynab';
 import { ApiClient } from '@/lib/api/client';
 import { AuthenticationError } from './AuthenticationError';
@@ -35,6 +36,20 @@ export default function BudgetSelector({
             new Date(a.lastModified).getTime()
         );
         setBudgets(sortedBudgets);
+
+        // Enrich person properties in PostHog
+        try {
+          analytics.setUserProperties({
+            budget_count: sortedBudgets.length,
+            budget_ids: sortedBudgets.map(b => b.id),
+            currencies: Array.from(
+              new Set(sortedBudgets.map(b => b.currencyFormat?.iso_code).filter(Boolean))
+            ),
+            default_budget_id: sortedBudgets[0]?.id || null,
+          });
+        } catch (e) {
+          console.warn('Failed to set analytics user properties from budgets:', e);
+        }
 
         // Auto-select most recently modified budget if none selected
         if (!selectedBudgetId && sortedBudgets.length > 0) {

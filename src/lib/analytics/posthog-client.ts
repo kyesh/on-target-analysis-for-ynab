@@ -30,7 +30,7 @@ export interface ConsentSettings {
 export class PostHogClient {
   private static instance: PostHogClient | null = null;
   private initialized = false;
-  private consentGiven = false;
+  private consentGiven = true; // Capture-by-default globally; users can opt out via consent banner
   private queuedEvents: AnalyticsEvent[] = [];
 
   private constructor() {}
@@ -65,7 +65,7 @@ export class PostHogClient {
         api_host: host,
 
         // Privacy and compliance settings
-        opt_out_capturing_by_default: true, // Require explicit consent
+        opt_out_capturing_by_default: false, // Capture by default globally (opt-out available)
         respect_dnt: true, // Respect Do Not Track
         disable_surveys: true, // Disable surveys
 

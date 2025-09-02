@@ -227,6 +227,7 @@ export class ApiClient {
       '/api/analysis',
       '/api/auth',
       '/api/health',
+      '/api/user',
     ];
 
     return allowedPrefixes.some(prefix => endpoint.startsWith(prefix));
