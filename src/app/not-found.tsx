@@ -85,7 +85,7 @@ export default function NotFound() {
                   Auto-Redirect Active
                 </h3>
                 <p className="mt-1 text-sm text-blue-700">
-                  Redirecting to dashboard in {redirectCountdown} second
+                  Redirecting to home in {redirectCountdown} second
                   {redirectCountdown !== 1 ? 's' : ''}...
                 </p>
               </div>
