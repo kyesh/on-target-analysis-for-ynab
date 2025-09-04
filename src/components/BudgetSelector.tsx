@@ -41,9 +41,13 @@ export default function BudgetSelector({
         try {
           analytics.setUserProperties({
             budget_count: sortedBudgets.length,
-            budget_ids: sortedBudgets.map(b => b.id),
+            budget_ids: sortedBudgets.map((b: SafeBudget) => b.id),
             currencies: Array.from(
-              new Set(sortedBudgets.map(b => b.currencyFormat?.iso_code).filter(Boolean))
+              new Set(
+                sortedBudgets
+                  .map((b: SafeBudget) => b.currencyFormat?.iso_code)
+                  .filter((code: string | undefined | null): code is string => Boolean(code))
+              )
             ),
             default_budget_id: sortedBudgets[0]?.id || null,
           });
