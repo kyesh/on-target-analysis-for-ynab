@@ -20,6 +20,7 @@ const nextConfig = {
       "img-src 'self' data: https: blob:",
       "font-src 'self' https://fonts.gstatic.com",
       "connect-src 'self' https://api.ynab.com https://app.ynab.com https://ontargetanalysisforynab.com https://us.i.posthog.com https://us-assets.i.posthog.com https://app.posthog.com", // YNAB API, OAuth, production domain, and PostHog analytics
+      "frame-src 'self' https://us-assets.i.posthog.com", // Allow PostHog session recording iframes
       "worker-src 'self' blob: data:", // Allow Web Workers for PostHog session recording
       "frame-ancestors 'none'",
       "base-uri 'self'",

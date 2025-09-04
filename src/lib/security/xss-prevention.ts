@@ -322,21 +322,64 @@ export class XSSPrevention {
                   element.tagName === 'SCRIPT' ||
                   element.tagName === 'IFRAME'
                 ) {
-                  // Development allowlist: ignore known PostHog analytics injections
-                  const isDev = process.env.NODE_ENV === 'development';
+                  // Enhanced PostHog detection for both development and production
                   const src = (element as HTMLScriptElement).src || (element as HTMLIFrameElement).src || '';
+                  const className = element.className || '';
+                  const id = element.id || '';
+
+                  // Check if this element was created by PostHog by examining the call stack
+                  const isCreatedByPostHog = (() => {
+                    try {
+                      const stack = new Error().stack || '';
+                      return stack.includes('posthog') ||
+                             stack.includes('us-assets.i.posthog.com') ||
+                             stack.includes('recorder.js') ||
+                             stack.includes('rrweb') || // PostHog uses rrweb for session recording
+                             stack.includes('session-recording');
+                    } catch {
+                      return false;
+                    }
+                  })();
+
+                  // In development, be more lenient with iframe detection for PostHog
+                  const isDev = process.env.NODE_ENV === 'development';
+                  const isLikelyPostHogIframe = isDev && element.tagName === 'IFRAME' && (
+                    !src || // Many PostHog iframes have no src
+                    src === 'about:blank' ||
+                    element.getAttribute('style')?.includes('display: none') ||
+                    element.getAttribute('style')?.includes('position: absolute')
+                  );
+
                   const isPosthog =
+                    // PostHog script sources
                     src.includes('posthog') ||
                     src.includes('us-assets.i.posthog.com') ||
                     src.includes('us.i.posthog.com') ||
+                    src.includes('app.posthog.com') ||
+                    // PostHog data attributes
                     (element.getAttribute && element.getAttribute('data-posthog') !== null) ||
-                    // PostHog recorder creates iframes with specific patterns
+                    // PostHog class names and IDs
+                    className.includes('posthog') ||
+                    id.includes('posthog') ||
+                    // Created by PostHog (detected via call stack)
+                    isCreatedByPostHog ||
+                    // Development mode: likely PostHog iframe
+                    isLikelyPostHogIframe ||
+                    // PostHog recorder iframes (session recording) - very specific patterns
                     (element.tagName === 'IFRAME' && (
                       element.getAttribute('style')?.includes('display: none') ||
-                      element.getAttribute('src') === 'about:blank'
-                    ));
+                      element.getAttribute('src') === 'about:blank' ||
+                      element.getAttribute('title')?.includes('posthog') ||
+                      // PostHog recorder creates iframes with specific sandbox attributes
+                      element.getAttribute('sandbox') === 'allow-same-origin allow-scripts' ||
+                      // PostHog iframes often have no src and specific styling
+                      (!src && element.getAttribute('style')?.includes('position: absolute'))
+                    )) ||
+                    // PostHog scripts often have no src (inline) but contain posthog references
+                    (element.tagName === 'SCRIPT' && !src &&
+                      element.innerHTML.toLowerCase().includes('posthog'));
 
-                  if (!(isDev && isPosthog)) {
+                  if (!isPosthog) {
                     this.reportSecurityIncident('Suspicious DOM modification', {
                       tagName: element.tagName,
                       innerHTML: element.innerHTML.substring(0, 100),
