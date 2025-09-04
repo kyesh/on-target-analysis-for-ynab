@@ -341,9 +341,9 @@ export class XSSPrevention {
                     }
                   })();
 
-                  // In development, be more lenient with iframe detection for PostHog
-                  const isDev = process.env.NODE_ENV === 'development';
-                  const isLikelyPostHogIframe = isDev && element.tagName === 'IFRAME' && (
+                  // PostHog iframe detection for both development and production
+                  // PostHog session recording creates iframes that are hard to identify
+                  const isLikelyPostHogIframe = element.tagName === 'IFRAME' && (
                     !src || // Many PostHog iframes have no src
                     src === 'about:blank' ||
                     element.getAttribute('style')?.includes('display: none') ||
