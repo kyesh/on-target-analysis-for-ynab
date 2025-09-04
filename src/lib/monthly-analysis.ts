@@ -177,13 +177,14 @@ export function getTopVarianceCategories(
     .filter((variance): variance is CategoryVariance => variance !== null);
 
   // Sort by absolute variance amount (highest impact first)
+  // Apply tolerance threshold to avoid showing categories with tiny variances
   const overTarget = variances
-    .filter(v => v.variance > 0)
+    .filter(v => v.variance > config.toleranceMilliunits)
     .sort((a, b) => b.variance - a.variance)
     .slice(0, limit);
 
   const underTarget = variances
-    .filter(v => v.variance < 0)
+    .filter(v => v.variance < -config.toleranceMilliunits)
     .sort((a, b) => a.variance - b.variance) // Most negative first
     .slice(0, limit);
 

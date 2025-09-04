@@ -126,8 +126,13 @@ export default function AnalysisDashboard({
     analysis;
 
   // Get zero-target categories with assignments for over-target section
+  // Apply tolerance threshold to avoid showing categories with tiny assignments
+  const toleranceMilliunits = 1000; // $1.00 tolerance (same as DEFAULT_ANALYSIS_CONFIG)
   const zeroTargetWithAssignments = analysis.categories
-    .filter(category => category.neededThisMonth === 0 && category.assigned > 0)
+    .filter(category =>
+      category.neededThisMonth === 0 &&
+      category.assigned > toleranceMilliunits
+    )
     .map(category => ({
       categoryId: category.id,
       categoryName: category.name,
