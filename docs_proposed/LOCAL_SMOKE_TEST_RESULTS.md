@@ -49,15 +49,21 @@ Environment: macOS (darwin), Node 20+, Next.js 15.4.6, local dev server at http:
 ## Verdict
 - The application behaves normally in local dev for core flows. OAuth entrypoint works and error UX is correct. Integration checks pass.
 
-## Next Steps (Proposed)
-1) Dashboard route behavior
-   - Decide if /dashboard should exist. If yes, create page that redirects unauthenticated users to /auth/signin (and update tests). If no, adjust integration script to accept 404.
-2) SecurityInitializer tuning
-   - Add an allowlist entry to avoid flagging known analytics injections (PostHog) during development.
-3) Resolve lockfile warning
-   - Remove stray package-lock.json in /Users/kennethyesh/GitRepos (outside repo) or run dev from a clean shell where CWD has no parent lockfile.
-4) Track down recurring 404 asset (if reproducible)
-   - Open devtools Network tab to identify missing path and add asset or update reference.
+## Issues Identified and Resolved
+1) ✅ Dashboard route behavior
+   - RESOLVED: Updated all redirects from /dashboard to / since no dashboard route exists
+   - Updated integration script to accept 404 for /dashboard
+   - Updated UI copy from "dashboard" to "home" in callback and 404 pages
+2) ✅ SecurityInitializer tuning
+   - RESOLVED: Added dev-only allowlist for PostHog script/iframe injections
+   - Reduced console noise during development
+3) ✅ Lockfile warning resolution
+   - RESOLVED: Removed stray package-lock.json in /Users/kennethyesh/GitRepos (outside repo)
+4) ✅ 404 asset tracking
+   - RESOLVED: Added public/favicon.svg to eliminate favicon 404 errors
+5) ✅ Over-target filtering bug
+   - RESOLVED: Applied tolerance threshold (1000 milliunits = $1.00) to prevent categories with tiny variances from appearing in Over-Target section
+   - Categories must now exceed $1.00 variance to be considered truly over/under target
 
 ## Artifacts
 - Health JSON sample shows checks.oauth_config=true and ynab_connectivity=true
