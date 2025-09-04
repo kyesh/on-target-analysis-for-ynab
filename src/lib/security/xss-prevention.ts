@@ -329,7 +329,12 @@ export class XSSPrevention {
                     src.includes('posthog') ||
                     src.includes('us-assets.i.posthog.com') ||
                     src.includes('us.i.posthog.com') ||
-                    (element.getAttribute && element.getAttribute('data-posthog') !== null);
+                    (element.getAttribute && element.getAttribute('data-posthog') !== null) ||
+                    // PostHog recorder creates iframes with specific patterns
+                    (element.tagName === 'IFRAME' && (
+                      element.getAttribute('style')?.includes('display: none') ||
+                      element.getAttribute('src') === 'about:blank'
+                    ));
 
                   if (!(isDev && isPosthog)) {
                     this.reportSecurityIncident('Suspicious DOM modification', {
