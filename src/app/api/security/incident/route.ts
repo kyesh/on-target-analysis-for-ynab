@@ -16,11 +16,11 @@ const MAX_INCIDENTS_PER_WINDOW = 10; // Max 10 incidents per minute per IP
 export async function POST(request: NextRequest) {
   try {
     // Get client IP for rate limiting
-    const headersList = headers();
+    const headersList = await headers();
     const forwarded = headersList.get('x-forwarded-for');
-    const clientIP = forwarded ? forwarded.split(',')[0] : 
-                     headersList.get('x-real-ip') || 
-                     'unknown';
+    const clientIP: string = (forwarded ? forwarded.split(',')[0]?.trim() : null) ||
+                             headersList.get('x-real-ip') ||
+                             'unknown';
 
     // Rate limiting check
     const now = Date.now();
