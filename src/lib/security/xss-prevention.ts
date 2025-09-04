@@ -322,10 +322,21 @@ export class XSSPrevention {
                   element.tagName === 'SCRIPT' ||
                   element.tagName === 'IFRAME'
                 ) {
-                  this.reportSecurityIncident('Suspicious DOM modification', {
-                    tagName: element.tagName,
-                    innerHTML: element.innerHTML.substring(0, 100),
-                  });
+                  // Development allowlist: ignore known PostHog analytics injections
+                  const isDev = process.env.NODE_ENV === 'development';
+                  const src = (element as HTMLScriptElement).src || (element as HTMLIFrameElement).src || '';
+                  const isPosthog =
+                    src.includes('posthog') ||
+                    src.includes('us-assets.i.posthog.com') ||
+                    src.includes('us.i.posthog.com') ||
+                    (element.getAttribute && element.getAttribute('data-posthog') !== null);
+
+                  if (!(isDev && isPosthog)) {
+                    this.reportSecurityIncident('Suspicious DOM modification', {
+                      tagName: element.tagName,
+                      innerHTML: element.innerHTML.substring(0, 100),
+                    });
+                  }
                 }
               }
             });

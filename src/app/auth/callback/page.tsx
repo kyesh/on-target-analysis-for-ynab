@@ -47,6 +47,7 @@ export default function CallbackPage() {
             setRedirectCountdown(prev => {
               if (prev <= 1) {
                 clearInterval(countdown);
+                // Redirect to home (no dashboard route at this time)
                 router.push('/');
                 return 0;
               }
@@ -187,8 +188,7 @@ export default function CallbackPage() {
         </h2>
 
         <p className="mb-6 text-gray-600">
-          You have successfully connected your YNAB account. Redirecting to your
-          dashboard in {redirectCountdown} second
+          You have successfully connected your YNAB account. Redirecting to the home page in {redirectCountdown} second
           {redirectCountdown !== 1 ? 's' : ''}...
         </p>
 
@@ -197,7 +197,7 @@ export default function CallbackPage() {
             onClick={handleManualRedirect}
             className="w-full rounded-md bg-blue-600 px-4 py-2 text-white transition-colors duration-200 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
           >
-            Go to Dashboard Now
+            Go to Home Now
           </button>
 
           <div className="rounded-md border border-green-200 bg-green-50 p-4">

@@ -22,7 +22,8 @@ export default function SignInPage() {
   useEffect(() => {
     // Check if user is already authenticated
     if (SecureTokenStorage.isTokenValid()) {
-      window.location.href = '/dashboard';
+      // Redirect authenticated users to home; no dashboard route exists currently
+      window.location.href = '/';
       return;
     }
 
