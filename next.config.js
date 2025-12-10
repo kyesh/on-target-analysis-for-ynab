@@ -75,11 +75,6 @@ const nextConfig = {
     ignoreBuildErrors: false,
   },
 
-  // ESLint configuration - temporarily ignore during builds for deployment
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-
   // Allow build to continue despite static generation errors
   experimental: {
     optimizePackageImports: ['recharts', 'lodash', 'date-fns'],

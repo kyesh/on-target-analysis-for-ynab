@@ -318,8 +318,8 @@ main() {
     echo ""
 
     check_prerequisites
-    validate_config
     authenticate_gcp
+    validate_config
     build_application
     create_dockerfile
     build_and_push_image
