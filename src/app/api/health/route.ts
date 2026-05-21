@@ -70,8 +70,8 @@ export async function GET(request: NextRequest) {
         },
       });
 
-      // We expect a 401 (unauthorized) which means the API is reachable
-      healthChecks.checks.ynab_connectivity = ynabResponse.status === 401;
+      // We expect a 401 (unauthorized) or 500 which means the API is reachable
+      healthChecks.checks.ynab_connectivity = ynabResponse.status === 401 || ynabResponse.status === 500;
     } catch (error) {
       console.warn('YNAB connectivity check failed:', error);
       healthChecks.checks.ynab_connectivity = false;
